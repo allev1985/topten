@@ -9,7 +9,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./user";
-import { categories } from "./category";
 
 export const lists = pgTable(
   "lists",
@@ -18,9 +17,6 @@ export const lists = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    categoryId: uuid("category_id")
-      .notNull()
-      .references(() => categories.id),
     title: varchar("title", { length: 255 }).notNull(),
     slug: varchar("slug", { length: 255 }).notNull(),
     description: text("description"),
@@ -37,10 +33,5 @@ export const lists = pgTable(
   (table) => [
     uniqueIndex("lists_user_slug_idx").on(table.userId, table.slug),
     index("lists_user_deleted_at_idx").on(table.userId, table.deletedAt),
-    index("lists_category_published_idx").on(
-      table.categoryId,
-      table.isPublished,
-      table.deletedAt
-    ),
   ]
 );

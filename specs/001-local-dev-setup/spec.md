@@ -34,9 +34,8 @@ As a developer working on data-related features, I want a local database environ
 **Acceptance Scenarios**:
 
 1. **Given** Docker is running, **When** the developer starts the local database service, **Then** a local database instance is available and accessible
-2. **Given** the database is running, **When** the developer runs the migration command, **Then** all database tables are created matching the defined schema (User, Category, List, Place, ListPlace)
-3. **Given** migrations have been applied, **When** the developer runs the seed command, **Then** the Categories table is populated with the 8 predefined categories
-4. **Given** the database is running, **When** the developer views the connection details, **Then** they can connect using standard database tools
+2. **Given** the database is running, **When** the developer runs the migration command, **Then** all database tables are created matching the defined schema (User, List, Place, ListPlace)
+3. **Given** the database is running, **When** the developer views the connection details, **Then** they can connect using standard database tools
 
 ---
 
@@ -128,9 +127,8 @@ As a new developer, I want comprehensive setup documentation so that I can under
 
 - **FR-005**: The development environment MUST include a local database service that runs in isolation from other environments
 - **FR-006**: The project MUST include ORM configuration for connecting to the local database
-- **FR-007**: The project MUST include database schema definitions for all data entities: User, Category, List, Place, and ListPlace
+- **FR-007**: The project MUST include database schema definitions for all data entities: User, List, Place, and ListPlace
 - **FR-008**: The project MUST include executable migration files that create and modify database structure
-- **FR-009**: The project MUST include seed data scripts that populate Categories with the 8 predefined values: coffee-cafes, restaurants, bars-nightlife, breakfast-brunch, date-night, family-friendly, outdoor-nature, workspaces
 
 #### UI Framework
 
@@ -171,8 +169,7 @@ As a new developer, I want comprehensive setup documentation so that I can under
 ### Key Entities
 
 - **User**: Represents a creator profile with unique identifier, email, display name, biography, avatar, vanity slug for custom URLs, and soft-delete capability via deletion timestamp
-- **Category**: Represents a classification type for lists (e.g., Coffee & Cafés, Restaurants) with name, URL-friendly slug, and soft-delete capability
-- **List**: Represents a curated collection of places belonging to a user within a category, with title, URL-friendly slug, description, publication status, publication timestamp, and soft-delete capability
+- **List**: Represents a curated collection of places belonging to a user, with title, URL-friendly slug, description, publication status, publication timestamp, and soft-delete capability
 - **Place**: Represents a cached location from external places data with external reference ID, display name, address, geographic coordinates, and soft-delete capability
 - **ListPlace**: Represents the relationship between a list and a place, including display position, optional hero image URL, and soft-delete capability
 
@@ -193,12 +190,11 @@ As a new developer, I want comprehensive setup documentation so that I can under
 - **SC-001**: A new developer can complete the full local environment setup in under 15 minutes following the documentation
 - **SC-002**: The local development server starts and displays the application homepage within 30 seconds of running the start command
 - **SC-003**: Database migrations complete successfully in under 1 minute, creating all required tables
-- **SC-004**: Seed data script populates all 8 predefined categories in under 10 seconds
-- **SC-005**: The linting command completes a full codebase check in under 30 seconds
-- **SC-006**: The formatting command processes all files in under 30 seconds
-- **SC-007**: Unit tests can execute and report results in under 2 minutes for a baseline test suite
-- **SC-008**: Component tests can execute and report results in under 3 minutes for a baseline test suite
-- **SC-009**: End-to-end tests can execute a basic flow in under 5 minutes
-- **SC-010**: Hot reload reflects code changes in the browser within 3 seconds of file save
-- **SC-011**: 90% of developers following the documentation complete setup successfully on first attempt without requiring additional support
-- **SC-012**: All documented commands execute without errors on a correctly configured environment
+- **SC-004**: The linting command completes a full codebase check in under 30 seconds
+- **SC-005**: The formatting command processes all files in under 30 seconds
+- **SC-006**: Unit tests can execute and report results in under 2 minutes for a baseline test suite
+- **SC-007**: Component tests can execute and report results in under 3 minutes for a baseline test suite
+- **SC-008**: End-to-end tests can execute a basic flow in under 5 minutes
+- **SC-009**: Hot reload reflects code changes in the browser within 3 seconds of file save
+- **SC-010**: 90% of developers following the documentation complete setup successfully on first attempt without requiring additional support
+- **SC-011**: All documented commands execute without errors on a correctly configured environment

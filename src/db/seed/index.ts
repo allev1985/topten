@@ -1,10 +1,8 @@
-import { seedCategories } from "./categories";
-
 async function main() {
   console.log("Starting database seed...");
 
   try {
-    await seedCategories();
+    // Future seed operations can be added here
     console.log("Database seed completed successfully");
     process.exit(0);
   } catch (error) {
