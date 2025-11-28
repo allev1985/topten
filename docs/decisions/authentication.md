@@ -395,7 +395,7 @@ sequenceDiagram
     
     Note over User,Database: Email Verification
     User->>Browser: Click verification link in email
-    Browser->>NextJS: GET /auth/verify?token=xxx
+    Browser->>NextJS: GET /api/auth/verify?token=xxx
     NextJS->>Supabase: verifyEmail(token)
     Supabase->>Database: Mark email as verified
     Database-->>Supabase: Email verified
