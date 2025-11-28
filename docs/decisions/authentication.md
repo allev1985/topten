@@ -41,7 +41,8 @@ The following RESTful API routes handle authentication operations:
 
 | Method | Endpoint | Description | Request Body | Response |
 |--------|----------|-------------|--------------|----------|
-| `POST` | `/api/auth/signup` | Register a new user account | `{ email, password }` | `{ user, session }` or error |
+| `POST` | `/api/auth/signup` | Register a new user account | `{ email, password }` | `{ success, message }` |
+| `GET` | `/api/auth/verify` | Verify email address via token | Query: `?token=xxx` | Redirect to dashboard with session |
 | `POST` | `/api/auth/login` | Authenticate existing user | `{ email, password, redirectTo? }` | `{ session }` or error |
 | `POST` | `/api/auth/logout` | End user session | - | `{ success: true }` |
 | `POST` | `/api/auth/refresh` | Refresh an expiring session | - | `{ session }` or error |
@@ -65,15 +66,32 @@ Creates a new user account with email and password.
 **Success Response (201):**
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com"
-  },
-  "session": {
-    "access_token": "...",
-    "refresh_token": "..."
-  }
+  "success": true,
+  "message": "Please check your email to verify your account"
 }
+```
+
+**Note:** For security, the response does not reveal whether the email is already registered. Users receive appropriate emails based on account status.
+
+#### `GET /api/auth/verify`
+Verifies a user's email address using the token from the verification email.
+
+**Query Parameters:**
+- `token` - The verification token from the email link
+- `type` - Optional, defaults to "signup"
+
+**Success Flow:**
+1. Token is validated
+2. User's email is marked as verified in the database
+3. Session is created
+4. User is redirected to `/dashboard` with session cookie set
+
+**Error Response (400):**
+```json
+{
+  "error": "Invalid or expired verification token"
+}
+```
 ```
 
 #### `POST /api/auth/login`
@@ -136,8 +154,11 @@ Sends a password reset email to the user.
 ```json
 {
   "success": true,
-  "message": "Password reset email sent"
+  "message": "If an account exists with this email, a password reset link has been sent"
 }
+```
+
+**Note:** For security, the response does not reveal whether the email is registered. Reset emails are only sent to valid accounts.
 ```
 
 #### `PUT /api/auth/password`
@@ -190,6 +211,156 @@ These routes follow RESTful conventions:
 - **Standard status codes** - 200 (success), 201 (created), 400 (bad request), 401 (unauthorized), 500 (server error)
 - **JSON format** - Consistent request/response format
 
+## Security Considerations
+
+### Redirect URL Validation
+
+**Critical:** The `redirectTo` parameter in login requests must be strictly validated to prevent open redirect vulnerabilities.
+
+**Implementation Requirements:**
+- Only allow relative paths starting with `/` (e.g., `/dashboard/my-lists`)
+- Reject absolute URLs unless they match the application's domain
+- Default to `/dashboard` if `redirectTo` is invalid or missing
+
+**Example Validation:**
+```typescript
+function isValidRedirect(url: string): boolean {
+  // Only allow relative paths
+  if (!url.startsWith('/')) return false;
+  
+  // Prevent protocol-relative URLs
+  if (url.startsWith('//')) return false;
+  
+  // Prevent javascript: and data: URLs
+  if (url.match(/^(javascript|data):/i)) return false;
+  
+  return true;
+}
+```
+
+### Rate Limiting
+
+**Status:** Deferred to post-MVP
+
+Public authentication endpoints are vulnerable to brute-force attacks and credential stuffing. Rate limiting will be implemented in a future phase using one of the following solutions:
+
+**Recommended Solutions:**
+- **Upstash Rate Limit** - Serverless rate limiting with Redis
+- **Vercel Edge Middleware Rate Limiting** - Built-in edge-based protection
+- **Arcjet** - Security-as-a-service with rate limiting for Next.js
+
+**Planned Limits (Post-MVP):**
+- `/api/auth/login` - 5 attempts per 15 minutes per IP
+- `/api/auth/signup` - 3 attempts per hour per IP
+- `/api/auth/password/reset` - 3 attempts per hour per email
+
+**MVP Mitigation:**
+- Rely on Supabase's built-in rate limiting for authentication endpoints
+- Monitor authentication logs for suspicious patterns
+
+### User Enumeration Protection
+
+To prevent attackers from discovering valid email addresses, the application implements the following protections:
+
+#### Signup Endpoint
+**Response Behavior:**
+- Always return 201 Created with a generic success message
+- Do not distinguish between "email already registered" and "new account created"
+- Send appropriate email (confirmation for new users, "account exists" notification for existing users)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Please check your email to verify your account"
+}
+```
+
+#### Password Reset Endpoint
+**Response Behavior:**
+- Always return 200 OK with the same message regardless of whether the email exists
+- Only send reset emails to registered accounts
+- Do not reveal whether an account exists
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "If an account exists with this email, a password reset link has been sent"
+}
+```
+
+### Password Policy
+
+All user passwords must meet the following requirements:
+
+**Minimum Requirements:**
+- Minimum length: 12 characters
+- Must contain at least one uppercase letter
+- Must contain at least one lowercase letter
+- Must contain at least one number
+- Must contain at least one special character
+
+**Additional Rules:**
+- Passwords cannot contain common patterns (e.g., "password123", "qwerty")
+- Passwords are checked against known breach databases using Supabase's integration
+- Users are encouraged (but not required) to use passphrases for better security
+
+**Implementation:**
+- Validation occurs on both client-side (UX) and server-side (security)
+- Password strength indicator shown during signup and password changes
+
+### Audit Logging
+
+All authentication events are logged for security monitoring and compliance:
+
+**Logged Events:**
+- Successful login attempts (timestamp, IP, user agent)
+- Failed login attempts (timestamp, IP, attempted email)
+- Password changes (timestamp, IP)
+- Password reset requests (timestamp, IP, email)
+- Account creation (timestamp, IP)
+- Session invalidation/logout (timestamp, IP)
+
+**Log Retention:**
+- Authentication logs retained for 90 days
+- Logs stored securely in Supabase with restricted access
+- Accessible only to administrators for security auditing
+
+**Monitoring:**
+- Automated alerts for suspicious patterns (e.g., multiple failed logins)
+- Weekly review of authentication anomalies
+
+### Multi-Factor Authentication (MFA)
+
+**Status:** Out of scope for MVP
+
+MFA is planned for a future release to provide enhanced account security. Supabase supports:
+- Time-based One-Time Passwords (TOTP)
+- SMS-based verification
+- Email-based verification codes
+
+**Future Implementation:**
+- Optional MFA during MVP phase
+- Mandatory MFA for accounts with elevated privileges in future phases
+
+### Additional Security Measures
+
+**Session Security:**
+- HTTP-only cookies prevent XSS attacks
+- Secure flag ensures cookies only sent over HTTPS
+- SameSite=Lax prevents CSRF attacks
+- Session tokens automatically rotated on refresh
+
+**HTTPS Enforcement:**
+- All authentication endpoints require HTTPS in production
+- HTTP Strict Transport Security (HSTS) headers enabled
+
+**Input Validation:**
+- Email format validation using RFC 5322 standards
+- SQL injection prevention via Supabase's parameterized queries
+- XSS prevention through proper output encoding
+
 ## Authentication Flow
 
 ```mermaid
@@ -208,13 +379,29 @@ sequenceDiagram
     User->>Browser: Submit signup form (email, password)
     Browser->>NextJS: POST /api/auth/signup
     NextJS->>Supabase: signUp(email, password)
-    Supabase->>Database: Create user record
-    Database-->>Supabase: User created
-    Supabase-->>NextJS: Return user & session
+    
+    alt New User
+        Supabase->>Database: Create user record (unverified)
+        Database-->>Supabase: User created
+        Supabase->>User: Send verification email
+        Supabase-->>NextJS: Return success (no session)
+    else Existing User
+        Supabase->>User: Send "account exists" notification
+        Supabase-->>NextJS: Return success (no session)
+    end
+    
+    NextJS-->>Browser: Generic success response
+    NextJS-->>Browser: Redirect to /verify-email page
+    
+    Note over User,Database: Email Verification
+    User->>Browser: Click verification link in email
+    Browser->>NextJS: GET /auth/verify?token=xxx
+    NextJS->>Supabase: verifyEmail(token)
+    Supabase->>Database: Mark email as verified
+    Database-->>Supabase: Email verified
+    Supabase-->>NextJS: Return session
     NextJS->>Browser: Set session cookie
     NextJS-->>Browser: Redirect to /dashboard
-    Browser->>NextJS: GET /dashboard
-    NextJS-->>Browser: Return dashboard page
 
     Note over User,Database: User Login Flow
     User->>Browser: Navigate to login page
@@ -309,9 +496,14 @@ sequenceDiagram
 ### 1. User Sign Up
 - User navigates to the signup page and submits their email and password
 - Next.js calls Supabase's `signUp()` method
-- Supabase creates a new user record in the database
-- A session is created and stored in a secure cookie
-- User is redirected to the dashboard
+- For security (user enumeration protection):
+  - New users: Supabase creates an unverified user record and sends a verification email
+  - Existing users: Supabase sends an "account exists" notification email
+  - API returns the same generic success message in both cases
+- User is redirected to a "Check your email" page (not logged in yet)
+- User clicks the verification link in their email
+- Email is verified and a session is created
+- User is then redirected to the dashboard and logged in
 
 ### 2. User Login
 - User submits credentials via the login form
