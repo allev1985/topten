@@ -92,6 +92,550 @@ Verifies a user's email address using the token from the verification email.
   "error": "Invalid or expired verification token"
 }
 ```
+
+## Implementation Breakdown
+
+This section breaks down the authentication system implementation into manageable tasks, each approximately 600 lines of code or less. Tasks are ordered by dependency and priority.
+
+### Phase 1: Foundation & Core Setup
+
+#### Task 1.1: Supabase Configuration & Environment Setup
+**Estimated Size:** ~200 lines  
+**Priority:** Critical (Blocking)  
+**Dependencies:** None
+
+**Deliverables:**
+- Install required packages (`@supabase/supabase-js`, `@supabase/ssr`, `@supabase/auth-helpers-nextjs`)
+- Configure environment variables (`.env.local`)
+- Create Supabase client utilities for server and client components
+- Set up TypeScript types for auth responses
+
+**Files Created/Modified:**
+- `/lib/supabase/client.ts` - Client-side Supabase client
+- `/lib/supabase/server.ts` - Server-side Supabase client
+- `/lib/supabase/middleware.ts` - Middleware helper
+- `/types/auth.ts` - Authentication type definitions
+- `.env.local` - Environment configuration
+- `package.json` - Dependencies
+
+**Acceptance Criteria:**
+- Supabase clients instantiate without errors
+- Environment variables load correctly
+- TypeScript types compile successfully
+
+---
+
+#### Task 1.2: Database Schema & Supabase Auth Configuration
+**Estimated Size:** ~150 lines (SQL + config)  
+**Priority:** Critical (Blocking)  
+**Dependencies:** Task 1.1
+
+**Deliverables:**
+- Configure Supabase Auth settings (email confirmation, password requirements)
+- Set up email templates for verification and password reset
+- Configure Row Level Security (RLS) policies for user data
+- Create any additional user profile tables if needed
+
+**Files Created/Modified:**
+- `/supabase/migrations/001_initial_auth_setup.sql` - Database schema
+- Supabase Dashboard configuration (documented in migration notes)
+
+**Acceptance Criteria:**
+- Email verification is required for new accounts
+- Password policy enforces 12+ characters with complexity
+- RLS policies prevent unauthorized data access
+- Email templates display correctly
+
+---
+
+### Phase 2: Authentication API Routes
+
+#### Task 2.1: Signup & Email Verification Endpoints
+**Estimated Size:** ~400 lines  
+**Priority:** High  
+**Dependencies:** Task 1.1, Task 1.2
+
+**Deliverables:**
+- Create signup API route with user enumeration protection
+- Create email verification handler
+- Implement input validation and sanitization
+- Add error handling and logging
+- Create redirect to verification page
+
+**Files Created/Modified:**
+- `/app/api/auth/signup/route.ts` - Signup endpoint (~150 lines)
+- `/app/api/auth/verify/route.ts` - Email verification endpoint (~100 lines)
+- `/lib/validation/auth.ts` - Input validation schemas (~80 lines)
+- `/lib/auth/errors.ts` - Custom error classes (~70 lines)
+
+**Acceptance Criteria:**
+- Signup returns generic message for new and existing users
+- Verification emails sent successfully
+- Email verification creates session and redirects to dashboard
+- Invalid tokens return appropriate errors
+- All inputs validated before processing
+
+---
+
+#### Task 2.2: Login & Logout Endpoints
+**Estimated Size:** ~350 lines  
+**Priority:** High  
+**Dependencies:** Task 1.1
+
+**Deliverables:**
+- Create login API route with redirectTo validation
+- Create logout API route
+- Implement redirect URL validation (prevent open redirects)
+- Add rate limiting preparation hooks
+- Session cookie management
+
+**Files Created/Modified:**
+- `/app/api/auth/login/route.ts` - Login endpoint (~180 lines)
+- `/app/api/auth/logout/route.ts` - Logout endpoint (~80 lines)
+- `/lib/auth/redirect-validation.ts` - Redirect URL validation (~90 lines)
+
+**Acceptance Criteria:**
+- Login authenticates users and creates sessions
+- redirectTo parameter validated (only relative paths)
+- Logout invalidates sessions and clears cookies
+- Failed login attempts logged
+- Sessions stored in HTTP-only cookies
+
+---
+
+#### Task 2.3: Password Reset & Update Endpoints
+**Estimated Size:** ~400 lines  
+**Priority:** Medium  
+**Dependencies:** Task 1.1, Task 1.2
+
+**Deliverables:**
+- Create password reset request endpoint
+- Create password update endpoint
+- Implement user enumeration protection for reset
+- Add password strength validation
+- Handle both authenticated and token-based password updates
+
+**Files Created/Modified:**
+- `/app/api/auth/password/reset/route.ts` - Password reset request (~120 lines)
+- `/app/api/auth/password/route.ts` - Password update endpoint (~150 lines)
+- `/lib/validation/password.ts` - Password validation (~80 lines)
+- `/lib/auth/password-strength.ts` - Password strength checker (~50 lines)
+
+**Acceptance Criteria:**
+- Reset endpoint returns generic message
+- Reset emails sent only to valid accounts
+- Password update requires valid token or active session
+- Passwords validated against complexity requirements
+- Users can update password from both reset flow and authenticated state
+
+---
+
+#### Task 2.4: Session Management Endpoints
+**Estimated Size:** ~250 lines  
+**Priority:** Medium  
+**Dependencies:** Task 1.1
+
+**Deliverables:**
+- Create session refresh endpoint
+- Create session status endpoint
+- Implement automatic token refresh logic
+- Add session validation utilities
+
+**Files Created/Modified:**
+- `/app/api/auth/refresh/route.ts` - Session refresh endpoint (~100 lines)
+- `/app/api/auth/session/route.ts` - Session status endpoint (~80 lines)
+- `/lib/auth/session.ts` - Session utilities (~70 lines)
+
+**Acceptance Criteria:**
+- Refresh endpoint returns new session tokens
+- Session endpoint returns current user and session data
+- Expired refresh tokens handled gracefully
+- Session utilities work on both client and server
+
+---
+
+### Phase 3: Middleware & Route Protection
+
+#### Task 3.1: Authentication Middleware
+**Estimated Size:** ~350 lines  
+**Priority:** Critical  
+**Dependencies:** Task 2.1, Task 2.2
+
+**Deliverables:**
+- Create Next.js middleware for route protection
+- Implement session checking logic
+- Add automatic session refresh
+- Handle redirectTo parameter for protected routes
+- Configure public vs protected route patterns
+
+**Files Created/Modified:**
+- `/middleware.ts` - Main middleware (~200 lines)
+- `/lib/auth/middleware-helpers.ts` - Helper functions (~100 lines)
+- `/lib/auth/route-config.ts` - Route protection configuration (~50 lines)
+
+**Acceptance Criteria:**
+- `/dashboard/*` routes protected (redirect to login if unauthenticated)
+- Public routes (`/login`, `/signup`, etc.) accessible without auth
+- redirectTo parameter preserved when redirecting to login
+- Sessions automatically refreshed when near expiry
+- Middleware runs efficiently on edge runtime
+
+---
+
+### Phase 4: UI Components & Pages
+
+#### Task 4.1: Authentication UI Components
+**Estimated Size:** ~400 lines  
+**Priority:** High  
+**Dependencies:** Task 2.1, Task 2.2, Task 2.3
+
+**Design Status:** ⚠️ No designs available - implement barebone HTML only
+
+**Important:** This task focuses on **functional HTML structure only**. CSS styling will be added in a future phase once designs are finalized. Keep markup semantic and accessible, but do not add custom styling beyond browser defaults.
+
+**Deliverables:**
+- Create reusable form components (basic HTML inputs, buttons, error display)
+- Create password strength indicator (text-based feedback)
+- Create loading states and feedback components (basic disabled states)
+- Implement form validation on client-side (HTML5 validation attributes)
+- Add accessibility features (ARIA labels, keyboard navigation, semantic HTML)
+
+**Files Created/Modified:**
+- `/components/auth/form-input.tsx` - Reusable input component (~80 lines)
+- `/components/auth/password-input.tsx` - Password input with strength indicator (~100 lines)
+- `/components/auth/form-button.tsx` - Submit button with loading state (~50 lines)
+- `/components/auth/error-message.tsx` - Error display component (~40 lines)
+- `/components/auth/auth-card.tsx` - Auth page wrapper component (~60 lines)
+- `/lib/hooks/use-form-state.ts` - Form state management hook (~90 lines)
+
+**Implementation Guidelines:**
+- Use native HTML elements (`<input>`, `<button>`, `<form>`, etc.)
+- Use HTML5 validation attributes (`required`, `type="email"`, `minlength`, etc.)
+- Use semantic HTML (`<label>`, `<fieldset>`, proper heading hierarchy)
+- Password strength: Display as plain text (e.g., "Weak", "Medium", "Strong")
+- Loading state: Use `disabled` attribute on buttons
+- Errors: Display as plain text in a `<div>` or `<p>` element
+- No CSS classes for styling (utility classes like Tailwind are fine for structure/layout only if already in project)
+- Focus on functionality and accessibility over aesthetics
+
+**Acceptance Criteria:**
+- All form components render functional HTML
+- Password strength indicator shows text-based feedback
+- Loading states prevent double submissions via disabled attribute
+- Error messages display as plain text
+- Components are accessible (WCAG 2.1 AA) with proper ARIA labels and semantic markup
+- No custom CSS added (browser default styling only)
+- Forms are fully functional without JavaScript (progressive enhancement)
+
+---
+
+#### Task 4.2: Signup & Verification Pages
+**Estimated Size:** ~350 lines  
+**Priority:** High  
+**Dependencies:** Task 4.1, Task 2.1
+
+**Design Status:** ⚠️ No designs available - implement barebone HTML only
+
+**Deliverables:**
+- Create signup page with form (semantic HTML)
+- Create email verification waiting page (plain text instructions)
+- Create email verified success page (simple confirmation message)
+- Implement client-side validation (HTML5 attributes)
+- Add SEO metadata
+
+**Files Created/Modified:**
+- `/app/signup/page.tsx` - Signup page (~140 lines)
+- `/app/verify-email/page.tsx` - Check email page (~80 lines)
+- `/app/auth/verify/page.tsx` - Verification handler page (~100 lines)
+- `/lib/actions/auth-actions.ts` - Server actions for forms (~50 lines)
+
+**Implementation Guidelines:**
+- Use plain HTML forms with native validation
+- Keep pages simple and text-focused
+- Use browser default styling only
+- Ensure mobile responsiveness through semantic HTML (not CSS)
+
+**Acceptance Criteria:**
+- Signup form validates input before submission
+- Success redirects to verification waiting page
+- Verification page shows clear text instructions
+- Email verification link redirects to dashboard
+- All pages functional on mobile (semantic HTML ensures basic responsiveness)
+- No custom styling applied
+
+---
+
+#### Task 4.3: Login & Logout Pages
+**Estimated Size:** ~300 lines  
+**Priority:** High  
+**Dependencies:** Task 4.1, Task 2.2
+
+**Design Status:** ⚠️ No designs available - implement barebone HTML only
+
+**Deliverables:**
+- Create login page with form (semantic HTML)
+- Add "Remember me" functionality (optional, checkbox only)
+- Handle redirectTo parameter in UI
+- Add social auth placeholders (if planned for future - simple disabled buttons)
+
+**Files Created/Modified:**
+- `/app/login/page.tsx` - Login page (~150 lines)
+- `/components/auth/login-form.tsx` - Login form component (~120 lines)
+- `/app/api/auth/logout/route.ts` - Already created in Task 2.2 (modifications ~30 lines)
+
+**Implementation Guidelines:**
+- Use native HTML form elements
+- Keep layout simple and functional
+- No custom CSS - browser defaults only
+- Use standard HTML checkboxes for "Remember me"
+
+**Acceptance Criteria:**
+- Login form submits to API route
+- redirectTo parameter preserved through flow
+- Failed login shows plain text error message
+- Success redirects to intended destination or dashboard
+- "Forgot password" link navigates correctly
+- No custom styling applied
+
+---
+
+#### Task 4.4: Password Reset & Update Pages
+**Estimated Size:** ~400 lines  
+**Priority:** Medium  
+**Dependencies:** Task 4.1, Task 2.3
+
+**Design Status:** ⚠️ No designs available - implement barebone HTML only
+
+**Deliverables:**
+- Create forgot password page (simple form)
+- Create password reset page (with token)
+- Create password change page (for authenticated users)
+- Add password confirmation fields
+- Implement client-side password matching validation (HTML5)
+
+**Files Created/Modified:**
+- `/app/forgot-password/page.tsx` - Forgot password page (~100 lines)
+- `/app/reset-password/page.tsx` - Reset password page (~120 lines)
+- `/app/dashboard/settings/password/page.tsx` - Change password page (~110 lines)
+- `/components/auth/password-reset-form.tsx` - Password reset form (~70 lines)
+
+**Implementation Guidelines:**
+- Use native HTML forms and validation
+- Password matching: Use HTML5 pattern matching or simple JS validation
+- Display messages as plain text
+- Keep forms minimal and functional
+
+**Acceptance Criteria:**
+- Forgot password shows generic success message (plain text)
+- Reset password page validates token on load
+- Password and confirm password must match (client-side validation)
+- Success messages displayed as plain text
+- Expired tokens show plain text error messages
+- No custom styling applied
+
+---
+
+### Phase 5: Security Hardening & Testing
+
+#### Task 5.1: Security Implementation
+**Estimated Size:** ~400 lines  
+**Priority:** High  
+**Dependencies:** All Phase 2 & 3 tasks
+
+**Deliverables:**
+- Implement audit logging for all auth events
+- Add CSRF protection verification
+- Implement input sanitization
+- Add security headers configuration
+- Create rate limiting preparation (hooks for future implementation)
+
+**Files Created/Modified:**
+- `/lib/auth/audit-logger.ts` - Audit logging service (~150 lines)
+- `/lib/security/sanitization.ts` - Input sanitization utilities (~100 lines)
+- `/lib/security/headers.ts` - Security headers configuration (~80 lines)
+- `/lib/security/rate-limit-hooks.ts` - Rate limit preparation (~70 lines)
+- `next.config.js` - Security headers config (modifications ~20 lines)
+
+**Acceptance Criteria:**
+- All auth events logged to Supabase
+- Security headers present in responses (HSTS, CSP, etc.)
+- User inputs sanitized before processing
+- CSRF tokens validated where applicable
+- Rate limit hooks ready for future integration
+
+---
+
+#### Task 5.2: Error Handling & User Feedback
+**Estimated Size:** ~350 lines  
+**Priority:** Medium  
+**Dependencies:** All Phase 2 & 4 tasks
+
+**Deliverables:**
+- Standardize error responses across all endpoints
+- Create user-friendly error messages
+- Implement global error boundary
+- Add toast notifications for feedback
+- Create error logging service
+
+**Files Created/Modified:**
+- `/lib/errors/error-handler.ts` - Centralized error handler (~120 lines)
+- `/lib/errors/error-messages.ts` - User-facing error messages (~100 lines)
+- `/components/error-boundary.tsx` - Error boundary component (~80 lines)
+- `/lib/notifications/toast.ts` - Toast notification service (~50 lines)
+
+**Acceptance Criteria:**
+- Consistent error format across all API routes
+- Technical errors translated to user-friendly messages
+- Errors logged without exposing sensitive data
+- Toast notifications work on all auth pages
+- Error boundary catches unexpected errors
+
+---
+
+#### Task 5.3: Testing Suite
+**Estimated Size:** ~600 lines  
+**Priority:** High  
+**Dependencies:** All previous tasks
+
+**Deliverables:**
+- Unit tests for validation functions
+- Integration tests for API routes
+- E2E tests for critical flows (signup, login, password reset)
+- Security tests (enumeration, open redirect, CSRF)
+- Test fixtures and mocking utilities
+
+**Files Created/Modified:**
+- `/tests/unit/validation.test.ts` - Validation tests (~100 lines)
+- `/tests/unit/auth-helpers.test.ts` - Helper function tests (~100 lines)
+- `/tests/integration/signup.test.ts` - Signup flow tests (~100 lines)
+- `/tests/integration/login.test.ts` - Login flow tests (~100 lines)
+- `/tests/integration/password-reset.test.ts` - Password reset tests (~100 lines)
+- `/tests/e2e/auth-flows.spec.ts` - E2E tests (~100 lines)
+
+**Acceptance Criteria:**
+- All unit tests pass with >90% coverage
+- Integration tests cover happy and error paths
+- E2E tests verify complete user flows
+- Security tests verify enumeration protection and redirect validation
+- CI/CD pipeline runs tests automatically
+
+---
+
+### Phase 6: Documentation & Deployment
+
+#### Task 6.1: Developer Documentation
+**Estimated Size:** ~300 lines (documentation)  
+**Priority:** Medium  
+**Dependencies:** All previous tasks
+
+**Deliverables:**
+- API route documentation with examples
+- Environment setup guide
+- Local development instructions
+- Supabase configuration guide
+- Troubleshooting guide
+
+**Files Created/Modified:**
+- `/docs/development/setup.md` - Setup instructions
+- `/docs/development/api-reference.md` - API documentation
+- `/docs/development/troubleshooting.md` - Common issues
+- `README.md` - Updated with auth setup instructions
+
+**Acceptance Criteria:**
+- New developers can set up auth locally using docs
+- All API routes documented with curl examples
+- Common errors documented with solutions
+- Environment variables explained clearly
+
+---
+
+#### Task 6.2: Deployment & Monitoring Setup
+**Estimated Size:** ~250 lines (config + monitoring)  
+**Priority:** High  
+**Dependencies:** All Phase 5 tasks
+
+**Deliverables:**
+- Production environment configuration
+- Supabase production setup
+- Error monitoring integration (e.g., Sentry)
+- Analytics setup for auth events
+- Health check endpoints
+
+**Files Created/Modified:**
+- `/app/api/health/route.ts` - Health check endpoint (~50 lines)
+- `/lib/monitoring/sentry.ts` - Error monitoring setup (~80 lines)
+- `/lib/analytics/auth-events.ts` - Analytics tracking (~70 lines)
+- `.env.production` - Production environment template
+- `/docs/deployment/production-setup.md` - Deployment guide (~50 lines)
+
+**Acceptance Criteria:**
+- Production environment variables configured
+- Supabase production instance connected
+- Errors logged to monitoring service
+- Auth events tracked in analytics
+- Health check returns system status
+
+---
+
+## Implementation Timeline Estimate
+
+**Total Estimated Lines of Code:** ~5,400 lines (excluding future CSS styling)
+
+### Recommended Sprint Breakdown (2-week sprints):
+
+**Sprint 1 - Foundation** (Tasks 1.1, 1.2, 2.1)
+- Core setup and signup flow
+- ~750 lines
+
+**Sprint 2 - Core Auth** (Tasks 2.2, 2.3, 2.4)
+- Login, logout, password management, session management
+- ~1,000 lines
+
+**Sprint 3 - Protection & UI Foundation** (Tasks 3.1, 4.1)
+- Middleware and reusable components
+- ~850 lines
+
+**Sprint 4 - Auth Pages** (Tasks 4.2, 4.3, 4.4)
+- All user-facing pages
+- ~850 lines
+- **Note:** Barebone HTML only, no custom styling
+
+**Sprint 5 - Security & Testing** (Tasks 5.1, 5.2, 5.3)
+- Hardening and comprehensive testing
+- ~1,350 lines
+
+**Sprint 6 - Polish & Deploy** (Tasks 6.1, 6.2)
+- Documentation and production deployment
+- ~550 lines
+
+**Total Duration:** 12 weeks (3 months) for full implementation
+
+**Future Phase - UI Styling:**
+- CSS implementation will be added once designs are finalized
+- Estimated ~300-500 additional lines of styling code
+- Can be done in parallel with feature development after MVP
+
+## Task Dependencies Diagram
+
+```
+1.1 (Supabase Setup)
+  ├─→ 1.2 (Database Schema)
+  │     └─→ 2.1 (Signup & Verify)
+  │     └─→ 2.3 (Password Reset)
+  ├─→ 2.2 (Login & Logout)
+  │     └─→ 3.1 (Middleware)
+  │           └─→ 4.2 (Signup Pages)
+  │           └─→ 4.3 (Login Pages)
+  ├─→ 2.4 (Session Management)
+  └─→ 4.1 (UI Components)
+        └─→ 4.4 (Password Pages)
+
+All Phase 2-4 → 5.1 (Security)
+              → 5.2 (Error Handling)
+              → 5.3 (Testing)
+                └─→ 6.1 (Documentation)
+                └─→ 6.2 (Deployment)
+```
 ```
 
 #### `POST /api/auth/login`
@@ -395,7 +939,7 @@ sequenceDiagram
     
     Note over User,Database: Email Verification
     User->>Browser: Click verification link in email
-    Browser->>NextJS: GET /api/auth/verify?token=xxx
+    Browser->>NextJS: GET /auth/verify?token=xxx
     NextJS->>Supabase: verifyEmail(token)
     Supabase->>Database: Mark email as verified
     Database-->>Supabase: Email verified
