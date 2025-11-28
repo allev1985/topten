@@ -2,7 +2,7 @@
 
 ## Overview
 
-YourFavs is a platform that empowers individuals to curate and share personalised collections of their favourite places. Each list is organised around a specific category—such as coffee shops, hiking trails, date-night restaurants, or weekend getaways—allowing users to build focused, meaningful lists that reflect their genuine preferences and local expertise.
+YourFavs is a platform that empowers individuals to curate and share personalised collections of their favourite places. Users build focused, meaningful lists that reflect their genuine preferences and local expertise.
 
 The platform prioritises visual storytelling and ease of consumption. Rather than overwhelming viewers with dense information, YourFavs presents each list through a carefully designed interface that highlights compelling imagery, distills key details, and creates an intuitive browsing experience. The result is a format that feels less like a review database and more like a personal recommendation from a trusted friend.
 
@@ -14,10 +14,10 @@ Core to the platform is the concept of curation as expression. Users aren't just
 
 The initial release focuses on five core capabilities:
 
-- **List Management** — Create, edit, and publish lists within predefined categories
+- **List Management** — Create, edit, and publish lists
 - **Place Management** — Search and add places via Google Places, with curated imagery
 - **Creator Profiles** — Personalised profiles with custom URLs for sharing
-- **Discovery** — Browse lists by category or creator
+- **Discovery** — Browse lists by creator
 - **Sharing** — Generate shareable links for any published list
 
 ### Technology Stack
@@ -33,8 +33,7 @@ The platform is built as a modern, serverless application optimised for rapid de
 ### Key Design Decisions
 
 | Decision | Rationale |
-|----------|-----------|
-| Predefined categories | Maintain curation quality; expand based on demand |
+|----------|-----------|]
 | Google Places imagery only | Simplifies MVP; avoids image storage complexity |
 | Public lists only | Reduces permissions complexity for initial release |
 | Serverless architecture | Minimal infrastructure management for solo development |
@@ -43,13 +42,12 @@ The platform is built as a modern, serverless application optimised for rapid de
 
 ### Deferred to Future Releases
 
-- User-created categories
+- Categories (user-created or predefined)
 - Custom image uploads
 - Private/unlisted list visibility
 - Location-based discovery (will likely require PostGIS or Supabase geo features)
 - Engagement analytics
 - Social features (following, bookmarking)
-- Category visual representation (icons/emoji)
 - Draft mode for list editing
 
 ## Context Diagram
@@ -78,7 +76,6 @@ C4Context
 
 ### List Management
 - Create, edit, and delete lists
-- Assign list to a predefined category
 - Reorder places within a list
 - Publish/unpublish lists
 
@@ -93,7 +90,7 @@ C4Context
 - Customise profile URL/vanity slug
 
 ### Discovery & Browsing
-- Browse lists by category or creator
+- Browse lists by creator
 - View individual list pages with optimised imagery layout
 - View place details within list context
 
@@ -112,9 +109,8 @@ C4Context
 | Content | Visibility |
 |---------|------------|
 | Creator profiles | Always public (even with zero published lists) |
-| Published lists | Public, discoverable via category and creator pages |
+| Published lists | Public, discoverable via creator pages |
 | Unpublished lists | Visible only to the owning creator |
-| Categories | Public, system-defined |
 
 ### Account Deletion
 - Soft delete: User record is marked as deleted (`deleted_at` timestamp)
@@ -127,14 +123,12 @@ C4Context
 | Route | Description |
 |-------|-------------|
 | `/@{vanity_slug}` | Creator profile page |
-| `/@{vanity_slug}/{category-slug}/{list-slug}` | Individual list page |
-| `/category/{category-slug}` | Category browse page |
+| `/@{vanity_slug}/{list-slug}` | Individual list page |
 | `/` | Homepage with featured/recent lists |
 
 ### Notes
 - Vanity slugs are unique per user and URL-safe
 - List slugs are unique per user (not globally) and derived from list title
-- Category slugs are system-defined and immutable
 
 ## Google Places Integration
 
@@ -198,21 +192,11 @@ These fields can be added to the Place table without schema redesign.
 | updated_at | Timestamp | |
 | deleted_at | Timestamp | Null if active; set on soft delete |
 
-### Category
-| Field | Type | Notes |
-|-------|------|-------|
-| id | UUID | Primary key |
-| name | String | Display name (e.g., "Coffee & Cafés") |
-| slug | String | URL-friendly identifier (e.g., `coffee-cafes`) |
-| created_at | Timestamp | |
-| deleted_at | Timestamp |soft delete|
-
 ### List
 | Field | Type | Notes |
 |-------|------|-------|
 | id | UUID | Primary key |
 | user_id | UUID | Foreign key → User |
-| category_id | UUID | Foreign key → Category |
 | title | String | Required |
 | slug | String | URL-friendly, unique per user |
 | description | Text | Optional |
@@ -249,11 +233,10 @@ These fields can be added to the Place table without schema redesign.
 ### Indexes
 
 | Table | Index | Purpose |
-|-------|-------|---------|
+|-------|-------|---------|]
 | User | `vanity_slug` (unique) | Profile URL lookup |
 | User | `deleted_at` | Exclude soft-deleted users |
 | List | `user_id, deleted_at` | Creator's lists query |
-| List | `category_id, is_published, deleted_at` | Category browse page |
 | List | `user_id, slug` (unique) | List URL lookup |
 | Place | `google_place_id` (unique) | Deduplication |
 | ListPlace | `list_id, position` | Ordered place retrieval |
@@ -263,7 +246,6 @@ These fields can be added to the Place table without schema redesign.
 ```mermaid
 erDiagram
     User ||--o{ List : creates
-    Category ||--o{ List : categorises
     List ||--o{ ListPlace : contains
     Place ||--o{ ListPlace : appears_in
 
@@ -279,18 +261,9 @@ erDiagram
         timestamp deleted_at
     }
 
-    Category {
-        uuid id PK
-        string name
-        string slug UK
-        timestamp created_at
-        timestamp deleted_at
-    }
-
     List {
         uuid id PK
         uuid user_id FK
-        uuid category_id FK
         string title
         string slug
         text description
@@ -335,19 +308,6 @@ erDiagram
 | vanity_slug on User | Enables clean profile URLs like `yourfavs.com/@alex` |
 | Soft deletes on User and List | Enables recovery, maintains referential integrity, supports future compliance needs |
 | slug on List | Enables readable URLs; unique per user, not globally |
-
-### Seed Data: Categories
-
-| Slug | Name |
-|------|------|
-| coffee-cafes | Coffee & Cafés |
-| restaurants | Restaurants |
-| bars-nightlife | Bars & Nightlife |
-| breakfast-brunch | Breakfast & Brunch |
-| date-night | Date Night |
-| family-friendly | Family-Friendly |
-| outdoor-nature | Outdoor & Nature |
-| workspaces | Workspaces & Co-working |
 
 ## Technology Stack
 
