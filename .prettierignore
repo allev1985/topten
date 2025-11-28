@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.generated.*
+coverage/
+
+# Database migrations (SQL files)
+src/db/migrations/
+
+# Supabase
+supabase/
+
+# Misc
+.git/
+.vercel/
