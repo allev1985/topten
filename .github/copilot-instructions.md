@@ -1,0 +1,118 @@
+# GitHub Copilot Instructions for TopTen (YourFavs)
+
+## Project Overview
+
+TopTen/YourFavs is a platform that empowers individuals to curate and share personalised collections of their favourite places. Each list is organised around a specific category—such as coffee shops, hiking trails, or restaurants—allowing users to build focused, meaningful lists that reflect their preferences and local expertise.
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js (App Router) |
+| Database | Supabase (Postgres) |
+| ORM | Drizzle |
+| Auth | Supabase Auth |
+| Styling | Tailwind CSS + shadcn/ui |
+| Places API | Google Places API (New) |
+| Testing | Vitest + React Testing Library + Playwright |
+| Linting | ESLint + Prettier |
+| Local Dev | Node.js + pnpm + Supabase CLI + Docker |
+| Deployment | Vercel |
+
+## Code Quality Standards
+
+### General Principles
+
+- Write simple, readable, and maintainable code
+- Every module should have a clear, single responsibility
+- Avoid unnecessary abstraction
+- Follow the project's chosen style and linting rules
+- Justify complexity or non-obvious behavior in documentation or code comments
+
+### Testing Requirements
+
+- All user-facing behavior and critical logic must be covered by automated tests
+- Write or update tests before or alongside implementation
+- The full test suite must pass before merge
+- Reproduced bugs must include a failing test before the fix
+- Use appropriate test types:
+  - **Unit tests (Vitest)** — Business logic, utility functions, data transformations
+  - **Component tests (React Testing Library)** — UI components in isolation
+  - **E2E tests (Playwright)** — Critical user flows
+
+### Code Style
+
+- Use TypeScript for type safety
+- Follow ESLint and Prettier configurations
+- Use functional components with React hooks
+- Prefer server components in Next.js App Router where appropriate
+- Use Tailwind CSS utility classes for styling
+- Follow shadcn/ui patterns for UI components
+
+## Data Model
+
+The application uses the following core entities:
+
+- **User** — Creator profiles with vanity slugs for custom URLs
+- **Category** — Predefined categories (coffee-cafes, restaurants, bars-nightlife, etc.)
+- **List** — User-curated lists of places within a category
+- **Place** — Cached place data from Google Places API
+- **ListPlace** — Junction table for list-place relationships with ordering and hero images
+
+### Key Conventions
+
+- Use UUIDs for primary keys
+- Implement soft deletes with `deleted_at` timestamps
+- Filter queries by `deleted_at IS NULL` to exclude soft-deleted records
+- Use slugs for URL-friendly identifiers
+- Vanity slugs are unique per user (e.g., `@alex`)
+- List slugs are unique per user, not globally
+
+## URL Structure
+
+| Route | Description |
+|-------|-------------|
+| `/@{vanity_slug}` | Creator profile page |
+| `/@{vanity_slug}/{category-slug}/{list-slug}` | Individual list page |
+| `/category/{category-slug}` | Category browse page |
+| `/` | Homepage with featured/recent lists |
+
+## Security Guidelines
+
+- Sanitise all user input to prevent XSS
+- Validate authentication and ownership before mutations
+- Use environment variables for all secrets
+- Implement CSRF protection for write operations
+- Google Places API calls should be made server-side only
+
+## Best Practices
+
+### Database
+
+- Use Drizzle ORM for database operations
+- Include appropriate indexes for frequently queried columns
+- Use cursor-based pagination for list pages
+
+### API Design
+
+- Failed Google Places API calls should not block list operations; use cached data as fallback
+- Implement proper error handling with actionable messages
+
+### State Management
+
+- Lists have Draft (`is_published = false`) and Published (`is_published = true`) states
+- Edits to published lists go live immediately
+- Set `published_at` on first publish and retain even if later unpublished
+
+## File Structure Conventions
+
+- Place components in appropriate directories following Next.js App Router conventions
+- Keep business logic separate from UI components
+- Use shared utilities for common operations
+- Document complex logic with comments referencing decision records in `docs/decisions/`
+
+## Additional Resources
+
+- Project constitution: `.specify/memory/constitution.md`
+- Architecture decisions: `docs/decisions/high-level.md`
+- Templates: `.specify/templates/`
