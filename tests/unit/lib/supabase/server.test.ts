@@ -15,18 +15,24 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 describe("Server Supabase Client", () => {
+  // Shared mock values
   const mockSupabaseUrl = "https://test.supabase.co";
   const mockAnonKey = "test-anon-key";
+
+  // Shared mock objects
   const mockCookieStore = {
     getAll: vi.fn().mockReturnValue([{ name: "sb-token", value: "token123" }]),
     set: vi.fn(),
   };
+
+  const mockClient = { auth: { getUser: vi.fn() } };
 
   beforeEach(() => {
     vi.resetAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_URL = mockSupabaseUrl;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = mockAnonKey;
     vi.mocked(cookies).mockResolvedValue(mockCookieStore as unknown as Awaited<ReturnType<typeof cookies>>);
+    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
   });
 
   afterEach(() => {
@@ -35,9 +41,6 @@ describe("Server Supabase Client", () => {
   });
 
   it("should call createServerClient with correct environment variables", async () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await createClient();
 
     expect(createServerClient).toHaveBeenCalledWith(
@@ -53,18 +56,12 @@ describe("Server Supabase Client", () => {
   });
 
   it("should return a valid Supabase client instance", async () => {
-    const mockClient = { auth: { getUser: vi.fn() } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     const result = await createClient();
 
     expect(result).toBe(mockClient);
   });
 
   it("should configure cookie handlers with getAll method", async () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await createClient();
 
     // Get the cookie configuration passed to createServerClient
@@ -78,9 +75,6 @@ describe("Server Supabase Client", () => {
   });
 
   it("should configure cookie handlers with setAll method", async () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await createClient();
 
     // Get the cookie configuration passed to createServerClient
@@ -97,8 +91,6 @@ describe("Server Supabase Client", () => {
   });
 
   it("should handle setAll errors gracefully from Server Components", async () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
     mockCookieStore.set.mockImplementation(() => {
       throw new Error("Cannot set cookies in Server Component");
     });

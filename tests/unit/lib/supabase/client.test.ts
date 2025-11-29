@@ -9,13 +9,18 @@ import { createBrowserClient } from "@supabase/ssr";
 import { createClient } from "@/lib/supabase/client";
 
 describe("Browser Supabase Client", () => {
+  // Shared mock values
   const mockSupabaseUrl = "https://test.supabase.co";
   const mockAnonKey = "test-anon-key";
+
+  // Shared mock objects
+  const mockClient = { auth: { signIn: vi.fn() } };
 
   beforeEach(() => {
     vi.resetAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_URL = mockSupabaseUrl;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = mockAnonKey;
+    vi.mocked(createBrowserClient).mockReturnValue(mockClient as ReturnType<typeof createBrowserClient>);
   });
 
   afterEach(() => {
@@ -24,9 +29,6 @@ describe("Browser Supabase Client", () => {
   });
 
   it("should call createBrowserClient with correct environment variables", () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createBrowserClient).mockReturnValue(mockClient as ReturnType<typeof createBrowserClient>);
-
     createClient();
 
     expect(createBrowserClient).toHaveBeenCalledWith(
@@ -36,18 +38,12 @@ describe("Browser Supabase Client", () => {
   });
 
   it("should return a valid Supabase client instance", () => {
-    const mockClient = { auth: { signIn: vi.fn() } };
-    vi.mocked(createBrowserClient).mockReturnValue(mockClient as ReturnType<typeof createBrowserClient>);
-
     const result = createClient();
 
     expect(result).toBe(mockClient);
   });
 
   it("should call createBrowserClient only once per call", () => {
-    const mockClient = { auth: {} };
-    vi.mocked(createBrowserClient).mockReturnValue(mockClient as ReturnType<typeof createBrowserClient>);
-
     createClient();
     createClient();
 

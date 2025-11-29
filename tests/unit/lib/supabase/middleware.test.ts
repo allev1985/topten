@@ -18,9 +18,11 @@ import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 describe("Middleware Supabase Helper", () => {
+  // Shared mock values
   const mockSupabaseUrl = "https://test.supabase.co";
   const mockAnonKey = "test-anon-key";
   
+  // Shared mock objects
   const mockRequestCookies = {
     getAll: vi.fn().mockReturnValue([{ name: "sb-token", value: "token123" }]),
     set: vi.fn(),
@@ -38,11 +40,16 @@ describe("Middleware Supabase Helper", () => {
     cookies: mockResponseCookies,
   };
 
+  const mockGetUser = vi.fn();
+  const mockClient = { auth: { getUser: mockGetUser } };
+
   beforeEach(() => {
     vi.resetAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_URL = mockSupabaseUrl;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = mockAnonKey;
     vi.mocked(NextResponse.next).mockReturnValue(mockResponse as unknown as ReturnType<typeof NextResponse.next>);
+    mockGetUser.mockResolvedValue({ data: { user: null } });
+    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
   });
 
   afterEach(() => {
@@ -51,9 +58,6 @@ describe("Middleware Supabase Helper", () => {
   });
 
   it("should call createServerClient with correct environment variables", async () => {
-    const mockClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await updateSession(mockRequest);
 
     expect(createServerClient).toHaveBeenCalledWith(
@@ -69,9 +73,7 @@ describe("Middleware Supabase Helper", () => {
   });
 
   it("should call supabase.auth.getUser() for session refresh", async () => {
-    const mockGetUser = vi.fn().mockResolvedValue({ data: { user: { id: "123" } } });
-    const mockClient = { auth: { getUser: mockGetUser } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
+    mockGetUser.mockResolvedValue({ data: { user: { id: "123" } } });
 
     await updateSession(mockRequest);
 
@@ -79,18 +81,12 @@ describe("Middleware Supabase Helper", () => {
   });
 
   it("should return a NextResponse", async () => {
-    const mockClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     const result = await updateSession(mockRequest);
 
     expect(result).toBe(mockResponse);
   });
 
   it("should use getAll cookie pattern from request", async () => {
-    const mockClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await updateSession(mockRequest);
 
     // Get the cookie configuration passed to createServerClient
@@ -103,9 +99,6 @@ describe("Middleware Supabase Helper", () => {
   });
 
   it("should use setAll cookie pattern to set cookies on request and response", async () => {
-    const mockClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await updateSession(mockRequest);
 
     // Get the cookie configuration passed to createServerClient
@@ -126,9 +119,6 @@ describe("Middleware Supabase Helper", () => {
   });
 
   it("should create a new NextResponse when setAll is called", async () => {
-    const mockClient = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } };
-    vi.mocked(createServerClient).mockReturnValue(mockClient as ReturnType<typeof createServerClient>);
-
     await updateSession(mockRequest);
 
     // Get the cookie configuration passed to createServerClient
