@@ -18,28 +18,17 @@ export const PASSWORD_REQUIREMENTS = {
  * Redirect URL configuration
  * Centralized redirect paths for auth flows
  */
-export const REDIRECT = {
+export const REDIRECT_ROUTES = {
   /** Default redirect after successful login */
-  DEFAULT: "/dashboard",
-  /** Redirect after successful auth operations (signup verification, etc.) */
-  SUCCESS: "/dashboard",
-  /** Redirect for auth errors */
-  ERROR: "/auth/error",
+  default: "/dashboard",
+  /** Auth-specific redirects */
+  auth: {
+    /** Redirect after successful auth operations (signup verification, etc.) */
+    success: "/dashboard",
+    /** Redirect for auth errors */
+    error: "/auth/error",
+  },
 } as const;
-
-/**
- * @deprecated Use REDIRECT instead
- * Auth-related route constants (kept for backwards compatibility)
- */
-export const AUTH_ROUTES = {
-  ERROR_REDIRECT: REDIRECT.ERROR,
-  SUCCESS_REDIRECT: REDIRECT.SUCCESS,
-} as const;
-
-/**
- * @deprecated Use REDIRECT.DEFAULT instead
- */
-export const DEFAULT_REDIRECT = REDIRECT.DEFAULT;
 
 /**
  * Verification type constant for OTP verification
