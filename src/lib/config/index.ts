@@ -15,6 +15,11 @@ export const PASSWORD_REQUIREMENTS = {
 } as const;
 
 /**
+ * Default redirect URL after successful login
+ */
+export const DEFAULT_REDIRECT = "/dashboard";
+
+/**
  * Auth-related route constants
  */
 export const AUTH_ROUTES = {
