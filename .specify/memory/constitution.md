@@ -1,16 +1,16 @@
 <!-- Sync Impact Report
-- Version change: 0.0.0 → 1.0.0
-- Modified principles: n/a (initial concrete definition)
-- Added sections: Core Principles, Quality & Testing Standards, Delivery Workflow, Governance
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - I. Code Quality & Maintainability → expanded with explicit DRY principle
+- Added sections: none
 - Removed sections: none
 - Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md
-  - ✅ .specify/templates/spec-template.md
-  - ✅ .specify/templates/tasks-template.md
-  - ✅ .specify/templates/agent-file-template.md
-  - ✅ .specify/templates/checklist-template.md
-- Follow-up TODOs:
-  - TODO(RATIFICATION_DATE): Set the original adoption date if different from 2025-11-28.
+  - ✅ .specify/templates/plan-template.md (no changes needed)
+  - ✅ .specify/templates/spec-template.md (no changes needed)
+  - ✅ .specify/templates/tasks-template.md (no changes needed)
+  - ✅ .specify/templates/agent-file-template.md (no changes needed)
+  - ✅ .specify/templates/checklist-template.md (no changes needed)
+- Follow-up TODOs: none
 -->
 
 # TopTen Constitution
@@ -21,12 +21,22 @@
 Code written for TopTen MUST be simple, readable, and maintainable by any
 contributor familiar with the language. Every module MUST have a clear,
 single responsibility, avoid unnecessary abstraction, and follow the
-project's chosen style and linting rules. Complexity, duplication, or
-non-obvious behavior MUST be explicitly justified in documentation or
-code comments linked to the relevant decision records.
+project's chosen style and linting rules.
 
-**Rationale**: High code quality reduces defects, accelerates onboarding,
-and makes iterative change safe and predictable.
+**DRY (Don't Repeat Yourself)**: Duplicated logic or code patterns MUST be
+extracted into reusable modules, utilities, or shared components. Before
+implementing any functionality, contributors MUST check whether similar
+logic already exists and MUST reuse or extend it. When duplication is
+unavoidable (e.g., due to platform constraints or explicit design trade-offs),
+it MUST be explicitly justified in documentation or code comments linked to
+the relevant decision records.
+
+Complexity or non-obvious behavior MUST be explicitly justified in
+documentation or code comments linked to the relevant decision records.
+
+**Rationale**: High code quality and adherence to DRY reduce defects,
+minimize maintenance burden, accelerate onboarding, and make iterative
+change safe and predictable.
 
 ### II. Testing Discipline & Safety Nets (NON-NEGOTIABLE)
 All user-facing behavior and critical logic MUST be covered by automated
@@ -110,4 +120,4 @@ understanding and applying these principles.
   include an explicit "Constitution Check" step verifying alignment with
   code quality, testing, UX, and performance requirements.
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-28 | **Last Amended**: 2025-11-28
+**Version**: 1.1.0 | **Ratified**: 2025-11-28 | **Last Amended**: 2025-11-29
