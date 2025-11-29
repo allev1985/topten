@@ -15,6 +15,12 @@ export const PASSWORD_REQUIREMENTS = {
 } as const;
 
 /**
+ * Session expiry threshold (5 minutes in milliseconds)
+ * Used to determine when to proactively refresh sessions
+ */
+export const SESSION_EXPIRY_THRESHOLD_MS = 5 * 60 * 1000;
+
+/**
  * Redirect URL configuration
  * Centralized redirect paths for auth flows
  */
