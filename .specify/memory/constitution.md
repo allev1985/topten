@@ -18,7 +18,6 @@
 ## Core Principles
 
 ### I. Code Quality & Maintainability (NON-NEGOTIABLE)
-
 Code written for TopTen MUST be simple, readable, and maintainable by any
 contributor familiar with the language. Every module MUST have a clear,
 single responsibility, avoid unnecessary abstraction, and follow the
@@ -40,7 +39,6 @@ minimize maintenance burden, accelerate onboarding, and make iterative
 change safe and predictable.
 
 ### II. Testing Discipline & Safety Nets (NON-NEGOTIABLE)
-
 All user-facing behavior and critical logic MUST be covered by automated
 tests. For each change, tests MUST be written or updated before or
 alongside implementation, and the full test suite MUST pass before
@@ -52,7 +50,6 @@ contract-level tests.
 regressions, and document expected behavior.
 
 ### III. User Experience Consistency
-
 User-facing flows MUST feel consistent across the project. Terminology,
 interaction patterns, and visual structure (where applicable) SHOULD
 match across similar screens and commands. Breaking changes to the user
@@ -64,7 +61,6 @@ configuration.
 and builds trust in the tool.
 
 ### IV. Performance & Resource Efficiency
-
 Features MUST be designed to meet clearly defined performance targets
 appropriate to their scope (e.g., latency, throughput, memory
 usage). Baseline performance expectations MUST be captured in plan and
@@ -76,7 +72,6 @@ metrics, and optimizations MUST preserve correctness and clarity.
 and responsive as usage grows.
 
 ### V. Observability & Debuggability
-
 The system MUST provide enough logging, metrics, and diagnostics to
 understand behavior in development and production-like environments.
 Logs MUST be structured where feasible and avoid leaking sensitive data.

@@ -6,18 +6,18 @@ TopTen/YourFavs is a platform that empowers individuals to curate and share pers
 
 ## Technology Stack
 
-| Layer      | Technology                                  |
-| ---------- | ------------------------------------------- |
-| Framework  | Next.js (App Router)                        |
-| Database   | Supabase (Postgres)                         |
-| ORM        | Drizzle                                     |
-| Auth       | Supabase Auth                               |
-| Styling    | Tailwind CSS + shadcn/ui                    |
-| Places API | Google Places API (New)                     |
-| Testing    | Vitest + React Testing Library + Playwright |
-| Linting    | ESLint + Prettier                           |
-| Local Dev  | Node.js + pnpm + Supabase CLI + Docker      |
-| Deployment | Vercel                                      |
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js (App Router) |
+| Database | Supabase (Postgres) |
+| ORM | Drizzle |
+| Auth | Supabase Auth |
+| Styling | Tailwind CSS + shadcn/ui |
+| Places API | Google Places API (New) |
+| Testing | Vitest + React Testing Library + Playwright |
+| Linting | ESLint + Prettier |
+| Local Dev | Node.js + pnpm + Supabase CLI + Docker |
+| Deployment | Vercel |
 
 ## Code Quality Standards
 
@@ -70,12 +70,12 @@ The application uses the following core entities:
 
 ## URL Structure
 
-| Route                                         | Description                         |
-| --------------------------------------------- | ----------------------------------- |
-| `/@{vanity_slug}`                             | Creator profile page                |
-| `/@{vanity_slug}/{category-slug}/{list-slug}` | Individual list page                |
-| `/category/{category-slug}`                   | Category browse page                |
-| `/`                                           | Homepage with featured/recent lists |
+| Route | Description |
+|-------|-------------|
+| `/@{vanity_slug}` | Creator profile page |
+| `/@{vanity_slug}/{category-slug}/{list-slug}` | Individual list page |
+| `/category/{category-slug}` | Category browse page |
+| `/` | Homepage with featured/recent lists |
 
 ## Security Guidelines
 
