@@ -6,6 +6,8 @@ import {
   createAllowResponse,
   pathStartsWithAny,
   getRedirectToFromRequest,
+  isProtectedRoute,
+  isPublicRoute,
 } from "@/lib/auth/middleware-helpers";
 
 // Mock getValidatedRedirect
@@ -157,6 +159,86 @@ describe("middleware-helpers", () => {
 
       expect(getValidatedRedirect).toHaveBeenCalledWith("//evil.com");
       expect(result).toBe("/dashboard");
+    });
+  });
+
+  describe("isProtectedRoute", () => {
+    it("returns true for /dashboard", () => {
+      expect(isProtectedRoute("/dashboard")).toBe(true);
+    });
+
+    it("returns true for /dashboard/my-lists", () => {
+      expect(isProtectedRoute("/dashboard/my-lists")).toBe(true);
+    });
+
+    it("returns true for /dashboard/settings/password", () => {
+      expect(isProtectedRoute("/dashboard/settings/password")).toBe(true);
+    });
+
+    it("returns false for /login", () => {
+      expect(isProtectedRoute("/login")).toBe(false);
+    });
+
+    it("returns false for /", () => {
+      expect(isProtectedRoute("/")).toBe(false);
+    });
+
+    it("returns false for /dashboardz (not a nested route)", () => {
+      expect(isProtectedRoute("/dashboardz")).toBe(false);
+    });
+
+    it("returns false for empty string", () => {
+      expect(isProtectedRoute("")).toBe(false);
+    });
+  });
+
+  describe("isPublicRoute", () => {
+    it("returns true for /", () => {
+      expect(isPublicRoute("/")).toBe(true);
+    });
+
+    it("returns true for /login", () => {
+      expect(isPublicRoute("/login")).toBe(true);
+    });
+
+    it("returns true for /signup", () => {
+      expect(isPublicRoute("/signup")).toBe(true);
+    });
+
+    it("returns true for /verify-email", () => {
+      expect(isPublicRoute("/verify-email")).toBe(true);
+    });
+
+    it("returns true for /forgot-password", () => {
+      expect(isPublicRoute("/forgot-password")).toBe(true);
+    });
+
+    it("returns true for /reset-password", () => {
+      expect(isPublicRoute("/reset-password")).toBe(true);
+    });
+
+    it("returns true for /auth/callback", () => {
+      expect(isPublicRoute("/auth/callback")).toBe(true);
+    });
+
+    it("returns true for /auth/error", () => {
+      expect(isPublicRoute("/auth/error")).toBe(true);
+    });
+
+    it("returns false for /dashboard", () => {
+      expect(isPublicRoute("/dashboard")).toBe(false);
+    });
+
+    it("returns false for /dashboard/my-lists", () => {
+      expect(isPublicRoute("/dashboard/my-lists")).toBe(false);
+    });
+
+    it("returns false for /loginz (not a nested route)", () => {
+      expect(isPublicRoute("/loginz")).toBe(false);
+    });
+
+    it("returns false for empty string", () => {
+      expect(isPublicRoute("")).toBe(false);
     });
   });
 });

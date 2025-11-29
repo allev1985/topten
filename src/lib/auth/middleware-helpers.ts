@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getValidatedRedirect } from "@/lib/utils/redirect-validation";
+import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/config";
 
 /**
  * Get the pathname from a request
@@ -70,4 +71,26 @@ export function pathStartsWithAny(
 export function getRedirectToFromRequest(request: NextRequest): string {
   const redirectTo = request.nextUrl.searchParams.get("redirectTo");
   return getValidatedRedirect(redirectTo);
+}
+
+/**
+ * Check if a pathname matches a protected route
+ * @param pathname - The URL pathname to check
+ * @returns true if the pathname requires authentication
+ */
+export function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+/**
+ * Check if a pathname matches a public route
+ * @param pathname - The URL pathname to check
+ * @returns true if the pathname is publicly accessible
+ */
+export function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 }

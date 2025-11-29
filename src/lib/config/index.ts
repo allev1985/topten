@@ -42,6 +42,30 @@ export const REDIRECT_ROUTES = {
 export const VERIFICATION_TYPE_EMAIL = "email" as const;
 
 /**
+ * Route protection configuration for authentication middleware
+ */
+
+/** Routes that require authentication */
+export const PROTECTED_ROUTES = ["/dashboard"] as const;
+
+/** Routes that are always publicly accessible */
+export const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/verify-email",
+  "/forgot-password",
+  "/reset-password",
+  "/auth",
+] as const;
+
+/** Type for protected route paths */
+export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
+
+/** Type for public route paths */
+export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
+
+/**
  * Get the application URL from environment or request origin
  * @param requestOrigin - Optional origin from request headers
  */

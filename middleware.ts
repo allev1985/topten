@@ -15,8 +15,9 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { isProtectedRoute, isPublicRoute } from "@/lib/auth/route-config";
 import {
+  isProtectedRoute,
+  isPublicRoute,
   createLoginRedirect,
   getRequestPathname,
 } from "@/lib/auth/middleware-helpers";

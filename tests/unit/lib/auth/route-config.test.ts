@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  PROTECTED_ROUTES,
-  PUBLIC_ROUTES,
-  isProtectedRoute,
-  isPublicRoute,
-} from "@/lib/auth/route-config";
+import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/config";
+import { isProtectedRoute, isPublicRoute } from "@/lib/auth/middleware-helpers";
 
 describe("route-config", () => {
   describe("PROTECTED_ROUTES", () => {
