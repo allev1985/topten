@@ -7,18 +7,12 @@ export const PASSWORD_REQUIREMENTS = {
   minLength: 12,
   minWeakChecks: 2,
   minMediumChecks: 4,
+  /**
+   * Regex for special characters allowed in passwords
+   * Includes common special characters used in password policies
+   */
+  specialCharRegex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
 } as const;
-
-/**
- * Password validation constants
- */
-export const PASSWORD_MIN_LENGTH = PASSWORD_REQUIREMENTS.minLength;
-
-/**
- * Regex for special characters allowed in passwords
- * Includes common special characters used in password policies
- */
-export const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
 
 /**
  * Auth-related route constants

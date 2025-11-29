@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  PASSWORD_MIN_LENGTH,
-  SPECIAL_CHAR_REGEX,
-  VERIFICATION_TYPE_EMAIL,
-} from "@/lib/config";
+import { PASSWORD_REQUIREMENTS, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
 
 /**
  * Schema for validating signup requests
@@ -32,14 +28,14 @@ export const signupSchema = z.object({
     .string({ message: "Password is required" })
     .min(1, "Password is required")
     .min(
-      PASSWORD_MIN_LENGTH,
-      `Password must be at least ${PASSWORD_MIN_LENGTH} characters`
+      PASSWORD_REQUIREMENTS.minLength,
+      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
     )
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(
-      SPECIAL_CHAR_REGEX,
+      PASSWORD_REQUIREMENTS.specialCharRegex,
       "Password must contain at least one special character"
     ),
 });
