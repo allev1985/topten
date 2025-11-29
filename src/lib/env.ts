@@ -1,4 +1,4 @@
-type EnvConfig = {
+export type EnvConfig = {
   NEXT_PUBLIC_SUPABASE_URL: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -8,7 +8,7 @@ type EnvConfig = {
 
 function getRequiredEnv(key: string): string {
   const value = process.env[key];
-  if (!value) {
+  if (!value || value.trim() === "") {
     throw new Error(
       `Missing required environment variable: ${key}. ` +
         `Please check your .env.local file or environment configuration.`
