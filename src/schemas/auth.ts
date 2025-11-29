@@ -84,8 +84,45 @@ export const loginSchema = z.object({
   redirectTo: z.string().optional(),
 });
 
+/**
+ * Schema for validating password reset requests
+ * Only requires email - follows existing preprocessing pattern
+ */
+export const passwordResetSchema = z.object({
+  email: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
+    z
+      .string({ message: "Email is required" })
+      .min(1, "Email is required")
+      .email("Invalid email format")
+  ),
+});
+
+/**
+ * Schema for validating password update requests
+ * Uses same password validation as signup
+ */
+export const passwordUpdateSchema = z.object({
+  password: z
+    .string({ message: "Password is required" })
+    .min(1, "Password is required")
+    .min(
+      PASSWORD_REQUIREMENTS.minLength,
+      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
+    )
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(
+      PASSWORD_REQUIREMENTS.specialCharRegex,
+      "Password must contain at least one special character"
+    ),
+});
+
 // Type exports for use in other modules
 export type SignupInput = z.infer<typeof signupSchema>;
 export type VerifyTokenInput = z.infer<typeof verifyTokenSchema>;
 export type VerifyCodeInput = z.infer<typeof verifyCodeSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
+export type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;
