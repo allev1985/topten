@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { signupSchema, signupSuccessResponse } from "@/schemas/auth";
 import {
@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth/errors";
 import { getAppUrl } from "@/lib/config";
 import { maskEmail } from "@/lib/utils/email";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * POST /api/auth/signup
@@ -38,9 +39,7 @@ export async function POST(request: NextRequest) {
       }));
 
       const error = validationError(details);
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(error);
     }
 
     const { email, password } = result.data;
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Always return same response (user enumeration protection)
-    return NextResponse.json(signupSuccessResponse, { status: 201 });
+    return successResponse(signupSuccessResponse, 201);
   } catch (err) {
     console.error(
       "[Signup]",
@@ -84,6 +83,6 @@ export async function POST(request: NextRequest) {
       err instanceof Error ? err.message : "Unknown error"
     );
     const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(error);
   }
 }
