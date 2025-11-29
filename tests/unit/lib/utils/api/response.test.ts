@@ -4,7 +4,7 @@ import {
   errorResponse,
   successResponse,
   redirectResponse,
-} from "@/lib/utils/api-response";
+} from "@/lib/utils/api/response";
 import { AuthError, validationError, serverError } from "@/lib/auth/errors";
 
 describe("api-response utilities", () => {

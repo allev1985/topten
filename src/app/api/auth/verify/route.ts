@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { REDIRECT_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
-import { redirectResponse } from "@/lib/utils/api-response";
+import { redirectResponse } from "@/lib/utils/api/response";
 
 /**
  * GET /api/auth/verify

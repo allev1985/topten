@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   isValidRedirect,
   getValidatedRedirect,
-} from "@/lib/utils/redirect-validation";
+} from "@/lib/utils/validation/redirect";
 import { REDIRECT_ROUTES } from "@/lib/config";
 
 describe("isValidRedirect", () => {

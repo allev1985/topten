@@ -11,7 +11,7 @@ import {
 } from "@/lib/auth/middleware-helpers";
 
 // Mock getValidatedRedirect
-vi.mock("@/lib/utils/redirect-validation", () => ({
+vi.mock("@/lib/utils/validation/redirect", () => ({
   getValidatedRedirect: vi.fn((url: string | null) => {
     // Simple mock: return valid paths, default for invalid
     if (url && url.startsWith("/") && !url.startsWith("//")) {
@@ -69,7 +69,7 @@ describe("middleware-helpers", () => {
 
     it("uses validated redirect URL", async () => {
       const { getValidatedRedirect } =
-        await import("@/lib/utils/redirect-validation");
+        await import("@/lib/utils/validation/redirect");
       const request = new NextRequest("http://localhost/dashboard");
       createLoginRedirect(request, "/dashboard");
 
@@ -126,7 +126,7 @@ describe("middleware-helpers", () => {
   describe("getRedirectToFromRequest", () => {
     it("returns validated redirectTo from query params", async () => {
       const { getValidatedRedirect } =
-        await import("@/lib/utils/redirect-validation");
+        await import("@/lib/utils/validation/redirect");
       const request = new NextRequest(
         "http://localhost/login?redirectTo=/dashboard/my-lists"
       );
@@ -139,7 +139,7 @@ describe("middleware-helpers", () => {
 
     it("returns default when redirectTo is missing", async () => {
       const { getValidatedRedirect } =
-        await import("@/lib/utils/redirect-validation");
+        await import("@/lib/utils/validation/redirect");
       const request = new NextRequest("http://localhost/login");
 
       const result = getRedirectToFromRequest(request);
@@ -150,7 +150,7 @@ describe("middleware-helpers", () => {
 
     it("returns default for invalid redirectTo", async () => {
       const { getValidatedRedirect } =
-        await import("@/lib/utils/redirect-validation");
+        await import("@/lib/utils/validation/redirect");
       const request = new NextRequest(
         "http://localhost/login?redirectTo=//evil.com"
       );
