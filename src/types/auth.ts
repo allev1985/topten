@@ -14,7 +14,7 @@ export interface AuthError {
 }
 
 export type AuthState =
-  | { status: "authenticated"; user: User; session: Session }
+  | { status: "authenticated"; user: AuthUser; session: AuthSession }
   | { status: "unauthenticated"; user: null; session: null }
   | { status: "loading"; user: null; session: null };
 
