@@ -1,11 +1,8 @@
-// Re-exported from @supabase/supabase-js
-export type {
-  User as AuthUser,
-  Session as AuthSession,
-} from "@supabase/supabase-js";
-
-// Import for internal use in this file
 import type { User, Session } from "@supabase/supabase-js";
+
+// Re-exported from @supabase/supabase-js with application-specific aliases
+export type AuthUser = User;
+export type AuthSession = Session;
 
 // Application-specific types
 export interface AuthError {
@@ -15,7 +12,7 @@ export interface AuthError {
 }
 
 export type AuthState =
-  | { status: "authenticated"; user: User; session: Session }
+  | { status: "authenticated"; user: AuthUser; session: AuthSession }
   | { status: "unauthenticated"; user: null; session: null }
   | { status: "loading"; user: null; session: null };
 
