@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { passwordResetSchema } from "@/schemas/auth";
 import {
@@ -7,6 +7,7 @@ import {
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
 import { maskEmail } from "@/lib/utils/email";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * POST /api/auth/password/reset
@@ -30,9 +31,7 @@ export async function POST(request: NextRequest) {
       }));
 
       const error = validationError(details);
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(error);
     }
 
     const { email } = result.data;
@@ -61,8 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Always return success regardless of whether email exists
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       message: "If an account exists, a password reset email has been sent",
     });
   } catch (err) {
@@ -71,7 +69,6 @@ export async function POST(request: NextRequest) {
       "Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(serverError());
   }
 }

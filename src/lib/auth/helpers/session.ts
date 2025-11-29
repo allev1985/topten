@@ -5,23 +5,9 @@
  * Works on both client and server contexts
  */
 
-import type { Session, User } from "@supabase/supabase-js";
-
-/**
- * Session information for API responses
- */
-export interface SessionInfo {
-  isValid: boolean;
-  user: Pick<User, "id" | "email"> | null;
-  expiresAt: Date | null;
-  isExpiringSoon: boolean;
-}
-
-/**
- * Session expiry threshold (5 minutes in milliseconds)
- * Used to determine when to proactively refresh sessions
- */
-export const SESSION_EXPIRY_THRESHOLD_MS = 5 * 60 * 1000;
+import type { Session } from "@supabase/supabase-js";
+import type { SessionInfo } from "@/types/auth";
+import { SESSION_EXPIRY_THRESHOLD_MS } from "@/lib/config";
 
 /**
  * Extract session information for API response

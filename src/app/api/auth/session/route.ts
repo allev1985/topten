@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getSessionInfo } from "@/lib/utils/session";
+import { getSessionInfo } from "@/lib/auth/helpers/session";
 import { serverError } from "@/lib/auth/errors";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * GET /api/auth/session
@@ -23,8 +23,7 @@ export async function GET() {
     if (!sessionInfo.isValid || !session) {
       console.info("[Session]", "Session status check: not authenticated");
 
-      return NextResponse.json({
-        success: true,
+      return successResponse({
         authenticated: false,
         user: null,
         session: null,
@@ -36,8 +35,7 @@ export async function GET() {
       `Session status check: authenticated as ${sessionInfo.user?.id ?? "unknown"}`
     );
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       authenticated: true,
       user: sessionInfo.user,
       session: {
@@ -51,7 +49,6 @@ export async function GET() {
       "Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(serverError());
   }
 }

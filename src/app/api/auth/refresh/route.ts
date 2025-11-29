@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serverError, AuthError } from "@/lib/auth/errors";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * POST /api/auth/refresh
@@ -28,9 +28,7 @@ export async function POST() {
         "Session has expired. Please log in again.",
         401
       );
-      return NextResponse.json(expiredError.toResponse(), {
-        status: expiredError.httpStatus,
-      });
+      return errorResponse(expiredError);
     }
 
     if (!session) {
@@ -41,9 +39,7 @@ export async function POST() {
         "Session has expired. Please log in again.",
         401
       );
-      return NextResponse.json(expiredError.toResponse(), {
-        status: expiredError.httpStatus,
-      });
+      return errorResponse(expiredError);
     }
 
     const expiresAt = session.expires_at
@@ -55,8 +51,7 @@ export async function POST() {
       `Session refreshed successfully, expires at: ${expiresAt}`
     );
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       message: "Session refreshed successfully",
       session: {
         expiresAt,
@@ -68,7 +63,6 @@ export async function POST() {
       "Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(serverError());
   }
 }

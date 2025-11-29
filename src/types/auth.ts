@@ -19,3 +19,13 @@ export type AuthState =
 export type AuthResult<T> =
   | { success: true; data: T }
   | { success: false; error: AuthError };
+
+/**
+ * Session information for API responses
+ */
+export interface SessionInfo {
+  isValid: boolean;
+  user: Pick<User, "id" | "email"> | null;
+  expiresAt: Date | null;
+  isExpiringSoon: boolean;
+}

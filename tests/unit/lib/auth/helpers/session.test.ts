@@ -4,8 +4,8 @@ import {
   isSessionExpired,
   getSessionTimeRemaining,
   isSessionExpiringSoon,
-  SESSION_EXPIRY_THRESHOLD_MS,
-} from "@/lib/utils/session";
+} from "@/lib/auth/helpers/session";
+import { SESSION_EXPIRY_THRESHOLD_MS } from "@/lib/config";
 import type { Session, User } from "@supabase/supabase-js";
 
 describe("Session utilities", () => {

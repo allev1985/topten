@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { passwordUpdateSchema } from "@/schemas/auth";
 import {
@@ -8,6 +8,7 @@ import {
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
 import { maskEmail } from "@/lib/utils/email";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * PUT /api/auth/password
@@ -30,10 +31,7 @@ export async function PUT(request: NextRequest) {
         message: issue.message,
       }));
 
-      const error = validationError(details);
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(validationError(details));
     }
 
     const { password } = result.data;
@@ -51,10 +49,7 @@ export async function PUT(request: NextRequest) {
         "[PasswordUpdate]",
         `Authentication check failed: ${userError?.message ?? "No user"}`
       );
-      const error = authError("Authentication required");
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(authError("Authentication required"));
     }
 
     console.info(
@@ -85,16 +80,12 @@ export async function PUT(request: NextRequest) {
         updateError.message?.toLowerCase().includes("session");
 
       if (isSessionError) {
-        const error = authError("Session has expired. Please log in again.");
-        return NextResponse.json(error.toResponse(), {
-          status: error.httpStatus,
-        });
+        return errorResponse(
+          authError("Session has expired. Please log in again.")
+        );
       }
 
-      const error = authError("Failed to update password");
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(authError("Failed to update password"));
     }
 
     console.info(
@@ -102,8 +93,7 @@ export async function PUT(request: NextRequest) {
       `Password updated successfully for: ${maskEmail(user.email ?? "unknown")}`
     );
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       message: "Password updated successfully",
     });
   } catch (err) {
@@ -112,7 +102,6 @@ export async function PUT(request: NextRequest) {
       "Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(serverError());
   }
 }
