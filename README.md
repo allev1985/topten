@@ -101,17 +101,29 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 topten/
 ├── src/
-│   ├── app/                 # Next.js App Router pages
+│   ├── app/                 # Next.js App Router pages & API routes
+│   │   └── api/             # API route handlers
 │   ├── components/          # React components
-│   │   └── ui/              # shadcn/ui components
+│   │   ├── ui/              # shadcn/ui components
+│   │   ├── auth/            # Auth-related components
+│   │   ├── lists/           # List-related components
+│   │   └── shared/          # Shared/common components
 │   ├── db/                  # Database layer
 │   │   ├── schema/          # Drizzle schema definitions
-│   │   ├── migrations/      # Database migrations
 │   │   └── seed/            # Seed data scripts
+│   ├── hooks/               # Custom React hooks
 │   ├── lib/                 # Shared utilities
+│   │   ├── auth/            # Auth helpers and middleware
+│   │   ├── config/          # Route configuration
+│   │   ├── supabase/        # Supabase client utilities
+│   │   └── utils/           # General utilities
+│   ├── schemas/             # Zod validation schemas
 │   └── types/               # TypeScript types
+├── supabase/
+│   └── migrations/          # Database migrations
 ├── tests/
 │   ├── unit/                # Vitest unit tests
+│   ├── integration/         # Integration tests
 │   ├── component/           # React Testing Library tests
 │   └── e2e/                 # Playwright E2E tests
 └── docs/                    # Documentation
