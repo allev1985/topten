@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-// Import will fail until we implement the schemas
+// Import from new schemas location
 import {
   signupSchema,
   verifyTokenSchema,
   verifyCodeSchema,
-  PASSWORD_MIN_LENGTH,
-} from "@/lib/validation/auth";
+} from "@/schemas/auth";
+import { PASSWORD_MIN_LENGTH } from "@/lib/config";
 
 describe("signupSchema", () => {
   describe("email validation", () => {

@@ -1,16 +1,9 @@
 import { z } from "zod";
-
-/**
- * Password complexity requirements
- * @see docs/decisions/authentication.md for rationale
- */
-export const PASSWORD_MIN_LENGTH = 12;
-
-/**
- * Regex for special characters allowed in passwords
- * Includes common special characters used in password policies
- */
-const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+import {
+  PASSWORD_MIN_LENGTH,
+  SPECIAL_CHAR_REGEX,
+  VERIFICATION_TYPE_EMAIL,
+} from "@/lib/config";
 
 /**
  * Schema for validating signup requests
@@ -57,7 +50,7 @@ export const signupSchema = z.object({
  */
 export const verifyTokenSchema = z.object({
   token_hash: z.string().min(1, "Token is required"),
-  type: z.literal("email"),
+  type: z.literal(VERIFICATION_TYPE_EMAIL),
 });
 
 /**
@@ -67,6 +60,15 @@ export const verifyTokenSchema = z.object({
 export const verifyCodeSchema = z.object({
   code: z.string().min(1, "Code is required"),
 });
+
+/**
+ * Consistent response schema for user enumeration protection
+ * Returns the same message for both new and existing users
+ */
+export const signupSuccessResponse = {
+  success: true,
+  message: "Please check your email to verify your account",
+} as const;
 
 // Type exports for use in other modules
 export type SignupInput = z.infer<typeof signupSchema>;

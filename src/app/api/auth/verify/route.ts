@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-/**
- * Redirect destinations for verification outcomes
- */
-const ERROR_REDIRECT_BASE = "/auth/error";
-const SUCCESS_REDIRECT = "/dashboard";
+import { AUTH_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
 
 /**
  * GET /api/auth/verify
@@ -44,9 +39,9 @@ export async function GET(request: NextRequest) {
 
   try {
     // Handle OTP-based verification (token_hash + type=email)
-    if (token_hash && type === "email") {
+    if (token_hash && type === VERIFICATION_TYPE_EMAIL) {
       const { error } = await supabase.auth.verifyOtp({
-        type: "email",
+        type: VERIFICATION_TYPE_EMAIL,
         token_hash,
       });
 
@@ -56,7 +51,7 @@ export async function GET(request: NextRequest) {
           ? "expired_token"
           : "invalid_token";
         return NextResponse.redirect(
-          `${origin}${ERROR_REDIRECT_BASE}?error=${errorType}`
+          `${origin}${AUTH_ROUTES.ERROR_REDIRECT}?error=${errorType}`
         );
       }
 
@@ -64,7 +59,7 @@ export async function GET(request: NextRequest) {
         "[Verify]",
         "OTP verification successful, redirecting to dashboard"
       );
-      return NextResponse.redirect(`${origin}${SUCCESS_REDIRECT}`);
+      return NextResponse.redirect(`${origin}${AUTH_ROUTES.SUCCESS_REDIRECT}`);
     }
 
     // Handle PKCE code exchange
@@ -77,7 +72,7 @@ export async function GET(request: NextRequest) {
           ? "expired_token"
           : "invalid_token";
         return NextResponse.redirect(
-          `${origin}${ERROR_REDIRECT_BASE}?error=${errorType}`
+          `${origin}${AUTH_ROUTES.ERROR_REDIRECT}?error=${errorType}`
         );
       }
 
@@ -85,13 +80,13 @@ export async function GET(request: NextRequest) {
         "[Verify]",
         "Code exchange successful, redirecting to dashboard"
       );
-      return NextResponse.redirect(`${origin}${SUCCESS_REDIRECT}`);
+      return NextResponse.redirect(`${origin}${AUTH_ROUTES.SUCCESS_REDIRECT}`);
     }
 
     // No valid token or code provided
     console.error("[Verify]", "Missing token or code in verification request");
     return NextResponse.redirect(
-      `${origin}${ERROR_REDIRECT_BASE}?error=missing_token`
+      `${origin}${AUTH_ROUTES.ERROR_REDIRECT}?error=missing_token`
     );
   } catch (err) {
     console.error(
@@ -100,7 +95,7 @@ export async function GET(request: NextRequest) {
       err instanceof Error ? err.message : "Unknown error"
     );
     return NextResponse.redirect(
-      `${origin}${ERROR_REDIRECT_BASE}?error=server_error`
+      `${origin}${AUTH_ROUTES.ERROR_REDIRECT}?error=server_error`
     );
   }
 }

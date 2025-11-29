@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { signupSchema } from "@/lib/validation/auth";
+import { signupSchema, signupSuccessResponse } from "@/schemas/auth";
 import {
   validationError,
   serverError,
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
-
-/**
- * Consistent response for user enumeration protection
- * Returns the same message for both new and existing users
- */
-const SUCCESS_RESPONSE = {
-  success: true,
-  message: "Please check your email to verify your account",
-} as const;
+import { getAppUrl } from "@/lib/config";
+import { maskEmail } from "@/lib/utils/email";
 
 /**
  * POST /api/auth/signup
@@ -56,8 +49,7 @@ export async function POST(request: NextRequest) {
     console.info("[Signup]", `Signup attempt for email: ${maskEmail(email)}`);
 
     // Get origin for email redirect URL
-    const origin =
-      request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL;
+    const origin = getAppUrl(request.headers.get("origin"));
 
     // Create Supabase client and attempt signup
     const supabase = await createClient();
@@ -84,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Always return same response (user enumeration protection)
-    return NextResponse.json(SUCCESS_RESPONSE, { status: 201 });
+    return NextResponse.json(signupSuccessResponse, { status: 201 });
   } catch (err) {
     console.error(
       "[Signup]",
@@ -94,19 +86,4 @@ export async function POST(request: NextRequest) {
     const error = serverError();
     return NextResponse.json(error.toResponse(), { status: error.httpStatus });
   }
-}
-
-/**
- * Masks email address for safe logging
- * Shows first 2 characters and domain only
- * Example: "test@example.com" -> "te***@example.com"
- */
-function maskEmail(email: string): string {
-  const parts = email.split("@");
-  const local = parts[0] ?? "";
-  const domain = parts[1];
-  if (!domain || local.length <= 2) {
-    return `${local.slice(0, 2)}***@${domain ?? "unknown"}`;
-  }
-  return `${local.slice(0, 2)}***@${domain}`;
 }
