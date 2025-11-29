@@ -59,20 +59,20 @@ This guide provides a quick reference for implementing the Category entity remov
 
 ### Files to DELETE
 
-| File | Reason |
-|------|--------|
+| File                        | Reason                             |
+| --------------------------- | ---------------------------------- |
 | `src/db/schema/category.ts` | Category entity removed from model |
-| `src/db/seed/categories.ts` | No categories to seed |
+| `src/db/seed/categories.ts` | No categories to seed              |
 
 ### Files to MODIFY
 
-| File | Changes |
-|------|---------|
-| `src/db/schema/list.ts` | Remove category import, field, and index |
-| `src/db/schema/index.ts` | Remove category export |
-| `src/db/seed/index.ts` | Remove seedCategories import and call |
-| `specs/001-local-dev-setup/data-model.md` | Remove all Category references |
-| `specs/001-local-dev-setup/spec.md` | Remove Category from key entities |
+| File                                      | Changes                                  |
+| ----------------------------------------- | ---------------------------------------- |
+| `src/db/schema/list.ts`                   | Remove category import, field, and index |
+| `src/db/schema/index.ts`                  | Remove category export                   |
+| `src/db/seed/index.ts`                    | Remove seedCategories import and call    |
+| `specs/001-local-dev-setup/data-model.md` | Remove all Category references           |
+| `specs/001-local-dev-setup/spec.md`       | Remove Category from key entities        |
 
 ---
 
@@ -176,11 +176,13 @@ pnpm drizzle-kit push
 If issues are discovered after deployment:
 
 1. Restore deleted files from git:
+
    ```bash
    git checkout HEAD~1 -- src/db/schema/category.ts src/db/seed/categories.ts
    ```
 
 2. Revert schema changes:
+
    ```bash
    git checkout HEAD~1 -- src/db/schema/list.ts src/db/schema/index.ts src/db/seed/index.ts
    ```

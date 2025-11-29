@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Remove Category from data models and usage to align with updated high-level.md architecture"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Lists Exist Without Categories (Priority: P1)
 
@@ -59,7 +59,7 @@ As a visitor viewing a creator's profile, I want to see all their lists in a sin
 - How does the system handle database queries that previously filtered or joined by category? All such queries must be updated to remove category references.
 - What happens to seed data that includes categories? The category seeding logic must be removed and the seed process must work without it.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -82,7 +82,7 @@ As a visitor viewing a creator's profile, I want to see all their lists in a sin
 
 **Note**: The Category entity is being removed entirely from the data model.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

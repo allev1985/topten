@@ -9,10 +9,12 @@ This feature is a **schema-only change** that removes the Category entity from t
 ## Contract Impact
 
 ### Existing Contracts
+
 - No existing API contracts reference the Category entity (pre-MVP)
 - No endpoints need to be modified
 
 ### Future Considerations
+
 When API endpoints are implemented, the List-related endpoints will not include category fields:
 
 ```yaml
@@ -58,6 +60,7 @@ List:
 ## URL Structure Change
 
 The URL structure for lists changes from:
+
 - **Before**: `/@{vanity_slug}/{category-slug}/{list-slug}`
 - **After**: `/@{vanity_slug}/{list-slug}`
 

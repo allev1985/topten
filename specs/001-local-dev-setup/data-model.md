@@ -320,15 +320,15 @@ erDiagram
 
 ## Indexes Summary
 
-| Table       | Index                                   | Type   | Purpose                    |
-| ----------- | --------------------------------------- | ------ | -------------------------- |
-| users       | vanity_slug                             | UNIQUE | Profile URL lookup         |
-| users       | deleted_at                              | B-TREE | Exclude soft-deleted users |
-| lists       | (user_id, slug)                         | UNIQUE | List URL lookup            |
-| lists       | (user_id, deleted_at)                   | B-TREE | Creator's lists query      |
-| places      | google_place_id                         | UNIQUE | Deduplication              |
-| list_places | (list_id, position)                     | B-TREE | Ordered place retrieval    |
-| list_places | (list_id, place_id)                     | UNIQUE | Prevent duplicates         |
+| Table       | Index                 | Type   | Purpose                    |
+| ----------- | --------------------- | ------ | -------------------------- |
+| users       | vanity_slug           | UNIQUE | Profile URL lookup         |
+| users       | deleted_at            | B-TREE | Exclude soft-deleted users |
+| lists       | (user_id, slug)       | UNIQUE | List URL lookup            |
+| lists       | (user_id, deleted_at) | B-TREE | Creator's lists query      |
+| places      | google_place_id       | UNIQUE | Deduplication              |
+| list_places | (list_id, position)   | B-TREE | Ordered place retrieval    |
+| list_places | (list_id, place_id)   | UNIQUE | Prevent duplicates         |
 
 ---
 

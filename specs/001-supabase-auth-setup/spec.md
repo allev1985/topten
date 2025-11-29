@@ -5,7 +5,7 @@
 **Status**: Ready for Planning  
 **Input**: Task 1.1: Supabase Configuration & Environment Setup for Authentication - Create middleware helper, TypeScript auth types, and ensure environment validation works correctly.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Developer Sets Up Local Authentication Environment (Priority: P1)
 
@@ -65,7 +65,7 @@ As a developer or DevOps engineer, I need the application to validate required e
 - What happens when cookies cannot be set due to browser restrictions?
 - How does the system handle expired or invalid session tokens in middleware?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -94,7 +94,7 @@ As a developer or DevOps engineer, I need the application to validate required e
 - Cookie-based session storage is the chosen approach (not localStorage).
 - The application will be deployed to an environment that supports secure HTTP-only cookies.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
