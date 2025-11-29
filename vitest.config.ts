@@ -16,7 +16,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx}", "middleware.ts"],
       exclude: [
         "src/**/*.d.ts",
         "src/db/migrations/**",
@@ -27,6 +27,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@root": path.resolve(__dirname, "./"),
     },
   },
 });
