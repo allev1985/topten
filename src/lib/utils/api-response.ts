@@ -3,13 +3,11 @@ import type { AuthError, AuthErrorResponse } from "@/lib/auth/errors";
 
 /**
  * Standard success response format for API endpoints
+ * Data fields are spread at the top level alongside success flag
  */
-export interface ApiSuccessResponse<T = Record<string, unknown>> {
+export type ApiSuccessResponse<T = Record<string, unknown>> = {
   success: true;
-  data?: T;
-  message?: string;
-  redirectTo?: string;
-}
+} & T;
 
 /**
  * Creates a JSON response from an AuthError
@@ -23,16 +21,17 @@ export function errorResponse(
 
 /**
  * Creates a success JSON response with optional data
+ * Data fields are spread at the top level alongside the success flag
  */
-export function successResponse<T = Record<string, unknown>>(
-  data?: T & { message?: string; redirectTo?: string },
+export function successResponse<T extends Record<string, unknown>>(
+  data?: T,
   status: number = 200
-): NextResponse<ApiSuccessResponse<T>> {
-  const response: ApiSuccessResponse<T> = {
-    success: true,
+): NextResponse<{ success: true } & T> {
+  const response = {
+    success: true as const,
     ...data,
   };
-  return NextResponse.json(response, { status });
+  return NextResponse.json(response as { success: true } & T, { status });
 }
 
 /**
