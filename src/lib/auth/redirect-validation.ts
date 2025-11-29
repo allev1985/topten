@@ -1,4 +1,4 @@
-import { DEFAULT_REDIRECT } from "@/lib/config";
+import { REDIRECT } from "@/lib/config";
 
 /**
  * Validates that a URL is safe for redirection.
@@ -82,5 +82,5 @@ export function isValidRedirect(url: string | undefined | null): boolean {
  * Always returns a safe URL for redirection.
  */
 export function getValidatedRedirect(url: string | undefined | null): string {
-  return isValidRedirect(url) ? url!.trim() : DEFAULT_REDIRECT;
+  return isValidRedirect(url) ? url!.trim() : REDIRECT.DEFAULT;
 }
