@@ -101,3 +101,13 @@ export function expiredTokenError(): AuthError {
 export function serverError(): AuthError {
   return new AuthError("SERVER_ERROR", "An unexpected error occurred", 500);
 }
+
+/**
+ * Factory function for authentication errors
+ * Used when login credentials are invalid
+ */
+export function authError(
+  message: string = "Invalid email or password"
+): AuthError {
+  return new AuthError("AUTH_ERROR", message, 401);
+}

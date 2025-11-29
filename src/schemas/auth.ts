@@ -66,7 +66,26 @@ export const signupSuccessResponse = {
   message: "Please check your email to verify your account",
 } as const;
 
+/**
+ * Schema for validating login requests
+ * Password validation is minimal (presence only) unlike signup
+ */
+export const loginSchema = z.object({
+  email: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
+    z
+      .string({ message: "Email is required" })
+      .min(1, "Email is required")
+      .email("Invalid email format")
+  ),
+  password: z
+    .string({ message: "Password is required" })
+    .min(1, "Password is required"),
+  redirectTo: z.string().optional(),
+});
+
 // Type exports for use in other modules
 export type SignupInput = z.infer<typeof signupSchema>;
 export type VerifyTokenInput = z.infer<typeof verifyTokenSchema>;
 export type VerifyCodeInput = z.infer<typeof verifyCodeSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;

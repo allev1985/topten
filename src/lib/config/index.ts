@@ -15,11 +15,19 @@ export const PASSWORD_REQUIREMENTS = {
 } as const;
 
 /**
- * Auth-related route constants
+ * Redirect URL configuration
+ * Centralized redirect paths for auth flows
  */
-export const AUTH_ROUTES = {
-  ERROR_REDIRECT: "/auth/error",
-  SUCCESS_REDIRECT: "/dashboard",
+export const REDIRECT_ROUTES = {
+  /** Default redirect after successful login */
+  default: "/dashboard",
+  /** Auth-specific redirects */
+  auth: {
+    /** Redirect after successful auth operations (signup verification, etc.) */
+    success: "/dashboard",
+    /** Redirect for auth errors */
+    error: "/auth/error",
+  },
 } as const;
 
 /**
