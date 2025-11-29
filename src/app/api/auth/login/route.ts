@@ -7,7 +7,7 @@ import {
   serverError,
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
-import { getValidatedRedirect } from "@/lib/auth/redirect-validation";
+import { getValidatedRedirect } from "@/lib/utils/redirect-validation";
 import { maskEmail } from "@/lib/utils/email";
 
 /**
