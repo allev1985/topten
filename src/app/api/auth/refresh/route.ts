@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { serverError, AuthError } from "@/lib/auth/errors";
-import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { errorResponse, successResponse } from "@/lib/utils/api/response";
 
 /**
  * POST /api/auth/refresh

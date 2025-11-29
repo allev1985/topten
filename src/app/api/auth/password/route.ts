@@ -7,8 +7,8 @@ import {
   serverError,
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
-import { maskEmail } from "@/lib/utils/email";
-import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { maskEmail } from "@/lib/utils/formatting/email";
+import { errorResponse, successResponse } from "@/lib/utils/api/response";
 
 /**
  * PUT /api/auth/password

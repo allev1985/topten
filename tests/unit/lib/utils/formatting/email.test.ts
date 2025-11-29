@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { maskEmail } from "@/lib/utils/email";
+import { maskEmail } from "@/lib/utils/formatting/email";
 
 describe("maskEmail", () => {
   it("masks email with standard format", () => {

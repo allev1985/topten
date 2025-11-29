@@ -7,9 +7,9 @@ import {
   serverError,
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
-import { getValidatedRedirect } from "@/lib/utils/redirect-validation";
-import { maskEmail } from "@/lib/utils/email";
-import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { getValidatedRedirect } from "@/lib/utils/validation/redirect";
+import { maskEmail } from "@/lib/utils/formatting/email";
+import { errorResponse, successResponse } from "@/lib/utils/api/response";
 
 /**
  * POST /api/auth/login

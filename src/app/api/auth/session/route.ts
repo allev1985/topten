@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionInfo } from "@/lib/auth/helpers/session";
 import { serverError } from "@/lib/auth/errors";
-import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { errorResponse, successResponse } from "@/lib/utils/api/response";
 
 /**
  * GET /api/auth/session

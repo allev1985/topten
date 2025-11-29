@@ -7,8 +7,8 @@ import {
   type AuthErrorDetail,
 } from "@/lib/auth/errors";
 import { getAppUrl } from "@/lib/config";
-import { maskEmail } from "@/lib/utils/email";
-import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { maskEmail } from "@/lib/utils/formatting/email";
+import { errorResponse, successResponse } from "@/lib/utils/api/response";
 
 /**
  * POST /api/auth/signup

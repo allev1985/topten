@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getValidatedRedirect } from "@/lib/utils/redirect-validation";
+import { getValidatedRedirect } from "@/lib/utils/validation/redirect";
 import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/config";
 
 /**
