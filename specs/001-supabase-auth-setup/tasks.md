@@ -172,18 +172,18 @@ Task T007 [P] [US1]: "Create unit tests for middleware helper in tests/unit/lib/
 
 ## File Mapping
 
-| File Path | Task(s) | User Story | Status |
-|-----------|---------|------------|--------|
-| `src/types/auth.ts` | T004 | Foundational | NEW |
-| `src/lib/supabase/middleware.ts` | T008 | US1 | NEW |
-| `src/lib/env.ts` | T012 | US3 | EXISTS (enhance) |
-| `src/lib/supabase/client.ts` | - | - | EXISTS (test only) |
-| `src/lib/supabase/server.ts` | - | - | EXISTS (test only) |
-| `tests/unit/lib/supabase/client.test.ts` | T005 | US1 | NEW |
-| `tests/unit/lib/supabase/server.test.ts` | T006 | US1 | NEW |
-| `tests/unit/lib/supabase/middleware.test.ts` | T007 | US1 | NEW |
-| `tests/unit/types/auth.test.ts` | T009 | US2 | NEW |
-| `tests/unit/lib/env.test.ts` | T011 | US3 | NEW |
+| File Path                                    | Task(s) | User Story   | Status             |
+| -------------------------------------------- | ------- | ------------ | ------------------ |
+| `src/types/auth.ts`                          | T004    | Foundational | NEW                |
+| `src/lib/supabase/middleware.ts`             | T008    | US1          | NEW                |
+| `src/lib/env.ts`                             | T012    | US3          | EXISTS (enhance)   |
+| `src/lib/supabase/client.ts`                 | -       | -            | EXISTS (test only) |
+| `src/lib/supabase/server.ts`                 | -       | -            | EXISTS (test only) |
+| `tests/unit/lib/supabase/client.test.ts`     | T005    | US1          | NEW                |
+| `tests/unit/lib/supabase/server.test.ts`     | T006    | US1          | NEW                |
+| `tests/unit/lib/supabase/middleware.test.ts` | T007    | US1          | NEW                |
+| `tests/unit/types/auth.test.ts`              | T009    | US2          | NEW                |
+| `tests/unit/lib/env.test.ts`                 | T011    | US3          | NEW                |
 
 ---
 
@@ -201,16 +201,16 @@ Task T007 [P] [US1]: "Create unit tests for middleware helper in tests/unit/lib/
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| **Total Tasks** | 14 |
-| **Phase 1 (Setup)** | 3 tasks |
-| **Phase 2 (Foundational)** | 1 task |
-| **Phase 3 (US1 - P1)** | 4 tasks (3 tests + 1 implementation) |
-| **Phase 4 (US2 - P2)** | 2 tasks (1 test + 1 verification) |
-| **Phase 5 (US3 - P3)** | 2 tasks (1 test + 1 enhancement) |
-| **Phase 6 (Polish)** | 2 tasks |
-| **Parallel Opportunities** | 7 tasks marked [P] |
-| **New Files** | 6 (1 type, 1 middleware, 4 test files) |
-| **Enhanced Files** | 1 (`env.ts`) |
-| **MVP Scope** | Phase 1-3 (8 tasks) |
+| Metric                     | Value                                  |
+| -------------------------- | -------------------------------------- |
+| **Total Tasks**            | 14                                     |
+| **Phase 1 (Setup)**        | 3 tasks                                |
+| **Phase 2 (Foundational)** | 1 task                                 |
+| **Phase 3 (US1 - P1)**     | 4 tasks (3 tests + 1 implementation)   |
+| **Phase 4 (US2 - P2)**     | 2 tasks (1 test + 1 verification)      |
+| **Phase 5 (US3 - P3)**     | 2 tasks (1 test + 1 enhancement)       |
+| **Phase 6 (Polish)**       | 2 tasks                                |
+| **Parallel Opportunities** | 7 tasks marked [P]                     |
+| **New Files**              | 6 (1 type, 1 middleware, 4 test files) |
+| **Enhanced Files**         | 1 (`env.ts`)                           |
+| **MVP Scope**              | Phase 1-3 (8 tasks)                    |

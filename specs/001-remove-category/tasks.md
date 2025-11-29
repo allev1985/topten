@@ -26,9 +26,9 @@
 
 **Purpose**: Verify current state and prepare for changes
 
-- [X] T001 Run `pnpm build` to verify current project builds successfully
-- [X] T002 Run `pnpm lint` to verify current linting passes
-- [X] T003 Run `pnpm test` to verify current tests pass (if any exist)
+- [x] T001 Run `pnpm build` to verify current project builds successfully
+- [x] T002 Run `pnpm lint` to verify current linting passes
+- [x] T003 Run `pnpm test` to verify current tests pass (if any exist)
 
 **Checkpoint**: Development environment is ready for changes
 
@@ -40,8 +40,8 @@
 
 **⚠️ CRITICAL**: These deletions must happen before modifying files that reference them
 
-- [X] T004 [P] Delete Category schema file at `src/db/schema/category.ts`
-- [X] T005 [P] Delete Category seed data file at `src/db/seed/categories.ts`
+- [x] T004 [P] Delete Category schema file at `src/db/schema/category.ts`
+- [x] T005 [P] Delete Category seed data file at `src/db/seed/categories.ts`
 
 **Checkpoint**: Category source files removed - can now update dependent files
 
@@ -55,10 +55,10 @@
 
 ### Implementation for User Story 1
 
-- [X] T006 [US1] Update `src/db/schema/list.ts` - Remove `import { categories } from "./category";` statement
-- [X] T007 [US1] Update `src/db/schema/list.ts` - Remove `categoryId` field definition with its `.references(() => categories.id)` chain
-- [X] T008 [US1] Update `src/db/schema/list.ts` - Remove `lists_category_published_idx` index from the table's indexes array
-- [X] T009 [US1] Update `src/db/schema/index.ts` - Remove `export * from "./category";` statement
+- [x] T006 [US1] Update `src/db/schema/list.ts` - Remove `import { categories } from "./category";` statement
+- [x] T007 [US1] Update `src/db/schema/list.ts` - Remove `categoryId` field definition with its `.references(() => categories.id)` chain
+- [x] T008 [US1] Update `src/db/schema/list.ts` - Remove `lists_category_published_idx` index from the table's indexes array
+- [x] T009 [US1] Update `src/db/schema/index.ts` - Remove `export * from "./category";` statement
 
 **Checkpoint**: User Story 1 complete - List schema no longer requires category_id
 
@@ -72,8 +72,8 @@
 
 ### Implementation for User Story 2
 
-- [X] T010 [US2] Update `src/db/seed/index.ts` - Remove `import { seedCategories } from "./categories";` statement
-- [X] T011 [US2] Update `src/db/seed/index.ts` - Remove `await seedCategories();` call from main function
+- [x] T010 [US2] Update `src/db/seed/index.ts` - Remove `import { seedCategories } from "./categories";` statement
+- [x] T011 [US2] Update `src/db/seed/index.ts` - Remove `await seedCategories();` call from main function
 
 **Checkpoint**: User Story 2 complete - Seed process works without categories
 
@@ -87,16 +87,16 @@
 
 ### Implementation for User Story 3
 
-- [X] T012 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove the entire "Category" entity section including code block
-- [X] T013 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Update List entity to remove `categoryId` field from code and fields table
-- [X] T014 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove `Category ||--o{ List : categorizes` from mermaid relationships diagram
-- [X] T015 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove category-related rows from Indexes Summary table
-- [X] T016 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove `export * from "./category";` from Schema Index File example
-- [X] T017 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove "Category" from Key Entities section
-- [X] T018 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Update FR-007 to remove Category from database schema entities list
-- [X] T019 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove FR-009 requirement for Category seed data (8 predefined values)
-- [X] T020 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove SC-004 success criterion for category seeding metric
-- [X] T021 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Update User Story 2 acceptance scenario 2 to remove Category table reference
+- [x] T012 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove the entire "Category" entity section including code block
+- [x] T013 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Update List entity to remove `categoryId` field from code and fields table
+- [x] T014 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove `Category ||--o{ List : categorizes` from mermaid relationships diagram
+- [x] T015 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove category-related rows from Indexes Summary table
+- [x] T016 [P] [US3] Update `specs/001-local-dev-setup/data-model.md` - Remove `export * from "./category";` from Schema Index File example
+- [x] T017 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove "Category" from Key Entities section
+- [x] T018 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Update FR-007 to remove Category from database schema entities list
+- [x] T019 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove FR-009 requirement for Category seed data (8 predefined values)
+- [x] T020 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Remove SC-004 success criterion for category seeding metric
+- [x] T021 [P] [US3] Update `specs/001-local-dev-setup/spec.md` - Update User Story 2 acceptance scenario 2 to remove Category table reference
 
 **Checkpoint**: User Story 3 complete - Documentation reflects simplified data model
 
@@ -106,15 +106,15 @@
 
 **Purpose**: Verify all changes, ensure build passes, and validate completeness
 
-- [X] T022 Run `pnpm build` to verify project builds after all changes
-- [X] T023 Run `pnpm lint` to verify linting passes after all changes
-- [X] T024 Run `pnpm test` to verify any existing tests still pass
+- [x] T022 Run `pnpm build` to verify project builds after all changes
+- [x] T023 Run `pnpm lint` to verify linting passes after all changes
+- [x] T024 Run `pnpm test` to verify any existing tests still pass
 - [ ] T025 Run `pnpm drizzle-kit generate` to generate migration (if database exists)
 - [ ] T026 Review generated migration SQL to ensure it includes: DROP INDEX, ALTER TABLE DROP COLUMN, DROP TABLE
-- [X] T027 Verify `src/db/schema/category.ts` no longer exists
-- [X] T028 Verify `src/db/seed/categories.ts` no longer exists
-- [X] T029 Verify `src/db/schema/list.ts` has no category references
-- [X] T030 Verify `src/db/schema/index.ts` has no category export
+- [x] T027 Verify `src/db/schema/category.ts` no longer exists
+- [x] T028 Verify `src/db/seed/categories.ts` no longer exists
+- [x] T029 Verify `src/db/schema/list.ts` has no category references
+- [x] T030 Verify `src/db/schema/index.ts` has no category export
 
 ---
 
@@ -209,32 +209,33 @@ Recommended execution order for a single developer:
 
 ## Summary
 
-| Metric | Count |
-|--------|-------|
-| **Total Tasks** | 30 |
-| **Phase 1 (Setup)** | 3 |
-| **Phase 2 (Foundational)** | 2 |
-| **Phase 3 (US1)** | 4 |
-| **Phase 4 (US2)** | 2 |
-| **Phase 5 (US3)** | 10 |
-| **Phase 6 (Polish)** | 9 |
+| Metric                     | Count               |
+| -------------------------- | ------------------- |
+| **Total Tasks**            | 30                  |
+| **Phase 1 (Setup)**        | 3                   |
+| **Phase 2 (Foundational)** | 2                   |
+| **Phase 3 (US1)**          | 4                   |
+| **Phase 4 (US2)**          | 2                   |
+| **Phase 5 (US3)**          | 10                  |
+| **Phase 6 (Polish)**       | 9                   |
 | **Parallel Opportunities** | 12 tasks marked [P] |
-| **Files to DELETE** | 2 |
-| **Files to MODIFY** | 4 |
+| **Files to DELETE**        | 2                   |
+| **Files to MODIFY**        | 4                   |
 
 ### Independent Test Criteria
 
-| User Story | Test Criteria |
-|------------|---------------|
-| US1 | List can be created/saved/retrieved without category association |
-| US2 | List URL format `/@{vanity_slug}/{list-slug}` works (routing TBD) |
-| US3 | Creator profile shows lists without category grouping (UI TBD) |
+| User Story | Test Criteria                                                     |
+| ---------- | ----------------------------------------------------------------- |
+| US1        | List can be created/saved/retrieved without category association  |
+| US2        | List URL format `/@{vanity_slug}/{list-slug}` works (routing TBD) |
+| US3        | Creator profile shows lists without category grouping (UI TBD)    |
 
 ### Suggested MVP Scope
 
 **MVP = Phase 1 + Phase 2 + Phase 3 + Phase 4** (T001-T011)
 
 This delivers:
+
 - Category files removed
 - List schema updated (no category_id)
 - Seed process updated (no category seeding)

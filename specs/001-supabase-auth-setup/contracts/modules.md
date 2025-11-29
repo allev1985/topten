@@ -15,11 +15,12 @@ This feature does not expose REST/GraphQL API endpoints. Instead, it provides in
 **Path**: `/src/lib/supabase/client.ts`
 
 **Exports**:
+
 ```typescript
 /**
  * Creates a Supabase client for browser-side operations.
  * Must only be called from client components.
- * 
+ *
  * @returns SupabaseClient instance configured for browser use
  * @throws Error if environment variables are not configured
  */
@@ -35,11 +36,12 @@ export function createClient(): SupabaseClient;
 **Path**: `/src/lib/supabase/server.ts`
 
 **Exports**:
+
 ```typescript
 /**
  * Creates a Supabase client for server-side operations.
  * Manages authentication cookies via next/headers.
- * 
+ *
  * @returns Promise<SupabaseClient> configured for server use with cookie management
  * @throws Error if environment variables are not configured
  */
@@ -55,15 +57,18 @@ export async function createClient(): Promise<SupabaseClient>;
 **Path**: `/src/lib/supabase/middleware.ts`
 
 **Exports**:
+
 ```typescript
 /**
  * Updates the user session by refreshing tokens if needed.
  * Must be called from Next.js middleware.
- * 
+ *
  * @param request - The incoming Next.js request
  * @returns NextResponse with updated cookies
  */
-export async function updateSession(request: NextRequest): Promise<NextResponse>;
+export async function updateSession(
+  request: NextRequest
+): Promise<NextResponse>;
 ```
 
 **Usage Context**: Next.js Middleware (`middleware.ts`)
@@ -75,6 +80,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 **Path**: `/src/types/auth.ts`
 
 **Exports**:
+
 ```typescript
 // Re-exported from @supabase/supabase-js
 export type { User as AuthUser, Session as AuthSession };
@@ -105,6 +111,7 @@ export type AuthResult<T> =
 **Path**: `/src/lib/env.ts`
 
 **Exports**:
+
 ```typescript
 /**
  * Configuration type for validated environment variables.
@@ -141,20 +148,20 @@ export function getEnv(): EnvConfig;
 
 ### Environment Validation Errors
 
-| Condition | Error Message |
-|-----------|---------------|
+| Condition                 | Error Message                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Missing required variable | `Missing required environment variable: {KEY}. Please check your .env.local file or environment configuration.` |
-| Empty required variable | `Missing required environment variable: {KEY}. Please check your .env.local file or environment configuration.` |
+| Empty required variable   | `Missing required environment variable: {KEY}. Please check your .env.local file or environment configuration.` |
 
 ### Auth Error Codes
 
-| Code | Description | HTTP Status |
-|------|-------------|-------------|
-| `invalid_credentials` | Email/password combination invalid | 401 |
-| `session_expired` | Session has expired, requires re-authentication | 401 |
-| `session_not_found` | No session exists | 401 |
-| `token_refresh_failed` | Failed to refresh access token | 401 |
-| `email_not_verified` | Email verification required | 403 |
+| Code                   | Description                                     | HTTP Status |
+| ---------------------- | ----------------------------------------------- | ----------- |
+| `invalid_credentials`  | Email/password combination invalid              | 401         |
+| `session_expired`      | Session has expired, requires re-authentication | 401         |
+| `session_not_found`    | No session exists                               | 401         |
+| `token_refresh_failed` | Failed to refresh access token                  | 401         |
+| `email_not_verified`   | Email verification required                     | 403         |
 
 ---
 
@@ -189,12 +196,12 @@ import type { AuthUser } from "@/types/auth";
 export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   // user is typed as AuthUser | null
   if (!user) {
     redirect("/login");
   }
-  
+
   return <div>Welcome, {user.email}</div>;
 }
 ```
@@ -214,7 +221,7 @@ export function AuthButton() {
     user: null,
     session: null,
   });
-  
+
   // ... implementation
 }
 ```

@@ -27,25 +27,30 @@ Remove the Category entity from the data model to align with the updated high-le
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### I. Code Quality & Maintainability ✅
+
 - **Compliant**: Removing the Category entity simplifies the data model and reduces unnecessary complexity
 - **Action**: Ensure clean removal of all Category references without orphaned code
 
 ### II. Testing Discipline & Safety Nets ✅
+
 - **Compliant**: All existing tests must pass after category removal
 - **Action**: Update or remove any tests that reference Category; verify test suite passes
 
 ### III. User Experience Consistency ✅
+
 - **Compliant**: URL structure changes from `/@{vanity_slug}/{category-slug}/{list-slug}` to `/@{vanity_slug}/{list-slug}` - intentional simplification
 - **Action**: Document the URL change; no backward compatibility required per spec assumptions
 
 ### IV. Performance & Resource Efficiency ✅
+
 - **Compliant**: Removing the Category table reduces JOIN complexity and improves query performance
 - **Action**: Remove `lists_category_published_idx` index; no new performance concerns
 
 ### V. Observability & Debuggability ✅
+
 - **Compliant**: No impact on logging or diagnostics
 - **Action**: None required
 
@@ -96,4 +101,4 @@ specs/
 
 > No Constitution Check violations - this table is not required.
 
-*This change reduces complexity by removing an unused entity from the data model.*
+_This change reduces complexity by removing an unused entity from the data model._

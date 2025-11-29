@@ -10,6 +10,7 @@ This guide explains how to use the Supabase authentication utilities in the Your
 ## Prerequisites
 
 1. **Environment Variables**: Ensure your `.env.local` file contains:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -38,21 +39,21 @@ import { createClient } from "@/lib/supabase/client";
 
 export function LoginButton() {
   const supabase = createClient();
-  
+
   const handleLogin = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: "user@example.com",
       password: "password",
     });
-    
+
     if (error) {
       console.error("Login failed:", error.message);
       return;
     }
-    
+
     console.log("Logged in as:", data.user?.email);
   };
-  
+
   return <button onClick={handleLogin}>Login</button>;
 }
 ```
@@ -66,11 +67,11 @@ import { redirect } from "next/navigation";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
     redirect("/login");
   }
-  
+
   return (
     <div>
       <h1>Welcome, {user.email}</h1>
@@ -134,7 +135,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function isAuthenticated(): Promise<boolean> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user !== null;
 }
 ```
@@ -147,7 +150,9 @@ import type { AuthUser } from "@/types/auth";
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 ```

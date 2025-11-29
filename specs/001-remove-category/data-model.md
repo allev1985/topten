@@ -8,13 +8,13 @@ This document defines the updated database schema after removing the Category en
 
 ## Entity Changes Summary
 
-| Entity | Action | Notes |
-|--------|--------|-------|
-| Category | **DELETE** | Remove entire table and schema |
-| List | **MODIFY** | Remove `category_id` field and related index |
-| User | UNCHANGED | No modifications |
-| Place | UNCHANGED | No modifications |
-| ListPlace | UNCHANGED | No modifications |
+| Entity    | Action     | Notes                                        |
+| --------- | ---------- | -------------------------------------------- |
+| Category  | **DELETE** | Remove entire table and schema               |
+| List      | **MODIFY** | Remove `category_id` field and related index |
+| User      | UNCHANGED  | No modifications                             |
+| Place     | UNCHANGED  | No modifications                             |
+| ListPlace | UNCHANGED  | No modifications                             |
 
 ---
 
@@ -138,6 +138,7 @@ export const lists = pgTable(
 | deletedAt | TIMESTAMP | NULLABLE | Soft delete timestamp |
 
 **State Transitions** (Unchanged):
+
 - **Draft → Published**: Set `isPublished = true`, set `publishedAt` if null
 - **Published → Draft**: Set `isPublished = false`, retain `publishedAt`
 - **Any → Deleted**: Set `deletedAt` to current timestamp
@@ -178,9 +179,7 @@ export const places = pgTable(
       .notNull(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (table) => [
-    uniqueIndex("places_google_place_id_idx").on(table.googlePlaceId),
-  ]
+  (table) => [uniqueIndex("places_google_place_id_idx").on(table.googlePlaceId)]
 );
 ```
 
@@ -314,17 +313,17 @@ erDiagram
 
 ## Indexes Summary (Updated)
 
-| Table | Index | Type | Purpose |
-|-------|-------|------|---------|
-| users | vanity_slug | UNIQUE | Profile URL lookup |
-| users | deleted_at | B-TREE | Exclude soft-deleted users |
-| ~~categories~~ | ~~slug~~ | ~~UNIQUE~~ | **REMOVED** |
-| lists | (user_id, slug) | UNIQUE | List URL lookup |
-| lists | (user_id, deleted_at) | B-TREE | Creator's lists query |
-| ~~lists~~ | ~~(category_id, is_published, deleted_at)~~ | ~~B-TREE~~ | **REMOVED** |
-| places | google_place_id | UNIQUE | Deduplication |
-| list_places | (list_id, position) | B-TREE | Ordered place retrieval |
-| list_places | (list_id, place_id) | UNIQUE | Prevent duplicates |
+| Table          | Index                                       | Type       | Purpose                    |
+| -------------- | ------------------------------------------- | ---------- | -------------------------- |
+| users          | vanity_slug                                 | UNIQUE     | Profile URL lookup         |
+| users          | deleted_at                                  | B-TREE     | Exclude soft-deleted users |
+| ~~categories~~ | ~~slug~~                                    | ~~UNIQUE~~ | **REMOVED**                |
+| lists          | (user_id, slug)                             | UNIQUE     | List URL lookup            |
+| lists          | (user_id, deleted_at)                       | B-TREE     | Creator's lists query      |
+| ~~lists~~      | ~~(category_id, is_published, deleted_at)~~ | ~~B-TREE~~ | **REMOVED**                |
+| places         | google_place_id                             | UNIQUE     | Deduplication              |
+| list_places    | (list_id, position)                         | B-TREE     | Ordered place retrieval    |
+| list_places    | (list_id, place_id)                         | UNIQUE     | Prevent duplicates         |
 
 ---
 

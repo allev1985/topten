@@ -76,11 +76,12 @@ Discriminated union type for authentication state.
 **Source**: Defined in `/src/types/auth.ts`
 
 **Variants**:
+
 ```typescript
 type AuthState =
-  | { status: 'authenticated'; user: AuthUser; session: AuthSession }
-  | { status: 'unauthenticated'; user: null; session: null }
-  | { status: 'loading'; user: null; session: null };
+  | { status: "authenticated"; user: AuthUser; session: AuthSession }
+  | { status: "unauthenticated"; user: null; session: null }
+  | { status: "loading"; user: null; session: null };
 ```
 
 **Usage Context**: UI state management, conditional rendering
@@ -105,6 +106,7 @@ Runtime configuration validated at startup.
 | `GOOGLE_PLACES_API_KEY` | `string \| undefined` | No | Google Places API key |
 
 **Validation Rules**:
+
 - Required fields must be present and non-empty
 - `NEXT_PUBLIC_SUPABASE_URL` must be a valid URL format
 
@@ -121,7 +123,10 @@ Runtime configuration validated at startup.
  */
 
 // Re-export Supabase auth types
-export type { User as AuthUser, Session as AuthSession } from "@supabase/supabase-js";
+export type {
+  User as AuthUser,
+  Session as AuthSession,
+} from "@supabase/supabase-js";
 
 /**
  * Application-specific authentication error type.

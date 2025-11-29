@@ -8,6 +8,7 @@
 Create the authentication foundation for YourFavs by implementing a middleware helper for session refresh, TypeScript types for authentication responses, and ensuring environment validation works correctly. This task establishes the foundational utilities required for all subsequent authentication features.
 
 **Primary deliverables:**
+
 1. Middleware helper at `/src/lib/supabase/middleware.ts` for session refresh during request processing
 2. TypeScript types at `/src/types/auth.ts` for `AuthUser`, `AuthSession`, and `AuthError`
 3. Verification and testing of environment validation in `/src/lib/env.ts`
@@ -27,27 +28,27 @@ Create the authentication foundation for YourFavs by implementing a middleware h
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| **I. Code Quality & Maintainability** | ✅ PASS | Single responsibility modules: `middleware.ts` for middleware client, `auth.ts` for types, `env.ts` for validation |
-| **II. Testing Discipline & Safety Nets** | ✅ PASS | Spec requires >65% coverage for auth utilities; unit tests planned for all new code |
-| **III. User Experience Consistency** | ✅ PASS | Developer-facing API follows existing patterns in `client.ts` and `server.ts` |
-| **IV. Performance & Resource Efficiency** | ✅ PASS | Performance goal defined: error messages within 1 second of startup |
-| **V. Observability & Debuggability** | ✅ PASS | FR-007 requires clear, actionable error messages for missing environment variables |
+| Principle                                 | Status  | Evidence                                                                                                           |
+| ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| **I. Code Quality & Maintainability**     | ✅ PASS | Single responsibility modules: `middleware.ts` for middleware client, `auth.ts` for types, `env.ts` for validation |
+| **II. Testing Discipline & Safety Nets**  | ✅ PASS | Spec requires >65% coverage for auth utilities; unit tests planned for all new code                                |
+| **III. User Experience Consistency**      | ✅ PASS | Developer-facing API follows existing patterns in `client.ts` and `server.ts`                                      |
+| **IV. Performance & Resource Efficiency** | ✅ PASS | Performance goal defined: error messages within 1 second of startup                                                |
+| **V. Observability & Debuggability**      | ✅ PASS | FR-007 requires clear, actionable error messages for missing environment variables                                 |
 
 **Gate Status**: ✅ ALL GATES PASS - Proceeding to Phase 0
 
 ### Post-Design Constitution Check (Phase 1 Complete)
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| **I. Code Quality & Maintainability** | ✅ PASS | Research confirms single-responsibility modules; middleware uses recommended `getAll`/`setAll` pattern |
-| **II. Testing Discipline & Safety Nets** | ✅ PASS | Test structure defined in research; mocking strategy documented; >65% coverage target |
-| **III. User Experience Consistency** | ✅ PASS | API contracts follow existing patterns; consistent with `client.ts` and `server.ts` |
-| **IV. Performance & Resource Efficiency** | ✅ PASS | Lazy-loaded env validation; no unnecessary computation |
-| **V. Observability & Debuggability** | ✅ PASS | Error types include codes and messages; env validation provides actionable error messages |
+| Principle                                 | Status  | Evidence                                                                                               |
+| ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| **I. Code Quality & Maintainability**     | ✅ PASS | Research confirms single-responsibility modules; middleware uses recommended `getAll`/`setAll` pattern |
+| **II. Testing Discipline & Safety Nets**  | ✅ PASS | Test structure defined in research; mocking strategy documented; >65% coverage target                  |
+| **III. User Experience Consistency**      | ✅ PASS | API contracts follow existing patterns; consistent with `client.ts` and `server.ts`                    |
+| **IV. Performance & Resource Efficiency** | ✅ PASS | Lazy-loaded env validation; no unnecessary computation                                                 |
+| **V. Observability & Debuggability**      | ✅ PASS | Error types include codes and messages; env validation provides actionable error messages              |
 
 **Post-Design Gate Status**: ✅ ALL GATES PASS - Ready for Phase 2 (Tasks)
 
