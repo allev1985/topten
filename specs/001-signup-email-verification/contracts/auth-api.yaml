@@ -1,0 +1,244 @@
+openapi: 3.1.0
+info:
+  title: YourFavs Authentication API - Signup & Email Verification
+  version: 1.0.0
+  description: |
+    API endpoints for user signup and email verification.
+
+    Security considerations:
+    - User enumeration protection: Signup always returns identical responses
+    - Password complexity: 12+ chars with uppercase, lowercase, number, special char
+    - Token validation: Handled by Supabase Auth
+
+servers:
+  - url: /api/auth
+    description: Authentication API routes
+
+paths:
+  /signup:
+    post:
+      operationId: signup
+      summary: Create a new user account
+      description: |
+        Creates a new user account and sends a verification email.
+
+        **Security**: Returns identical response for both new and existing emails
+        to prevent user enumeration attacks.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            examples:
+              valid:
+                summary: Valid signup request
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123!"
+      responses:
+        "201":
+          description: |
+            Signup request processed successfully.
+
+            **Note**: This response is returned regardless of whether a new account
+            was created or the email already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+              example:
+                success: true
+                message: "Please check your email to verify your account"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    success: false
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Validation failed"
+                      details:
+                        - field: "email"
+                          message: "Invalid email format"
+                weakPassword:
+                  summary: Password too weak
+                  value:
+                    success: false
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Validation failed"
+                      details:
+                        - field: "password"
+                          message: "Password must be at least 12 characters"
+                        - field: "password"
+                          message: "Password must contain at least one special character"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: "SERVER_ERROR"
+                  message: "An unexpected error occurred"
+
+  /verify:
+    get:
+      operationId: verifyEmail
+      summary: Verify email address
+      description: |
+        Verifies a user's email address using a token from the verification email.
+
+        On success:
+        - Marks the user's email as verified
+        - Creates an authenticated session
+        - Redirects to /dashboard with session cookie
+
+        On error:
+        - Redirects to /auth/error with appropriate error parameter
+      tags:
+        - Authentication
+      parameters:
+        - name: token_hash
+          in: query
+          description: Verification token from email (OTP flow)
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Verification type (should be "email" for email verification)
+          schema:
+            type: string
+            enum: [email]
+        - name: code
+          in: query
+          description: Authorization code (PKCE flow)
+          schema:
+            type: string
+      responses:
+        "302":
+          description: |
+            Redirect based on verification result.
+
+            **Success**: Redirects to `/dashboard` with session cookie set
+            **Error**: Redirects to `/auth/error?error={error_code}`
+          headers:
+            Location:
+              description: Redirect URL
+              schema:
+                type: string
+              examples:
+                success:
+                  value: /dashboard
+                expiredToken:
+                  value: /auth/error?error=expired_token
+                invalidToken:
+                  value: /auth/error?error=invalid_token
+            Set-Cookie:
+              description: Session cookie (only on success)
+              schema:
+                type: string
+
+components:
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (will be trimmed and lowercased)
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 12
+          description: |
+            User's password. Must meet complexity requirements:
+            - At least 12 characters
+            - At least one uppercase letter
+            - At least one lowercase letter
+            - At least one number
+            - At least one special character (!@#$%^&*()_+-=[]{};\':\"\\|,.<>/?)
+          example: "SecurePass123!"
+
+    SignupResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          const: true
+          description: Indicates successful request processing
+        message:
+          type: string
+          description: Generic success message
+          example: "Please check your email to verify your account"
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          const: false
+          description: Indicates request failure
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - INVALID_TOKEN
+                - EXPIRED_TOKEN
+                - AUTH_ERROR
+                - SERVER_ERROR
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: array
+              description: Field-level validation errors
+              items:
+                $ref: "#/components/schemas/ErrorDetail"
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: Field name that has the error
+          example: "email"
+        message:
+          type: string
+          description: Error message for the field
+          example: "Invalid email format"
+
+tags:
+  - name: Authentication
+    description: User authentication and verification endpoints
