@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 
 ## Active Technologies
 
+- TypeScript 5.x (Node.js 20+) + Next.js 16.0.5, @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Zod (to be added) (001-signup-email-verification)
+- PostgreSQL via Supabase (Supabase Auth handles user storage) (001-signup-email-verification)
+
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
 - **Auth/DB**: @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Supabase (PostgreSQL)
@@ -39,6 +42,8 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+
+- 001-signup-email-verification: Added TypeScript 5.x (Node.js 20+) + Next.js 16.0.5, @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Zod (to be added)
 
 - **001-supabase-auth-setup**: Added authentication foundation with Supabase SSR integration
 
