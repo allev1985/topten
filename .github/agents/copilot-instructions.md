@@ -4,9 +4,6 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 
 ## Active Technologies
 
-- TypeScript 5.x, Node.js 20+ + Next.js 16 (App Router), @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Drizzle ORM 0.44.7 (001-database-schema-auth-config)
-- PostgreSQL via Supabase (major version 17) (001-database-schema-auth-config)
-
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
 - **Auth/DB**: @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Supabase (PostgreSQL)
@@ -42,8 +39,6 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
-
-- 001-database-schema-auth-config: Added TypeScript 5.x, Node.js 20+ + Next.js 16 (App Router), @supabase/ssr 0.8.0, @supabase/supabase-js 2.86.0, Drizzle ORM 0.44.7
 
 - **001-supabase-auth-setup**: Added authentication foundation with Supabase SSR integration
 

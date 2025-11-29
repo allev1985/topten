@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   validatePassword,
   getPasswordRequirements,
-} from "@/lib/validation/password";
+} from "@/lib/utils/password";
 
 describe("validatePassword", () => {
   describe("valid passwords", () => {

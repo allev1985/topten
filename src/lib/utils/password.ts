@@ -10,6 +10,12 @@
  * - At least 1 symbol (special character)
  */
 
+import {
+  MIN_PASSWORD_LENGTH,
+  MIN_WEAK_CHECKS,
+  MIN_MEDIUM_CHECKS,
+} from "@/lib/config/auth";
+
 export interface PasswordValidationResult {
   isValid: boolean;
   errors: string[];
@@ -22,8 +28,6 @@ export interface PasswordValidationResult {
     hasSymbol: boolean;
   };
 }
-
-const MIN_PASSWORD_LENGTH = 12;
 
 /**
  * Validates a password against security requirements
@@ -61,9 +65,9 @@ export function validatePassword(password: string): PasswordValidationResult {
   const isValid = errors.length === 0;
 
   let strength: "weak" | "medium" | "strong";
-  if (passedChecks <= 2) {
+  if (passedChecks <= MIN_WEAK_CHECKS) {
     strength = "weak";
-  } else if (passedChecks <= 4) {
+  } else if (passedChecks <= MIN_MEDIUM_CHECKS) {
     strength = "medium";
   } else {
     strength = "strong";
