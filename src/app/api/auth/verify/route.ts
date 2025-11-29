@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { REDIRECT_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
+import { redirectResponse } from "@/lib/utils/api-response";
 
 /**
  * GET /api/auth/verify
@@ -50,16 +51,16 @@ export async function GET(request: NextRequest) {
         const errorType = error.message.toLowerCase().includes("expired")
           ? "expired_token"
           : "invalid_token";
-        return NextResponse.redirect(
-          `${origin}${REDIRECT_ROUTES.auth.error}?error=${errorType}`
-        );
+        return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+          error: errorType,
+        });
       }
 
       console.info(
         "[Verify]",
         "OTP verification successful, redirecting to dashboard"
       );
-      return NextResponse.redirect(`${origin}${REDIRECT_ROUTES.auth.success}`);
+      return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
     }
 
     // Handle PKCE code exchange
@@ -71,31 +72,31 @@ export async function GET(request: NextRequest) {
         const errorType = error.message.toLowerCase().includes("expired")
           ? "expired_token"
           : "invalid_token";
-        return NextResponse.redirect(
-          `${origin}${REDIRECT_ROUTES.auth.error}?error=${errorType}`
-        );
+        return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+          error: errorType,
+        });
       }
 
       console.info(
         "[Verify]",
         "Code exchange successful, redirecting to dashboard"
       );
-      return NextResponse.redirect(`${origin}${REDIRECT_ROUTES.auth.success}`);
+      return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
     }
 
     // No valid token or code provided
     console.error("[Verify]", "Missing token or code in verification request");
-    return NextResponse.redirect(
-      `${origin}${REDIRECT_ROUTES.auth.error}?error=missing_token`
-    );
+    return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+      error: "missing_token",
+    });
   } catch (err) {
     console.error(
       "[Verify]",
       "Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    return NextResponse.redirect(
-      `${origin}${REDIRECT_ROUTES.auth.error}?error=server_error`
-    );
+    return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+      error: "server_error",
+    });
   }
 }
