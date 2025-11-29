@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serverError } from "@/lib/auth/errors";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * POST /api/auth/logout
@@ -31,10 +31,7 @@ export async function POST() {
         : "Logout request (no active session)"
     );
 
-    return NextResponse.json({
-      success: true,
-      message: "Logged out successfully",
-    });
+    return successResponse({ message: "Logged out successfully" });
   } catch (err) {
     console.error(
       "[Logout]",
@@ -42,6 +39,6 @@ export async function POST() {
       err instanceof Error ? err.message : "Unknown error"
     );
     const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(error);
   }
 }

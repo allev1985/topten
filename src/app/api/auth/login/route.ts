@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/schemas/auth";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/errors";
 import { getValidatedRedirect } from "@/lib/utils/redirect-validation";
 import { maskEmail } from "@/lib/utils/email";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 
 /**
  * POST /api/auth/login
@@ -33,9 +34,7 @@ export async function POST(request: NextRequest) {
       }));
 
       const error = validationError(details);
-      return NextResponse.json(error.toResponse(), {
-        status: error.httpStatus,
-      });
+      return errorResponse(error);
     }
 
     const { email, password, redirectTo } = result.data;
@@ -67,19 +66,14 @@ export async function POST(request: NextRequest) {
           ? "Please verify your email before logging in"
           : "Invalid email or password"
       );
-      return NextResponse.json(authErr.toResponse(), {
-        status: authErr.httpStatus,
-      });
+      return errorResponse(authErr);
     }
 
     console.info("[Login]", `Login successful for ${maskEmail(email)}`);
 
     const validRedirect = getValidatedRedirect(redirectTo);
 
-    return NextResponse.json({
-      success: true,
-      redirectTo: validRedirect,
-    });
+    return successResponse({ redirectTo: validRedirect });
   } catch (err) {
     console.error(
       "[Login]",
@@ -87,6 +81,6 @@ export async function POST(request: NextRequest) {
       err instanceof Error ? err.message : "Unknown error"
     );
     const error = serverError();
-    return NextResponse.json(error.toResponse(), { status: error.httpStatus });
+    return errorResponse(error);
   }
 }
