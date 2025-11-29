@@ -218,8 +218,6 @@ This section breaks down the authentication system implementation into manageabl
 **Files Created/Modified:**
 - `/app/api/auth/password/reset/route.ts` - Password reset request (~120 lines)
 - `/app/api/auth/password/route.ts` - Password update endpoint (~150 lines)
-- `/lib/validation/password.ts` - Password validation (~80 lines)
-- `/lib/auth/password-strength.ts` - Password strength checker (~50 lines)
 
 **Acceptance Criteria:**
 - Reset endpoint returns generic message
@@ -244,7 +242,7 @@ This section breaks down the authentication system implementation into manageabl
 **Files Created/Modified:**
 - `/app/api/auth/refresh/route.ts` - Session refresh endpoint (~100 lines)
 - `/app/api/auth/session/route.ts` - Session status endpoint (~80 lines)
-- `/lib/auth/session.ts` - Session utilities (~70 lines)
+- `/lib/utils/session.ts` - Session utilities (~70 lines)
 
 **Acceptance Criteria:**
 - Refresh endpoint returns new session tokens
