@@ -10,11 +10,7 @@
  * - At least 1 symbol (special character)
  */
 
-import {
-  MIN_PASSWORD_LENGTH,
-  MIN_WEAK_CHECKS,
-  MIN_MEDIUM_CHECKS,
-} from "@/lib/config/auth";
+import { PASSWORD_REQUIREMENTS } from "@/lib/config";
 
 export interface PasswordValidationResult {
   isValid: boolean;
@@ -36,7 +32,7 @@ export interface PasswordValidationResult {
  */
 export function validatePassword(password: string): PasswordValidationResult {
   const checks = {
-    minLength: password.length >= MIN_PASSWORD_LENGTH,
+    minLength: password.length >= PASSWORD_REQUIREMENTS.minLength,
     hasLowercase: /[a-z]/.test(password),
     hasUppercase: /[A-Z]/.test(password),
     hasDigit: /\d/.test(password),
@@ -46,7 +42,9 @@ export function validatePassword(password: string): PasswordValidationResult {
   const errors: string[] = [];
 
   if (!checks.minLength) {
-    errors.push(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    errors.push(
+      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
+    );
   }
   if (!checks.hasLowercase) {
     errors.push("Password must contain at least one lowercase letter");
@@ -65,9 +63,9 @@ export function validatePassword(password: string): PasswordValidationResult {
   const isValid = errors.length === 0;
 
   let strength: "weak" | "medium" | "strong";
-  if (passedChecks <= MIN_WEAK_CHECKS) {
+  if (passedChecks <= PASSWORD_REQUIREMENTS.minWeakChecks) {
     strength = "weak";
-  } else if (passedChecks <= MIN_MEDIUM_CHECKS) {
+  } else if (passedChecks <= PASSWORD_REQUIREMENTS.minMediumChecks) {
     strength = "medium";
   } else {
     strength = "strong";
@@ -87,7 +85,7 @@ export function validatePassword(password: string): PasswordValidationResult {
  */
 export function getPasswordRequirements(): string[] {
   return [
-    `At least ${MIN_PASSWORD_LENGTH} characters`,
+    `At least ${PASSWORD_REQUIREMENTS.minLength} characters`,
     "At least one lowercase letter",
     "At least one uppercase letter",
     "At least one number",
