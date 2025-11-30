@@ -9,20 +9,9 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
+import type { AuthErrorResponse } from "@/lib/auth/errors";
 import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
-
-/**
- * API error response format from auth endpoints
- */
-interface ApiErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: Array<{ field: string; message: string }>;
-  };
-}
 
 /**
  * Helper to get cookies as a string for forwarding to API routes
@@ -138,7 +127,7 @@ export async function signupAction(
     const data = await response.json();
 
     if (!response.ok) {
-      const errorData = data as ApiErrorResponse;
+      const errorData = data as AuthErrorResponse;
       // Log error but don't expose to user for enumeration protection
       console.error("[Signup] Error:", errorData.error.message);
     }
@@ -199,7 +188,7 @@ export async function loginAction(
     const data = await response.json();
 
     if (!response.ok) {
-      const errorData = data as ApiErrorResponse;
+      const errorData = data as AuthErrorResponse;
       // Use generic error message for security
       return {
         data: null,
@@ -282,7 +271,7 @@ export async function passwordResetRequestAction(
     const data = await response.json();
 
     if (!response.ok) {
-      const errorData = data as ApiErrorResponse;
+      const errorData = data as AuthErrorResponse;
       // For validation errors, return field errors
       if (errorData.error.code === "VALIDATION_ERROR") {
         return {
@@ -377,7 +366,7 @@ export async function passwordUpdateAction(
     const data = await response.json();
 
     if (!response.ok) {
-      const errorData = data as ApiErrorResponse;
+      const errorData = data as AuthErrorResponse;
 
       // Check for authentication/session errors
       if (
@@ -556,7 +545,7 @@ export async function passwordChangeAction(
     const updateData = await updateResponse.json();
 
     if (!updateResponse.ok) {
-      const errorData = updateData as ApiErrorResponse;
+      const errorData = updateData as AuthErrorResponse;
 
       // Handle validation errors
       if (errorData.error.code === "VALIDATION_ERROR") {
