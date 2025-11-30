@@ -20,7 +20,7 @@ import {
   isPublicRoute,
   createLoginRedirect,
   getRequestPathname,
-} from "@/lib/auth/middleware-helpers";
+} from "@/lib/auth/helpers/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**

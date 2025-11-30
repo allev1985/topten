@@ -8,7 +8,7 @@ import {
   getRedirectToFromRequest,
   isProtectedRoute,
   isPublicRoute,
-} from "@/lib/auth/middleware-helpers";
+} from "@/lib/auth/helpers/middleware";
 
 // Mock getValidatedRedirect
 vi.mock("@/lib/utils/validation/redirect", () => ({
