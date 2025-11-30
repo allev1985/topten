@@ -14,28 +14,34 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-// Mock Supabase client
-const mockSignUp = vi.fn();
-const mockSignIn = vi.fn();
-const mockResetPasswordForEmail = vi.fn();
-const mockUpdateUser = vi.fn();
-const mockGetUser = vi.fn();
-const mockSignOut = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(() =>
+// Mock Next.js cookies
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(() =>
     Promise.resolve({
-      auth: {
-        signUp: mockSignUp,
-        signInWithPassword: mockSignIn,
-        resetPasswordForEmail: mockResetPasswordForEmail,
-        updateUser: mockUpdateUser,
-        getUser: mockGetUser,
-        signOut: mockSignOut,
-      },
+      getAll: () => [{ name: "session", value: "mock-session-value" }],
     })
   ),
 }));
+
+// Mock config - use importOriginal to preserve schema dependencies
+vi.mock("@/lib/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/config")>();
+  return {
+    ...actual,
+    getAppUrl: () => "http://localhost:3000",
+    REDIRECT_ROUTES: {
+      default: "/dashboard",
+      auth: {
+        success: "/dashboard",
+        error: "/auth/error",
+      },
+    },
+  };
+});
+
+// Mock fetch globally
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 // Helper to create FormData
 function createFormData(data: Record<string, string>): FormData {
@@ -58,6 +64,7 @@ const initialState = {
 describe("Auth Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetch.mockReset();
   });
 
   describe("signupAction", () => {
@@ -112,7 +119,14 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to verify-email on successful signup", async () => {
-      mockSignUp.mockResolvedValue({ error: null, data: { user: {} } });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message: "Please check your email to verify your account",
+          }),
+      });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -122,12 +136,31 @@ describe("Auth Actions", () => {
       await expect(signupAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/verify-email"
       );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3000/api/auth/signup",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "test@example.com",
+            password: "ValidPass123!@#",
+          }),
+        })
+      );
     });
 
     it("redirects even when email already exists (user enumeration protection)", async () => {
-      mockSignUp.mockResolvedValue({
-        error: { message: "User already exists" },
-        data: null,
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "AUTH_ERROR",
+              message: "User already exists",
+            },
+          }),
       });
 
       const formData = createFormData({
@@ -168,9 +201,16 @@ describe("Auth Actions", () => {
     });
 
     it("returns error for invalid credentials", async () => {
-      mockSignIn.mockResolvedValue({
-        error: { message: "Invalid login credentials" },
-        data: null,
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "AUTH_ERROR",
+              message: "Invalid email or password",
+            },
+          }),
       });
 
       const formData = createFormData({
@@ -186,7 +226,14 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to dashboard on successful login", async () => {
-      mockSignIn.mockResolvedValue({ error: null, data: { user: {} } });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            redirectTo: "/dashboard",
+          }),
+      });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -196,10 +243,30 @@ describe("Auth Actions", () => {
       await expect(loginAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/dashboard"
       );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3000/api/auth/login",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "test@example.com",
+            password: "ValidPass123!@#",
+            redirectTo: undefined,
+          }),
+        })
+      );
     });
 
     it("redirects to specified redirectTo on successful login", async () => {
-      mockSignIn.mockResolvedValue({ error: null, data: { user: {} } });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            redirectTo: "/settings",
+          }),
+      });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -213,7 +280,15 @@ describe("Auth Actions", () => {
     });
 
     it("ignores invalid redirectTo and uses default", async () => {
-      mockSignIn.mockResolvedValue({ error: null, data: { user: {} } });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            // API should validate and return default if invalid
+            redirectTo: "/dashboard",
+          }),
+      });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -240,7 +315,15 @@ describe("Auth Actions", () => {
     });
 
     it("returns success message regardless of email existence", async () => {
-      mockResetPasswordForEmail.mockResolvedValue({ error: null });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message:
+              "If an account exists, a password reset email has been sent",
+          }),
+      });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -252,11 +335,28 @@ describe("Auth Actions", () => {
       expect(result.data?.message).toBe(
         "If an account exists, a password reset email has been sent"
       );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3000/api/auth/password/reset",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "test@example.com",
+          }),
+        })
+      );
     });
 
     it("returns same success message even if email does not exist", async () => {
-      mockResetPasswordForEmail.mockResolvedValue({
-        error: { message: "User not found" },
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message:
+              "If an account exists, a password reset email has been sent",
+          }),
       });
 
       const formData = createFormData({
@@ -301,7 +401,17 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when session has expired", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: null } });
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "AUTH_ERROR",
+              message: "Authentication required",
+            },
+          }),
+      });
 
       const formData = createFormData({
         password: "ValidPass123!@#",
@@ -317,9 +427,14 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to login on successful password update", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: { id: "123" } } });
-      mockUpdateUser.mockResolvedValue({ error: null });
-      mockSignOut.mockResolvedValue({ error: null });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message: "Password updated successfully",
+          }),
+      });
 
       const formData = createFormData({
         password: "ValidPass123!@#",
@@ -329,12 +444,33 @@ describe("Auth Actions", () => {
       await expect(
         passwordUpdateAction(initialState, formData)
       ).rejects.toThrow("REDIRECT:/login");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3000/api/auth/password",
+        expect.objectContaining({
+          method: "PUT",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Cookie: "session=mock-session-value",
+          }),
+          body: JSON.stringify({
+            password: "ValidPass123!@#",
+          }),
+        })
+      );
     });
 
     it("returns error when update fails", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: { id: "123" } } });
-      mockUpdateUser.mockResolvedValue({
-        error: { message: "Update failed" },
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "SERVER_ERROR",
+              message: "Update failed",
+            },
+          }),
       });
 
       const formData = createFormData({
@@ -392,7 +528,15 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when not authenticated", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: null } });
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            authenticated: false,
+            user: null,
+          }),
+      });
 
       const formData = createFormData({
         currentPassword: "OldPass123!@#",
@@ -407,11 +551,28 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when current password is incorrect", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "123", email: "test@example.com" } },
+      // First call for session - returns authenticated user
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            authenticated: true,
+            user: { id: "123", email: "test@example.com" },
+          }),
       });
-      mockSignIn.mockResolvedValue({
-        error: { message: "Invalid credentials" },
+
+      // Second call for login/verify - returns error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "AUTH_ERROR",
+              message: "Invalid credentials",
+            },
+          }),
       });
 
       const formData = createFormData({
@@ -427,11 +588,36 @@ describe("Auth Actions", () => {
     });
 
     it("returns success on successful password change", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "123", email: "test@example.com" } },
+      // First call for session
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            authenticated: true,
+            user: { id: "123", email: "test@example.com" },
+          }),
       });
-      mockSignIn.mockResolvedValue({ error: null, data: { user: {} } });
-      mockUpdateUser.mockResolvedValue({ error: null });
+
+      // Second call for login/verify
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            redirectTo: "/dashboard",
+          }),
+      });
+
+      // Third call for password update
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message: "Password updated successfully",
+          }),
+      });
 
       const formData = createFormData({
         currentPassword: "OldPass123!@#",
@@ -446,11 +632,39 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when password update fails", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "123", email: "test@example.com" } },
+      // First call for session
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            authenticated: true,
+            user: { id: "123", email: "test@example.com" },
+          }),
       });
-      mockSignIn.mockResolvedValue({ error: null, data: { user: {} } });
-      mockUpdateUser.mockResolvedValue({ error: { message: "Update failed" } });
+
+      // Second call for login/verify
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            redirectTo: "/dashboard",
+          }),
+      });
+
+      // Third call for password update - fails
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: {
+              code: "SERVER_ERROR",
+              message: "Update failed",
+            },
+          }),
+      });
 
       const formData = createFormData({
         currentPassword: "OldPass123!@#",

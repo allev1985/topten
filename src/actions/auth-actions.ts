@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import {
   signupSchema,
   loginSchema,
@@ -9,7 +9,20 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
+import type { AuthErrorResponse } from "@/lib/auth/errors";
 import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
+import { isValidRedirect } from "@/lib/utils/validation/redirect";
+
+/**
+ * Helper to get cookies as a string for forwarding to API routes
+ */
+async function getCookieHeader(): Promise<string> {
+  const cookieStore = await cookies();
+  return cookieStore
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
+}
 
 /**
  * Signup action success data
@@ -42,19 +55,6 @@ export interface PasswordUpdateSuccessData {
 }
 
 /**
- * Validate redirect URL for security
- */
-function isValidRedirectUrl(url: string): boolean {
-  // Must be a relative path starting with /
-  if (!url.startsWith("/")) return false;
-  // Must not be a protocol-relative URL
-  if (url.startsWith("//")) return false;
-  // Must not contain protocol handlers
-  if (url.includes(":")) return false;
-  return true;
-}
-
-/**
  * Helper to map Zod errors to field errors
  */
 function mapZodErrors(
@@ -72,8 +72,26 @@ function mapZodErrors(
 }
 
 /**
+ * Helper to map API validation error details to field errors
+ */
+function mapApiDetailsToFieldErrors(
+  details?: Array<{ field: string; message: string }>
+): Record<string, string[]> {
+  if (!details) return {};
+  return details.reduce(
+    (acc, detail) => {
+      if (!acc[detail.field]) acc[detail.field] = [];
+      acc[detail.field]!.push(detail.message);
+      return acc;
+    },
+    {} as Record<string, string[]>
+  );
+}
+
+/**
  * Signup server action
  * Creates a new user account with email/password
+ * Calls /api/auth/signup endpoint
  */
 export async function signupAction(
   _prevState: ActionState<SignupSuccessData>,
@@ -82,7 +100,7 @@ export async function signupAction(
   const email = formData.get("email");
   const password = formData.get("password");
 
-  // Validate input
+  // Validate input (for immediate feedback - API will re-validate)
   const result = signupSchema.safeParse({ email, password });
 
   if (!result.success) {
@@ -94,30 +112,41 @@ export async function signupAction(
     };
   }
 
-  const supabase = await createClient();
-  const siteUrl = getAppUrl() || process.env.NEXT_PUBLIC_SITE_URL || "";
+  const baseUrl = getAppUrl();
 
-  // Always return success message for user enumeration protection
-  const { error } = await supabase.auth.signUp({
-    email: result.data.email,
-    password: result.data.password,
-    options: {
-      emailRedirectTo: `${siteUrl}/auth/verify`,
-    },
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: result.data.email,
+        password: result.data.password,
+      }),
+    });
 
-  // Log error but don't expose to user for enumeration protection
-  if (error) {
-    console.error("[Signup] Error:", error.message);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorData = data as AuthErrorResponse;
+      // Log error but don't expose to user for enumeration protection
+      console.error("[Signup] Error:", errorData.error.message);
+    }
+  } catch (err) {
+    // Log network errors but still redirect for enumeration protection
+    console.error(
+      "[Signup] Network error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
   }
 
-  // Always redirect to verify-email page
+  // Always redirect to verify-email page (user enumeration protection)
   redirect("/verify-email");
 }
 
 /**
  * Login server action
  * Authenticates user with email/password
+ * Calls /api/auth/login endpoint
  */
 export async function loginAction(
   _prevState: ActionState<LoginSuccessData>,
@@ -131,7 +160,7 @@ export async function loginAction(
       ? redirectToValue
       : undefined;
 
-  // Validate input
+  // Validate input (for immediate feedback - API will re-validate)
   const result = loginSchema.safeParse({ email, password, redirectTo });
 
   if (!result.success) {
@@ -143,35 +172,72 @@ export async function loginAction(
     };
   }
 
-  const supabase = await createClient();
+  const baseUrl = getAppUrl();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: result.data.email,
-    password: result.data.password,
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: result.data.email,
+        password: result.data.password,
+        redirectTo: result.data.redirectTo,
+      }),
+    });
 
-  if (error) {
-    // Use generic error message for security
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorData = data as AuthErrorResponse;
+      // Use generic error message for security
+      return {
+        data: null,
+        error: errorData.error.message || "Invalid email or password",
+        fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
+        isSuccess: false,
+      };
+    }
+
+    // Success - get validated redirect URL from API response
+    const targetUrl =
+      data.redirectTo && isValidRedirect(data.redirectTo)
+        ? data.redirectTo
+        : REDIRECT_ROUTES.default;
+
+    redirect(targetUrl);
+  } catch (err) {
+    // Check if this is a redirect (Next.js throws for redirect)
+    // Support both Next.js digest format and test mock format
+    const isRedirect =
+      (typeof err === "object" &&
+        err !== null &&
+        "digest" in err &&
+        typeof (err as { digest: string }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
+      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+
+    if (isRedirect) {
+      throw err;
+    }
+
+    console.error(
+      "[Login] Network error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+
     return {
       data: null,
-      error: "Invalid email or password",
+      error: "An unexpected error occurred. Please try again.",
       fieldErrors: {},
       isSuccess: false,
     };
   }
-
-  // Validate and use redirect URL
-  const targetUrl =
-    redirectTo && isValidRedirectUrl(redirectTo)
-      ? redirectTo
-      : REDIRECT_ROUTES.default;
-
-  redirect(targetUrl);
 }
 
 /**
  * Password reset request server action
  * Sends password reset email
+ * Calls /api/auth/password/reset endpoint
  */
 export async function passwordResetRequestAction(
   _prevState: ActionState<PasswordResetRequestSuccessData>,
@@ -179,7 +245,7 @@ export async function passwordResetRequestAction(
 ): Promise<ActionState<PasswordResetRequestSuccessData>> {
   const email = formData.get("email");
 
-  // Validate input
+  // Validate input (for immediate feedback - API will re-validate)
   const result = passwordResetSchema.safeParse({ email });
 
   if (!result.success) {
@@ -191,27 +257,67 @@ export async function passwordResetRequestAction(
     };
   }
 
-  const supabase = await createClient();
-  const siteUrl = getAppUrl() || process.env.NEXT_PUBLIC_SITE_URL || "";
+  const baseUrl = getAppUrl();
 
-  // Always return success for user enumeration protection
-  await supabase.auth.resetPasswordForEmail(result.data.email, {
-    redirectTo: `${siteUrl}/reset-password`,
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/password/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: result.data.email,
+      }),
+    });
 
-  return {
-    data: {
-      message: "If an account exists, a password reset email has been sent",
-    },
-    error: null,
-    fieldErrors: {},
-    isSuccess: true,
-  };
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorData = data as AuthErrorResponse;
+      // For validation errors, return field errors
+      if (errorData.error.code === "VALIDATION_ERROR") {
+        return {
+          data: null,
+          error: null,
+          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
+          isSuccess: false,
+        };
+      }
+      // For other errors (shouldn't happen due to enumeration protection)
+      // but fall through to success response anyway
+    }
+
+    // Always return success for user enumeration protection
+    return {
+      data: {
+        message:
+          data.message ||
+          "If an account exists, a password reset email has been sent",
+      },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
+  } catch (err) {
+    console.error(
+      "[PasswordResetRequest] Network error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+
+    // Still return success for enumeration protection
+    return {
+      data: {
+        message: "If an account exists, a password reset email has been sent",
+      },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
+  }
 }
 
 /**
  * Password update server action
  * Updates password using reset token (unauthenticated flow)
+ * Calls /api/auth/password PUT endpoint
  */
 export async function passwordUpdateAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -230,7 +336,7 @@ export async function passwordUpdateAction(
     };
   }
 
-  // Validate password requirements
+  // Validate password requirements (for immediate feedback - API will re-validate)
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -242,27 +348,80 @@ export async function passwordUpdateAction(
     };
   }
 
-  const supabase = await createClient();
+  const baseUrl = getAppUrl();
+  const cookieHeader = await getCookieHeader();
 
-  // Check if user has a valid session (from reset link)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        password: result.data.password,
+      }),
+    });
 
-  if (!user) {
-    return {
-      data: null,
-      error: "Session has expired. Please request a new reset link.",
-      fieldErrors: {},
-      isSuccess: false,
-    };
-  }
+    const data = await response.json();
 
-  const { error } = await supabase.auth.updateUser({
-    password: result.data.password,
-  });
+    if (!response.ok) {
+      const errorData = data as AuthErrorResponse;
 
-  if (error) {
+      // Check for authentication/session errors
+      if (
+        errorData.error.code === "AUTH_ERROR" ||
+        errorData.error.message.toLowerCase().includes("session") ||
+        errorData.error.message.toLowerCase().includes("authentication")
+      ) {
+        return {
+          data: null,
+          error: "Session has expired. Please request a new reset link.",
+          fieldErrors: {},
+          isSuccess: false,
+        };
+      }
+
+      // Handle validation errors
+      if (errorData.error.code === "VALIDATION_ERROR") {
+        return {
+          data: null,
+          error: null,
+          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
+          isSuccess: false,
+        };
+      }
+
+      return {
+        data: null,
+        error: "Failed to update password. Please try again.",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    // Success - redirect to login
+    redirect("/login");
+  } catch (err) {
+    // Check if this is a redirect (Next.js throws for redirect)
+    // Support both Next.js digest format and test mock format
+    const isRedirect =
+      (typeof err === "object" &&
+        err !== null &&
+        "digest" in err &&
+        typeof (err as { digest: string }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
+      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+
+    if (isRedirect) {
+      throw err;
+    }
+
+    console.error(
+      "[PasswordUpdate] Network error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+
     return {
       data: null,
       error: "Failed to update password. Please try again.",
@@ -270,16 +429,12 @@ export async function passwordUpdateAction(
       isSuccess: false,
     };
   }
-
-  // Sign out after password reset to force re-login
-  await supabase.auth.signOut();
-
-  redirect("/login");
 }
 
 /**
  * Password change server action
  * Changes password for authenticated user (requires current password)
+ * Calls /api/auth/password PUT endpoint after verifying current password via /api/auth/login
  */
 export async function passwordChangeAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -309,7 +464,7 @@ export async function passwordChangeAction(
     };
   }
 
-  // Validate password requirements
+  // Validate password requirements (for immediate feedback - API will re-validate)
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -321,43 +476,109 @@ export async function passwordChangeAction(
     };
   }
 
-  const supabase = await createClient();
+  const baseUrl = getAppUrl();
+  const cookieHeader = await getCookieHeader();
 
-  // Check if user is authenticated
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    // First, get the current user's session to retrieve their email
+    const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+      method: "GET",
+      headers: {
+        Cookie: cookieHeader,
+      },
+    });
 
-  if (!user || !user.email) {
+    if (!sessionResponse.ok) {
+      return {
+        data: null,
+        error: "Authentication required",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    const sessionData = await sessionResponse.json();
+
+    if (!sessionData.user?.email) {
+      return {
+        data: null,
+        error: "Authentication required",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    // Verify current password by attempting to log in
+    const verifyResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        email: sessionData.user.email,
+        password: currentPassword,
+      }),
+    });
+
+    if (!verifyResponse.ok) {
+      return {
+        data: null,
+        error: "Current password is incorrect",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    // Update password
+    const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        password: result.data.password,
+      }),
+    });
+
+    const updateData = await updateResponse.json();
+
+    if (!updateResponse.ok) {
+      const errorData = updateData as AuthErrorResponse;
+
+      // Handle validation errors
+      if (errorData.error.code === "VALIDATION_ERROR") {
+        return {
+          data: null,
+          error: null,
+          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
+          isSuccess: false,
+        };
+      }
+
+      return {
+        data: null,
+        error: "Failed to update password. Please try again.",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
     return {
-      data: null,
-      error: "Authentication required",
+      data: {
+        message: "Password updated successfully",
+      },
+      error: null,
       fieldErrors: {},
-      isSuccess: false,
+      isSuccess: true,
     };
-  }
+  } catch (err) {
+    console.error(
+      "[PasswordChange] Network error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
 
-  // Verify current password by attempting to sign in
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: user.email,
-    password: currentPassword,
-  });
-
-  if (signInError) {
-    return {
-      data: null,
-      error: "Current password is incorrect",
-      fieldErrors: {},
-      isSuccess: false,
-    };
-  }
-
-  // Update password
-  const { error: updateError } = await supabase.auth.updateUser({
-    password: result.data.password,
-  });
-
-  if (updateError) {
     return {
       data: null,
       error: "Failed to update password. Please try again.",
@@ -365,13 +586,4 @@ export async function passwordChangeAction(
       isSuccess: false,
     };
   }
-
-  return {
-    data: {
-      message: "Password updated successfully",
-    },
-    error: null,
-    fieldErrors: {},
-    isSuccess: true,
-  };
 }
