@@ -43,13 +43,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Build the redirect URL for password reset
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-    const redirectTo = `${siteUrl}/auth/reset-password`;
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
 
     // Log errors internally but always return success for enumeration protection
     if (error) {
