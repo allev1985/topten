@@ -15,7 +15,7 @@ import {
 export default function VerifyEmailPage(): JSX.Element {
   return (
     <main>
-      <Card>
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>

@@ -39,7 +39,7 @@ export function LoginForm({ redirectTo, defaultEmail }: LoginFormProps) {
   }, [state.isSuccess, state.data, router]);
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
         <CardDescription>

@@ -29,7 +29,7 @@ export default async function ResetPasswordPage({
   if (!code) {
     return (
       <main>
-        <Card>
+        <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle>Invalid Reset Link</CardTitle>
             <CardDescription>

@@ -40,7 +40,7 @@ export function PasswordResetForm() {
   // Show success message if completed
   if (state.isSuccess) {
     return (
-      <Card>
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Password Reset Successful</CardTitle>
           <CardDescription>Your password has been updated</CardDescription>

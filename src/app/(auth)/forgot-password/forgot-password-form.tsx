@@ -44,7 +44,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Reset Password</CardTitle>
         <CardDescription>

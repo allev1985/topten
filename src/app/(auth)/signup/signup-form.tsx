@@ -46,7 +46,7 @@ export function SignupForm() {
   };
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
         <CardDescription>
