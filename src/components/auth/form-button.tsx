@@ -1,4 +1,5 @@
 import type { JSX, ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 export interface FormButtonProps {
   /** Button content */
@@ -30,7 +31,7 @@ export function FormButton({
   const isDisabled = disabled || pending;
 
   return (
-    <button
+    <Button
       type={type}
       onClick={onClick}
       disabled={isDisabled}
@@ -38,6 +39,6 @@ export function FormButton({
       className={className}
     >
       {pending ? "Submitting..." : children}
-    </button>
+    </Button>
   );
 }

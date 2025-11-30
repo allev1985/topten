@@ -1,4 +1,6 @@
 import type { JSX } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export interface FormInputProps {
   /** Unique identifier for input and label association */
@@ -43,8 +45,8 @@ export function FormInput({
 
   return (
     <div className={className}>
-      <label htmlFor={id}>{label}</label>
-      <input
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
         name={name}
         type={type}

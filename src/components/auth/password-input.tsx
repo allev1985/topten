@@ -2,6 +2,8 @@
 
 import { useState, type JSX, type ChangeEvent } from "react";
 import { validatePassword } from "@/lib/utils/validation/password";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export interface PasswordInputProps {
   /** Unique identifier for input and label association */
@@ -65,8 +67,8 @@ export function PasswordInput({
 
   return (
     <div className={className}>
-      <label htmlFor={id}>{label}</label>
-      <input
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
         name={name}
         type="password"
