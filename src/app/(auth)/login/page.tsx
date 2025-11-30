@@ -1,6 +1,5 @@
 import type { JSX } from "react";
-import { AuthCard } from "@/components/auth/auth-card";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginForm } from "./login-form";
 
 interface LoginPageProps {
   searchParams: Promise<{
@@ -20,27 +19,8 @@ export default async function LoginPage({
   const { redirectTo, email } = params;
 
   return (
-    <AuthCard
-      title="Sign In"
-      description="Enter your credentials to access your account"
-      footer={
-        <div>
-          <p>
-            Don&apos;t have an account? <a href="/signup">Sign up</a>
-          </p>
-          <p>
-            <a href="/forgot-password">Forgot your password?</a>
-          </p>
-          <hr />
-          <p>
-            <button type="button" disabled>
-              Sign in with Google (coming soon)
-            </button>
-          </p>
-        </div>
-      }
-    >
+    <main>
       <LoginForm redirectTo={redirectTo} defaultEmail={email} />
-    </AuthCard>
+    </main>
   );
 }

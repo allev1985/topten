@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type ChangeEvent } from "react";
 import { useFormState } from "@/hooks/use-form-state";
-import { signupAction } from "@/actions/auth-actions";
+import { passwordUpdateAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,22 +18,15 @@ import {
 import { validatePassword } from "@/lib/utils/validation/password";
 
 /**
- * Signup form client component
- * Handles form state and client-side interactions
+ * Password reset form component
+ * Used for reset password flow
  */
-export function SignupForm() {
-  const router = useRouter();
-  const { state, formAction } = useFormState(signupAction);
+export function PasswordResetForm() {
+  const { state, formAction } = useFormState(passwordUpdateAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
     "weak"
   );
   const [hasInput, setHasInput] = useState(false);
-
-  useEffect(() => {
-    if (state.isSuccess && state.data?.redirectTo) {
-      router.push(state.data.redirectTo);
-    }
-  }, [state.isSuccess, state.data, router]);
 
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -45,13 +37,31 @@ export function SignupForm() {
     }
   };
 
+  // Show success message if completed
+  if (state.isSuccess) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Password Reset Successful</CardTitle>
+          <CardDescription>Your password has been updated</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p role="status">{state.data?.message}</p>
+        </CardContent>
+        <CardFooter>
+          <p>
+            <a href="/login">Back to sign in</a>
+          </p>
+        </CardFooter>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="w-full max-w-sm">
+    <Card>
       <CardHeader>
-        <CardTitle>Create Account</CardTitle>
-        <CardDescription>
-          Enter your email and password to sign up
-        </CardDescription>
+        <CardTitle>Set New Password</CardTitle>
+        <CardDescription>Enter your new password below</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
@@ -62,39 +72,14 @@ export function SignupForm() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="Enter your email"
-              aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
-              aria-describedby={
-                state.fieldErrors.email?.[0] ? "email-error" : undefined
-              }
-            />
-            {state.fieldErrors.email?.[0] && (
-              <span
-                id="email-error"
-                role="alert"
-                className="text-destructive text-sm"
-              >
-                {state.fieldErrors.email[0]}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">New Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
               required
               autoComplete="new-password"
-              placeholder="Create a password"
+              placeholder="Enter your new password"
               onChange={handlePasswordChange}
               aria-invalid={
                 state.fieldErrors.password?.[0] ? "true" : undefined
@@ -128,18 +113,47 @@ export function SignupForm() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              required
+              autoComplete="new-password"
+              placeholder="Confirm your new password"
+              aria-invalid={
+                state.fieldErrors.confirmPassword?.[0] ? "true" : undefined
+              }
+              aria-describedby={
+                state.fieldErrors.confirmPassword?.[0]
+                  ? "confirmPassword-error"
+                  : undefined
+              }
+            />
+            {state.fieldErrors.confirmPassword?.[0] && (
+              <span
+                id="confirmPassword-error"
+                role="alert"
+                className="text-destructive text-sm"
+              >
+                {state.fieldErrors.confirmPassword[0]}
+              </span>
+            )}
+          </div>
+
           <Button
             type="submit"
             disabled={state.isPending}
             aria-busy={state.isPending}
           >
-            {state.isPending ? "Submitting..." : "Create Account"}
+            {state.isPending ? "Submitting..." : "Reset Password"}
           </Button>
         </form>
       </CardContent>
       <CardFooter>
         <p>
-          Already have an account? <a href="/login">Sign in</a>
+          <a href="/login">Back to sign in</a>
         </p>
       </CardFooter>
     </Card>

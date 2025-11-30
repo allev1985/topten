@@ -1,6 +1,13 @@
 import type { JSX } from "react";
-import { AuthCard } from "@/components/auth/auth-card";
-import { PasswordResetForm } from "@/components/auth/password-reset-form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PasswordResetForm } from "./password-reset-form";
 
 interface ResetPasswordPageProps {
   searchParams: Promise<{
@@ -21,36 +28,33 @@ export default async function ResetPasswordPage({
   // If no code, show error state
   if (!code) {
     return (
-      <AuthCard
-        title="Invalid Reset Link"
-        description="This password reset link is invalid or has expired"
-        footer={
-          <p>
-            <a href="/forgot-password">Request a new reset link</a>
-          </p>
-        }
-      >
-        <div>
-          <p>
-            The password reset link you followed appears to be invalid or has
-            expired. Please request a new one.
-          </p>
-        </div>
-      </AuthCard>
+      <main>
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>Invalid Reset Link</CardTitle>
+            <CardDescription>
+              This password reset link is invalid or has expired
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>
+              The password reset link you followed appears to be invalid or has
+              expired. Please request a new one.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <p>
+              <a href="/forgot-password">Request a new reset link</a>
+            </p>
+          </CardFooter>
+        </Card>
+      </main>
     );
   }
 
   return (
-    <AuthCard
-      title="Set New Password"
-      description="Enter your new password below"
-      footer={
-        <p>
-          <a href="/login">Back to sign in</a>
-        </p>
-      }
-    >
+    <main>
       <PasswordResetForm />
-    </AuthCard>
+    </main>
   );
 }
