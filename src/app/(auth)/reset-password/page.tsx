@@ -54,20 +54,7 @@ export default async function ResetPasswordPage({
 
   return (
     <main>
-      <Card>
-        <CardHeader>
-          <CardTitle>Set New Password</CardTitle>
-          <CardDescription>Enter your new password below</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PasswordResetForm />
-        </CardContent>
-        <CardFooter>
-          <p>
-            <a href="/login">Back to sign in</a>
-          </p>
-        </CardFooter>
-      </Card>
+      <PasswordResetForm />
     </main>
   );
 }
