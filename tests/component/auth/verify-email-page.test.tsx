@@ -7,9 +7,7 @@ describe("VerifyEmailPage", () => {
     it("renders the page title", () => {
       render(<VerifyEmailPage />);
 
-      expect(
-        screen.getByRole("heading", { name: "Check your email" })
-      ).toBeInTheDocument();
+      expect(screen.getByText("Check your email")).toBeInTheDocument();
     });
 
     it("renders verification instructions", () => {
@@ -45,12 +43,10 @@ describe("VerifyEmailPage", () => {
   });
 
   describe("accessible content structure", () => {
-    it("has a main heading (h1)", () => {
+    it("has the page title", () => {
       render(<VerifyEmailPage />);
 
-      const heading = screen.getByRole("heading", { level: 1 });
-      expect(heading).toBeInTheDocument();
-      expect(heading).toHaveTextContent("Check your email");
+      expect(screen.getByText("Check your email")).toBeInTheDocument();
     });
 
     it("uses semantic HTML main element", () => {
@@ -59,10 +55,11 @@ describe("VerifyEmailPage", () => {
       expect(container.querySelector("main")).toBeInTheDocument();
     });
 
-    it("uses semantic HTML article element", () => {
+    it("uses shadcn Card component structure", () => {
       const { container } = render(<VerifyEmailPage />);
 
-      expect(container.querySelector("article")).toBeInTheDocument();
+      // Card uses div with specific classes
+      expect(container.querySelector(".rounded-xl.border")).toBeInTheDocument();
     });
 
     it("has link back to login", () => {

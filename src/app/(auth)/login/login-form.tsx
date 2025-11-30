@@ -1,26 +1,28 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "@/hooks/use-form-state";
-import { signupAction } from "@/actions/auth-actions";
+import { loginAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { validatePassword } from "@/lib/utils/validation/password";
+
+export interface LoginFormProps {
+  /** Redirect URL after successful login */
+  redirectTo?: string;
+  /** Initial email value (e.g., from URL params) */
+  defaultEmail?: string;
+}
 
 /**
- * Signup form client component
- * Handles form state and client-side interactions
+ * Login form component
+ * Handles authentication with email/password
  */
-export function SignupForm() {
+export function LoginForm({ redirectTo, defaultEmail }: LoginFormProps) {
   const router = useRouter();
-  const { state, formAction } = useFormState(signupAction);
-  const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
-    "weak"
-  );
-  const [hasInput, setHasInput] = useState(false);
+  const { state, formAction } = useFormState(loginAction);
 
   useEffect(() => {
     if (state.isSuccess && state.data?.redirectTo) {
@@ -28,21 +30,17 @@ export function SignupForm() {
     }
   }, [state.isSuccess, state.data, router]);
 
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setHasInput(value.length > 0);
-    if (value.length > 0) {
-      const result = validatePassword(value);
-      setStrength(result.strength);
-    }
-  };
-
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
+      )}
+
+      {/* Hidden field for redirect URL */}
+      {redirectTo && (
+        <input type="hidden" name="redirectTo" value={redirectTo} />
       )}
 
       <div className="space-y-2">
@@ -53,6 +51,7 @@ export function SignupForm() {
           type="email"
           required
           autoComplete="email"
+          defaultValue={defaultEmail}
           placeholder="Enter your email"
           aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
           aria-describedby={
@@ -77,28 +76,13 @@ export function SignupForm() {
           name="password"
           type="password"
           required
-          autoComplete="new-password"
-          placeholder="Create a password"
-          onChange={handlePasswordChange}
+          autoComplete="current-password"
+          placeholder="Enter your password"
           aria-invalid={state.fieldErrors.password?.[0] ? "true" : undefined}
           aria-describedby={
-            [
-              state.fieldErrors.password?.[0] ? "password-error" : null,
-              "password-strength",
-            ]
-              .filter(Boolean)
-              .join(" ") || undefined
+            state.fieldErrors.password?.[0] ? "password-error" : undefined
           }
         />
-        {hasInput && (
-          <span
-            id="password-strength"
-            aria-live="polite"
-            className="text-muted-foreground text-sm"
-          >
-            Password strength: {strength}
-          </span>
-        )}
         {state.fieldErrors.password?.[0] && (
           <span
             id="password-error"
@@ -110,12 +94,17 @@ export function SignupForm() {
         )}
       </div>
 
+      <div className="flex items-center space-x-2">
+        <input type="checkbox" id="rememberMe" name="rememberMe" />
+        <Label htmlFor="rememberMe">Remember me</Label>
+      </div>
+
       <Button
         type="submit"
         disabled={state.isPending}
         aria-busy={state.isPending}
       >
-        {state.isPending ? "Submitting..." : "Create Account"}
+        {state.isPending ? "Submitting..." : "Sign In"}
       </Button>
     </form>
   );

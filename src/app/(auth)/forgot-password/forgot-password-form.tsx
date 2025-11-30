@@ -2,9 +2,10 @@
 
 import { useFormState } from "@/hooks/use-form-state";
 import { passwordResetRequestAction } from "@/actions/auth-actions";
-import { FormInput } from "@/components/auth/form-input";
-import { FormButton } from "@/components/auth/form-button";
-import { ErrorMessage } from "@/components/auth/error-message";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
  * Forgot password form client component
@@ -15,7 +16,7 @@ export function ForgotPasswordForm() {
 
   if (state.isSuccess) {
     return (
-      <div>
+      <div className="space-y-4">
         <p role="status">{state.data?.message}</p>
         <p>
           <a href="/login">Back to sign in</a>
@@ -25,21 +26,45 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form action={formAction}>
-      <ErrorMessage message={state.error} />
+    <form action={formAction} className="space-y-4">
+      {state.error && (
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
+      )}
 
-      <FormInput
-        id="email"
-        name="email"
-        type="email"
-        label="Email"
-        required
-        autoComplete="email"
-        placeholder="Enter your email"
-        error={state.fieldErrors.email?.[0]}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="Enter your email"
+          aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
+          aria-describedby={
+            state.fieldErrors.email?.[0] ? "email-error" : undefined
+          }
+        />
+        {state.fieldErrors.email?.[0] && (
+          <span
+            id="email-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
+            {state.fieldErrors.email[0]}
+          </span>
+        )}
+      </div>
 
-      <FormButton pending={state.isPending}>Send Reset Link</FormButton>
+      <Button
+        type="submit"
+        disabled={state.isPending}
+        aria-busy={state.isPending}
+      >
+        {state.isPending ? "Submitting..." : "Send Reset Link"}
+      </Button>
     </form>
   );
 }

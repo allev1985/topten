@@ -1,7 +1,14 @@
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AuthCard } from "@/components/auth/auth-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { REDIRECT_ROUTES } from "@/lib/config";
 
 interface AuthVerifyPageProps {
@@ -27,24 +34,28 @@ export default async function AuthVerifyPage({
   // Handle error from Supabase
   if (error) {
     return (
-      <AuthCard
-        title="Verification Failed"
-        description={
-          error_description || "The verification link is invalid or has expired"
-        }
-        footer={
-          <p>
-            <a href="/signup">Try signing up again</a>
-          </p>
-        }
-      >
-        <div>
-          <p>
-            Your verification link may have expired. Please request a new one by
-            signing up again.
-          </p>
-        </div>
-      </AuthCard>
+      <main>
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification Failed</CardTitle>
+            <CardDescription>
+              {error_description ||
+                "The verification link is invalid or has expired"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Your verification link may have expired. Please request a new one
+              by signing up again.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <p>
+              <a href="/signup">Try signing up again</a>
+            </p>
+          </CardFooter>
+        </Card>
+      </main>
     );
   }
 
@@ -57,22 +68,25 @@ export default async function AuthVerifyPage({
 
     if (exchangeError) {
       return (
-        <AuthCard
-          title="Verification Failed"
-          description="Unable to verify your email"
-          footer={
-            <p>
-              <a href="/signup">Try signing up again</a>
-            </p>
-          }
-        >
-          <div>
-            <p>
-              There was a problem verifying your email. The link may have
-              expired.
-            </p>
-          </div>
-        </AuthCard>
+        <main>
+          <Card>
+            <CardHeader>
+              <CardTitle>Verification Failed</CardTitle>
+              <CardDescription>Unable to verify your email</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>
+                There was a problem verifying your email. The link may have
+                expired.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <p>
+                <a href="/signup">Try signing up again</a>
+              </p>
+            </CardFooter>
+          </Card>
+        </main>
       );
     }
 
@@ -88,22 +102,27 @@ export default async function AuthVerifyPage({
 
     if (verifyError) {
       return (
-        <AuthCard
-          title="Verification Failed"
-          description="The verification link is invalid or has expired"
-          footer={
-            <p>
-              <a href="/signup">Try signing up again</a>
-            </p>
-          }
-        >
-          <div>
-            <p>
-              Your verification link may have expired. Please request a new one
-              by signing up again.
-            </p>
-          </div>
-        </AuthCard>
+        <main>
+          <Card>
+            <CardHeader>
+              <CardTitle>Verification Failed</CardTitle>
+              <CardDescription>
+                The verification link is invalid or has expired
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>
+                Your verification link may have expired. Please request a new
+                one by signing up again.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <p>
+                <a href="/signup">Try signing up again</a>
+              </p>
+            </CardFooter>
+          </Card>
+        </main>
       );
     }
 
@@ -112,18 +131,23 @@ export default async function AuthVerifyPage({
 
   // No valid verification parameters
   return (
-    <AuthCard
-      title="Invalid Link"
-      description="This verification link is incomplete"
-      footer={
-        <p>
-          <a href="/login">Go to sign in</a>
-        </p>
-      }
-    >
-      <div>
-        <p>The verification link appears to be incomplete or invalid.</p>
-      </div>
-    </AuthCard>
+    <main>
+      <Card>
+        <CardHeader>
+          <CardTitle>Invalid Link</CardTitle>
+          <CardDescription>
+            This verification link is incomplete
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>The verification link appears to be incomplete or invalid.</p>
+        </CardContent>
+        <CardFooter>
+          <p>
+            <a href="/login">Go to sign in</a>
+          </p>
+        </CardFooter>
+      </Card>
+    </main>
   );
 }

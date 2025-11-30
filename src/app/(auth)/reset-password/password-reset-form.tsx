@@ -2,7 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { useFormState } from "@/hooks/use-form-state";
-import { passwordChangeAction } from "@/actions/auth-actions";
+import { passwordUpdateAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validatePassword } from "@/lib/utils/validation/password";
 
 /**
- * Password change form for authenticated users
- * Requires current password verification
+ * Password reset form component
+ * Used for reset password flow
  */
-export function PasswordChangeForm() {
-  const { state, formAction } = useFormState(passwordChangeAction);
+export function PasswordResetForm() {
+  const { state, formAction } = useFormState(passwordUpdateAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
     "weak"
   );
@@ -29,11 +29,11 @@ export function PasswordChangeForm() {
     }
   };
 
+  // Show success message if completed
   if (state.isSuccess) {
     return (
       <div className="space-y-4">
         <p role="status">{state.data?.message}</p>
-        <p>Your password has been successfully updated.</p>
       </div>
     );
   }
@@ -45,35 +45,6 @@ export function PasswordChangeForm() {
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
-
-      <div className="space-y-2">
-        <Label htmlFor="currentPassword">Current Password</Label>
-        <Input
-          id="currentPassword"
-          name="currentPassword"
-          type="password"
-          required
-          autoComplete="current-password"
-          placeholder="Enter your current password"
-          aria-invalid={
-            state.fieldErrors.currentPassword?.[0] ? "true" : undefined
-          }
-          aria-describedby={
-            state.fieldErrors.currentPassword?.[0]
-              ? "currentPassword-error"
-              : undefined
-          }
-        />
-        {state.fieldErrors.currentPassword?.[0] && (
-          <span
-            id="currentPassword-error"
-            role="alert"
-            className="text-destructive text-sm"
-          >
-            {state.fieldErrors.currentPassword[0]}
-          </span>
-        )}
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">New Password</Label>
@@ -116,7 +87,7 @@ export function PasswordChangeForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+        <Label htmlFor="confirmPassword">Confirm Password</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -149,7 +120,7 @@ export function PasswordChangeForm() {
         disabled={state.isPending}
         aria-busy={state.isPending}
       >
-        {state.isPending ? "Submitting..." : "Change Password"}
+        {state.isPending ? "Submitting..." : "Reset Password"}
       </Button>
     </form>
   );
