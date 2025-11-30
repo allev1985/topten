@@ -1,47 +1,50 @@
 import type { JSX } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { verifyEmailAction } from "@/actions/auth-actions";
+import { VerificationPending } from "./verification-pending";
+import { VerificationSuccess } from "./verification-success";
+import { VerificationError } from "./verification-error";
+
+interface VerifyEmailPageProps {
+  searchParams: Promise<{
+    code?: string;
+    token_hash?: string;
+    type?: string;
+  }>;
+}
 
 /**
- * Verify email waiting page
- * Shown after signup to instruct user to check their email
+ * Verify email page
+ * Handles email verification from Supabase links
+ * Supports both OTP (token_hash + type) and PKCE (code) flows
  */
-export default function VerifyEmailPage(): JSX.Element {
-  return (
-    <main>
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
-            We&apos;ve sent you a verification link
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>
-            Please check your inbox and click the verification link to complete
-            your registration.
-          </p>
-          <p>
-            <strong>Didn&apos;t receive the email?</strong>
-          </p>
-          <ul>
-            <li>Check your spam or junk folder</li>
-            <li>Make sure you entered the correct email address</li>
-            <li>Wait a few minutes and try again</li>
-          </ul>
-        </CardContent>
-        <CardFooter>
-          <p>
-            <a href="/login">Back to sign in</a>
-          </p>
-        </CardFooter>
-      </Card>
-    </main>
-  );
+export default async function VerifyEmailPage({
+  searchParams,
+}: VerifyEmailPageProps): Promise<JSX.Element> {
+  const params = await searchParams;
+  const { code, token_hash, type } = params;
+
+  // If no verification parameters, show pending state
+  if (!code && !token_hash) {
+    return <VerificationPending />;
+  }
+
+  // Attempt verification
+  const result = await verifyEmailAction({
+    code,
+    token_hash,
+    type: type as "email" | undefined,
+  });
+
+  // On success, show success message with redirect
+  if (result.isSuccess && result.data) {
+    return (
+      <VerificationSuccess
+        message={result.data.message}
+        redirectTo={result.data.redirectTo}
+      />
+    );
+  }
+
+  // Show error state with resend option
+  return <VerificationError error={result.error || "Verification failed"} />;
 }

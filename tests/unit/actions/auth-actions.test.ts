@@ -5,6 +5,8 @@ import {
   passwordResetRequestAction,
   passwordUpdateAction,
   passwordChangeAction,
+  verifyEmailAction,
+  resendVerificationAction,
 } from "@/actions/auth-actions";
 
 // Mock Next.js navigation
@@ -21,6 +23,9 @@ const mockResetPasswordForEmail = vi.fn();
 const mockUpdateUser = vi.fn();
 const mockGetUser = vi.fn();
 const mockSignOut = vi.fn();
+const mockVerifyOtp = vi.fn();
+const mockExchangeCodeForSession = vi.fn();
+const mockResend = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() =>
@@ -32,6 +37,9 @@ vi.mock("@/lib/supabase/server", () => ({
         updateUser: mockUpdateUser,
         getUser: mockGetUser,
         signOut: mockSignOut,
+        verifyOtp: mockVerifyOtp,
+        exchangeCodeForSession: mockExchangeCodeForSession,
+        resend: mockResend,
       },
     })
   ),
@@ -462,6 +470,168 @@ describe("Auth Actions", () => {
 
       expect(result.isSuccess).toBe(false);
       expect(result.error).toBe("Failed to update password. Please try again.");
+    });
+  });
+
+  describe("verifyEmailAction", () => {
+    it("returns success for valid PKCE code", async () => {
+      mockExchangeCodeForSession.mockResolvedValue({
+        error: null,
+        data: { session: {} },
+      });
+
+      const result = await verifyEmailAction({ code: "valid-pkce-code" });
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.data?.message).toBe("Email verified successfully");
+      expect(result.data?.redirectTo).toBe("/dashboard");
+      expect(mockExchangeCodeForSession).toHaveBeenCalledWith(
+        "valid-pkce-code"
+      );
+    });
+
+    it("returns success for valid OTP token", async () => {
+      mockVerifyOtp.mockResolvedValue({ error: null, data: { session: {} } });
+
+      const result = await verifyEmailAction({
+        token_hash: "valid-token-hash",
+        type: "email",
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.data?.message).toBe("Email verified successfully");
+      expect(result.data?.redirectTo).toBe("/dashboard");
+      expect(mockVerifyOtp).toHaveBeenCalledWith({
+        type: "email",
+        token_hash: "valid-token-hash",
+      });
+    });
+
+    it("returns error for expired PKCE code", async () => {
+      mockExchangeCodeForSession.mockResolvedValue({
+        error: { message: "code has expired" },
+        data: null,
+      });
+
+      const result = await verifyEmailAction({ code: "expired-code" });
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe(
+        "This verification link has expired. Please request a new one."
+      );
+    });
+
+    it("returns error for expired OTP token", async () => {
+      mockVerifyOtp.mockResolvedValue({
+        error: { message: "Token has expired" },
+        data: null,
+      });
+
+      const result = await verifyEmailAction({
+        token_hash: "expired-token",
+        type: "email",
+      });
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe(
+        "This verification link has expired. Please request a new one."
+      );
+    });
+
+    it("returns error for invalid PKCE code", async () => {
+      mockExchangeCodeForSession.mockResolvedValue({
+        error: { message: "Invalid code" },
+        data: null,
+      });
+
+      const result = await verifyEmailAction({ code: "invalid-code" });
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe(
+        "This verification link is invalid. Please request a new one."
+      );
+    });
+
+    it("returns error for invalid OTP token", async () => {
+      mockVerifyOtp.mockResolvedValue({
+        error: { message: "Invalid token" },
+        data: null,
+      });
+
+      const result = await verifyEmailAction({
+        token_hash: "invalid-token",
+        type: "email",
+      });
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe(
+        "This verification link is invalid. Please request a new one."
+      );
+    });
+
+    it("returns error when no verification parameters provided", async () => {
+      const result = await verifyEmailAction({});
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe("No verification code provided.");
+    });
+
+    it("returns error when only token_hash provided without type", async () => {
+      const result = await verifyEmailAction({ token_hash: "some-token" });
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe("No verification code provided.");
+    });
+  });
+
+  describe("resendVerificationAction", () => {
+    it("returns success for valid email", async () => {
+      mockResend.mockResolvedValue({ error: null });
+
+      const formData = createFormData({ email: "test@example.com" });
+      const result = await resendVerificationAction(initialState, formData);
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.data?.message).toBe(
+        "If an account exists with this email, a verification link has been sent."
+      );
+      expect(mockResend).toHaveBeenCalledWith({
+        type: "signup",
+        email: "test@example.com",
+        options: expect.objectContaining({
+          emailRedirectTo: expect.stringContaining("/auth/verify"),
+        }),
+      });
+    });
+
+    it("returns same success message for non-existent email (enumeration protection)", async () => {
+      mockResend.mockResolvedValue({ error: { message: "User not found" } });
+
+      const formData = createFormData({ email: "nonexistent@example.com" });
+      const result = await resendVerificationAction(initialState, formData);
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.data?.message).toBe(
+        "If an account exists with this email, a verification link has been sent."
+      );
+    });
+
+    it("returns fieldErrors for invalid email format", async () => {
+      const formData = createFormData({ email: "invalid-email" });
+      const result = await resendVerificationAction(initialState, formData);
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.fieldErrors.email).toBeDefined();
+      expect(result.data).toBeNull();
+    });
+
+    it("returns fieldErrors for empty email", async () => {
+      const formData = createFormData({ email: "" });
+      const result = await resendVerificationAction(initialState, formData);
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.fieldErrors.email).toBeDefined();
+      expect(result.data).toBeNull();
     });
   });
 });

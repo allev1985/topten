@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-11-28
 
 ## Active Technologies
+- TypeScript 5.x, Node.js 20.x + Next.js 15 (App Router), Supabase Auth (@supabase/ssr), React 19, shadcn/ui, Zod (001-fix-verify-email)
+- Supabase (PostgreSQL) - handled by Supabase Auth (001-fix-verify-email)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -39,6 +41,7 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 001-fix-verify-email: Added TypeScript 5.x, Node.js 20.x + Next.js 15 (App Router), Supabase Auth (@supabase/ssr), React 19, shadcn/ui, Zod
 
 - **001-supabase-auth-setup**: Added authentication foundation with Supabase SSR integration
 
