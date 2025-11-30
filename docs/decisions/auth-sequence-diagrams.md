@@ -33,7 +33,8 @@ sequenceDiagram
     Note over User,Supabase: Email Verification Step
 
     User->>User: Check email & click verification link
-    User->>WebApp: GET /api/auth/verify?code=xxx
+    User->>WebApp: GET /verify-email?code=xxx (page navigation)
+    WebApp->>WebApp: Page loads, calls POST /api/auth/verify
     WebApp->>Supabase: verifyOtp(code, type: 'email')
     Supabase->>Supabase: Mark email as verified
     Supabase-->>WebApp: Return session tokens
@@ -104,11 +105,11 @@ sequenceDiagram
     Note over User,Supabase: Password Reset Step
 
     User->>User: Check email & click reset link
-    User->>WebApp: GET /reset-password?code=xxx
-    WebApp-->>User: Display new password form
+    User->>WebApp: GET /reset-password?code=xxx (page navigation)
+    WebApp-->>User: Display new password form (with code in state)
 
     User->>WebApp: Submit new password
-    WebApp->>WebApp: PUT /api/auth/password
+    WebApp->>WebApp: PUT /api/auth/password (with code)
     WebApp->>Supabase: updateUser(password) with reset code
 
     alt Valid Code
@@ -127,7 +128,25 @@ sequenceDiagram
 
 ## API Architecture
 
-The Web Application implements a **RESTful API layer** that acts as an intermediary between the frontend pages and Supabase Auth. This architecture provides:
+The Web Application implements a **RESTful API layer** that acts as an intermediary between the frontend pages and Supabase Auth.
+
+### Key Distinction: Pages vs APIs
+
+**Web Pages** (visited by users in browser):
+- `/signup` - Signup form page
+- `/verify-email` - Email verification landing page (receives code from email link)
+- `/login` - Login form page
+- `/forgot-password` - Password reset request page
+- `/reset-password` - New password form page (receives code from email link)
+- `/dashboard/*` - Protected application pages
+
+**API Endpoints** (called internally by web pages):
+- Called server-side or via client-side JavaScript
+- Handle business logic and communicate with Supabase
+- Set cookies and manage sessions
+- Return JSON responses
+
+This architecture provides:
 
 ### API Endpoints
 
