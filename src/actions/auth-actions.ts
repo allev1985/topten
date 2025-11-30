@@ -318,6 +318,8 @@ export async function passwordResetRequestAction(
  * Password update server action
  * Updates password using reset token (unauthenticated flow)
  * Calls /api/auth/password PUT endpoint
+ *
+ * Supports PKCE code authentication from password reset email links
  */
 export async function passwordUpdateAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -325,6 +327,7 @@ export async function passwordUpdateAction(
 ): Promise<ActionState<PasswordUpdateSuccessData>> {
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
+  const codeValue = formData.get("code");
 
   // Validate password matches
   if (password !== confirmPassword) {
@@ -351,6 +354,10 @@ export async function passwordUpdateAction(
   const baseUrl = getAppUrl();
   const cookieHeader = await getCookieHeader();
 
+  // Extract code if provided (PKCE authentication from reset email)
+  const code =
+    typeof codeValue === "string" && codeValue ? codeValue : undefined;
+
   try {
     const response = await fetch(`${baseUrl}/api/auth/password`, {
       method: "PUT",
@@ -360,6 +367,7 @@ export async function passwordUpdateAction(
       },
       body: JSON.stringify({
         password: result.data.password,
+        ...(code && { code }),
       }),
     });
 

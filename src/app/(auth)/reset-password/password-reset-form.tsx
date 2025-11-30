@@ -17,11 +17,16 @@ import {
 } from "@/components/ui/card";
 import { validatePassword } from "@/lib/utils/validation/password";
 
+interface PasswordResetFormProps {
+  /** PKCE code from password reset email link */
+  code?: string;
+}
+
 /**
  * Password reset form component
  * Used for reset password flow
  */
-export function PasswordResetForm() {
+export function PasswordResetForm({ code }: PasswordResetFormProps) {
   const { state, formAction } = useFormState(passwordUpdateAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
     "weak"
@@ -65,6 +70,9 @@ export function PasswordResetForm() {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          {/* Hidden input for PKCE code from reset email */}
+          {code && <input type="hidden" name="code" value={code} />}
+
           {state.error && (
             <Alert variant="destructive">
               <AlertDescription>{state.error}</AlertDescription>

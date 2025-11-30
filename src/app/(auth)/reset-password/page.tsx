@@ -54,7 +54,7 @@ export default async function ResetPasswordPage({
 
   return (
     <main>
-      <PasswordResetForm />
+      <PasswordResetForm code={code} />
     </main>
   );
 }
