@@ -61,6 +61,7 @@
     "jsdom": "^27.2.0",
     "prettier": "^3.7.1",
     "prettier-plugin-tailwindcss": "^0.7.1",
+    "shadcn": "^3.5.1",
     "supabase": "^2.63.1",
     "tailwindcss": "^4",
     "typescript": "^5",
