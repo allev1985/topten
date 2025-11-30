@@ -31,8 +31,8 @@ sequenceDiagram
     Note over User,Supabase: Email Verification Step
 
     User->>User: Check email & click verification link
-    User->>WebApp: GET /auth/verify?token=xxx
-    WebApp->>Supabase: verifyEmail(token)
+    User->>WebApp: GET /verify-email?code=xxx
+    WebApp->>Supabase: verifyOtp(code, type: 'email')
     Supabase->>Supabase: Mark email as verified
     Supabase-->>WebApp: Return session tokens
     WebApp->>WebApp: Set session cookie (HTTP-only)
@@ -84,7 +84,7 @@ sequenceDiagram
     WebApp->>Supabase: POST resetPasswordForEmail(email)
 
     alt Email Exists (enumeration protection)
-        Supabase->>Supabase: Generate reset token
+        Supabase->>Supabase: Generate reset code
         Supabase->>User: Send password reset email
         Supabase-->>WebApp: Success
     else Email Not Found (enumeration protection)
@@ -96,20 +96,20 @@ sequenceDiagram
     Note over User,Supabase: Password Reset Step
 
     User->>User: Check email & click reset link
-    User->>WebApp: GET /reset-password?token=xxx
+    User->>WebApp: GET /reset-password?code=xxx
     WebApp-->>User: Display new password form
 
     User->>WebApp: Submit new password
-    WebApp->>Supabase: PUT updateUser(password, token)
+    WebApp->>Supabase: PUT updateUser(password) with verified session
 
-    alt Valid Token
-        Supabase->>Supabase: Validate reset token
+    alt Valid Code
+        Supabase->>Supabase: Validate reset code
         Supabase->>Supabase: Update password hash
-        Supabase->>Supabase: Invalidate reset token
+        Supabase->>Supabase: Invalidate reset code
         Supabase-->>WebApp: Success
         WebApp-->>User: Display success & redirect to /login
-    else Invalid/Expired Token
-        Supabase-->>WebApp: Error: Invalid token
+    else Invalid/Expired Code
+        Supabase-->>WebApp: Error: Invalid code
         WebApp-->>User: Display error message
     end
 ```
