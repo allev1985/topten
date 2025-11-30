@@ -903,157 +903,202 @@ MFA is planned for a future release to provide enhanced account security. Supaba
 - SQL injection prevention via Supabase's parameterized queries
 - XSS prevention through proper output encoding
 
-## Authentication Flow
+## Authentication Flows
+
+### 1. Sign Up Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Browser
-    participant NextJS as Next.js App
-    participant Middleware as Next.js Middleware
-    participant Supabase as Supabase Auth
-    participant Database as Supabase DB
+    participant WebApp as Web Application
+    participant Supabase
 
-    Note over User,Database: User Sign Up Flow
-    User->>Browser: Navigate to signup page
-    Browser->>NextJS: GET /signup
-    NextJS-->>Browser: Return signup form
-    User->>Browser: Submit signup form (email, password)
-    Browser->>NextJS: POST /api/auth/signup
-    NextJS->>Supabase: signUp(email, password)
-    
+    User->>WebApp: Navigate to /signup
+    WebApp-->>User: Display signup form
+
+    User->>WebApp: Submit signup form (email, password)
+    WebApp->>WebApp: POST /api/auth/signup
+    WebApp->>Supabase: signUp(email, password)
+
     alt New User
-        Supabase->>Database: Create user record (unverified)
-        Database-->>Supabase: User created
+        Supabase->>Supabase: Create unverified user record
         Supabase->>User: Send verification email
-        Supabase-->>NextJS: Return success (no session)
-    else Existing User
+        Supabase-->>WebApp: Success (no session)
+    else Existing User (enumeration protection)
         Supabase->>User: Send "account exists" notification
-        Supabase-->>NextJS: Return success (no session)
-    end
-    
-    NextJS-->>Browser: Generic success response
-    NextJS-->>Browser: Redirect to /verify-email page
-    
-    Note over User,Database: Email Verification
-    User->>Browser: Click verification link in email
-    Browser->>NextJS: GET /auth/verify?token=xxx
-    NextJS->>Supabase: verifyEmail(token)
-    Supabase->>Database: Mark email as verified
-    Database-->>Supabase: Email verified
-    Supabase-->>NextJS: Return session
-    NextJS->>Browser: Set session cookie
-    NextJS-->>Browser: Redirect to /dashboard
-
-    Note over User,Database: User Login Flow
-    User->>Browser: Navigate to login page
-    Browser->>NextJS: GET /login
-    NextJS-->>Browser: Return login form
-    User->>Browser: Submit login form (email, password)
-    Browser->>NextJS: POST /api/auth/login
-    NextJS->>Supabase: signInWithPassword(email, password)
-    Supabase->>Database: Validate credentials
-    Database-->>Supabase: User validated
-    Supabase-->>NextJS: Return session
-    NextJS->>Browser: Set session cookie
-    NextJS-->>Browser: Redirect to /dashboard
-    Browser->>NextJS: GET /dashboard
-    NextJS-->>Browser: Return dashboard page
-
-    Note over User,Database: Protected Route Access
-    User->>Browser: Navigate to /dashboard/*
-    Browser->>NextJS: GET /dashboard/my-lists
-    NextJS->>Middleware: Check route protection
-    Middleware->>Supabase: getSession() from cookie
-    
-    alt Session Valid
-        Supabase-->>Middleware: Return valid session
-        Middleware-->>NextJS: Allow access
-        NextJS-->>Browser: Return protected page
-    else Session Invalid/Expired
-        Supabase-->>Middleware: No valid session
-        Middleware->>Middleware: Store redirect URL (/dashboard/my-lists)
-        Middleware-->>Browser: Redirect to /login?redirectTo=/dashboard/my-lists
-        User->>Browser: Complete login
-        Browser->>NextJS: POST /api/auth/login (with redirectTo param)
-        NextJS->>Supabase: signInWithPassword(email, password)
-        Supabase-->>NextJS: Return session
-        NextJS->>Browser: Set session cookie
-        NextJS-->>Browser: Redirect to original URL (/dashboard/my-lists)
+        Supabase-->>WebApp: Success (no session)
     end
 
-    Note over User,Database: Password Reset Flow
-    User->>Browser: Navigate to forgot password
-    Browser->>NextJS: GET /forgot-password
-    NextJS-->>Browser: Return reset form
-    User->>Browser: Submit email
-    Browser->>NextJS: POST /api/auth/password/reset
-    NextJS->>Supabase: resetPasswordForEmail(email)
-    Supabase->>User: Send reset email
-    User->>Browser: Click reset link in email
-    Browser->>NextJS: GET /reset-password?token=xxx
-    NextJS-->>Browser: Return new password form
-    User->>Browser: Submit new password
-    Browser->>NextJS: PUT /api/auth/password
-    NextJS->>Supabase: updateUser({ password })
-    Supabase->>Database: Update password
-    Database-->>Supabase: Password updated
-    Supabase-->>NextJS: Return success
-    NextJS-->>Browser: Redirect to /login
+    WebApp-->>WebApp: API responds 201 Created
+    WebApp-->>User: Generic message: "Check your email to verify"
+    WebApp-->>User: Redirect to /verify-email
 
-    Note over User,Database: Session Refresh Flow
-    Browser->>NextJS: Request to protected route
-    NextJS->>Middleware: Check session
-    Middleware->>Supabase: getSession()
-    
-    alt Session Near Expiry
-        Supabase-->>Middleware: Session expiring soon
-        Middleware->>NextJS: POST /api/auth/refresh
-        NextJS->>Supabase: refreshSession()
-        Supabase->>Database: Validate refresh token
-        Database-->>Supabase: Token valid
-        Supabase-->>NextJS: New session
-        NextJS->>Middleware: Return updated session
-        Middleware->>Browser: Update session cookie
-        Middleware-->>NextJS: Allow access
-        NextJS-->>Browser: Return requested page
-    else Session Expired
-        Supabase-->>Middleware: Session expired
-        Middleware-->>Browser: Redirect to /login
-    end
+    Note over User,Supabase: Email Verification Step
 
-    Note over User,Database: User Logout Flow
-    User->>Browser: Click logout
-    Browser->>NextJS: POST /api/auth/logout
-    NextJS->>Supabase: signOut()
-    Supabase->>Database: Invalidate session
-    Database-->>Supabase: Session invalidated
-    Supabase-->>NextJS: Success
-    NextJS->>Browser: Clear session cookie
-    NextJS-->>Browser: Redirect to /login
+    User->>User: Check email & click verification link
+    User->>WebApp: GET /verify-email?code=xxx (page navigation)
+    WebApp->>WebApp: Page loads, calls POST /api/auth/verify
+    WebApp->>Supabase: verifyOtp(code, type: 'email')
+    Supabase->>Supabase: Mark email as verified
+    Supabase-->>WebApp: Return session tokens
+    WebApp->>WebApp: Set session cookie (HTTP-only)
+    WebApp-->>User: Redirect to /dashboard (logged in)
 ```
 
-## Authentication Flows Explained
+### 2. Login Flow
 
-### 1. User Sign Up
+```mermaid
+sequenceDiagram
+    participant User
+    participant WebApp as Web Application
+    participant Supabase
+
+    User->>WebApp: Navigate to /login
+    WebApp-->>User: Display login form
+
+    User->>WebApp: Submit login form (email, password)
+    WebApp->>WebApp: POST /api/auth/login
+    WebApp->>Supabase: signInWithPassword(email, password)
+
+    alt Valid Credentials
+        Supabase->>Supabase: Validate credentials
+        Supabase-->>WebApp: Return session (access + refresh tokens)
+        WebApp->>WebApp: API sets session cookie (HTTP-only, Secure, SameSite)
+        WebApp-->>WebApp: API responds 200 OK with session
+        WebApp-->>User: Redirect to /dashboard (or redirectTo param)
+
+        User->>WebApp: GET /dashboard
+        WebApp->>WebApp: Middleware checks session cookie
+        WebApp->>Supabase: Validate session token
+        Supabase-->>WebApp: Session valid
+        WebApp-->>User: Display protected dashboard page
+    else Invalid Credentials
+        Supabase-->>WebApp: Authentication error
+        WebApp-->>WebApp: API responds 401 Unauthorized
+        WebApp-->>User: Display error message
+    end
+```
+
+### 3. Forgot Password Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant WebApp as Web Application
+    participant Supabase
+
+    User->>WebApp: Navigate to /forgot-password
+    WebApp-->>User: Display email input form
+
+    User->>WebApp: Submit email address
+    WebApp->>WebApp: POST /api/auth/password/reset
+    WebApp->>Supabase: resetPasswordForEmail(email)
+
+    alt Email Exists (enumeration protection)
+        Supabase->>Supabase: Generate reset code
+        Supabase->>User: Send password reset email with link
+        Supabase-->>WebApp: Success
+    else Email Not Found (enumeration protection)
+        Supabase-->>WebApp: Success (no email sent)
+    end
+
+    WebApp-->>WebApp: API responds 200 OK
+    WebApp-->>User: Generic message: "If account exists, check your email"
+
+    Note over User,Supabase: Password Reset Step
+
+    User->>User: Check email & click reset link
+    User->>WebApp: GET /reset-password?code=xxx (page navigation)
+    WebApp-->>User: Display new password form (with code in state)
+
+    User->>WebApp: Submit new password
+    WebApp->>WebApp: PUT /api/auth/password (with code)
+    WebApp->>Supabase: updateUser(password) with reset code
+
+    alt Valid Code
+        Supabase->>Supabase: Validate reset code
+        Supabase->>Supabase: Update password hash
+        Supabase->>Supabase: Invalidate reset code
+        Supabase-->>WebApp: Success
+        WebApp-->>WebApp: API responds 200 OK
+        WebApp-->>User: Display success & redirect to /login
+    else Invalid/Expired Code
+        Supabase-->>WebApp: Error: Invalid code
+        WebApp-->>WebApp: API responds 400 Bad Request
+        WebApp-->>User: Display error message
+    end
+```
+
+## API Architecture
+
+The Web Application implements a **RESTful API layer** that acts as an intermediary between the frontend pages and Supabase Auth.
+
+### Key Distinction: Pages vs APIs
+
+**Web Pages** (visited by users in browser):
+- `/signup` - Signup form page
+- `/verify-email` - Email verification landing page (receives code from email link)
+- `/login` - Login form page
+- `/forgot-password` - Password reset request page
+- `/reset-password` - New password form page (receives code from email link)
+- `/dashboard/*` - Protected application pages
+
+**API Endpoints** (called internally by web pages):
+- Called server-side or via client-side JavaScript
+- Handle business logic and communicate with Supabase
+- Set cookies and manage sessions
+- Return JSON responses
+
+This architecture provides:
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/api/auth/signup` | Register new user account |
+| `GET` | `/api/auth/verify` | Verify email with code from link |
+| `POST` | `/api/auth/login` | Authenticate user and create session |
+| `POST` | `/api/auth/logout` | End user session |
+| `POST` | `/api/auth/refresh` | Refresh expiring session |
+| `POST` | `/api/auth/password/reset` | Request password reset email |
+| `PUT` | `/api/auth/password` | Update user password |
+| `GET` | `/api/auth/session` | Get current session status |
+
+### Benefits of API Layer
+- **Abstraction** - Frontend doesn't directly depend on Supabase client
+- **Security** - Sensitive operations handled server-side
+- **Validation** - Centralized input validation and sanitization
+- **Logging** - Audit logging for all authentication events
+- **Flexibility** - Easier to switch auth providers in the future
+
+## Flow Details
+
+### User Sign Up
 - User navigates to the signup page and submits their email and password
-- Next.js calls Supabase's `signUp()` method
+- Web application calls `/api/auth/signup` which invokes Supabase's `signUp()` method
 - For security (user enumeration protection):
   - New users: Supabase creates an unverified user record and sends a verification email
   - Existing users: Supabase sends an "account exists" notification email
   - API returns the same generic success message in both cases
 - User is redirected to a "Check your email" page (not logged in yet)
-- User clicks the verification link in their email
-- Email is verified and a session is created
+- User clicks the verification link in their email → navigates to `/verify-email?code=xxx`
+- Page calls `/api/auth/verify` which verifies the email and creates a session
 - User is then redirected to the dashboard and logged in
 
-### 2. User Login
+### User Login
 - User submits credentials via the login form
-- Next.js authenticates using Supabase's `signInWithPassword()`
+- Web application calls `/api/auth/login` which authenticates using Supabase's `signInWithPassword()`
 - Upon successful validation, a session is created
 - Session cookie is set and user gains access to protected routes
 
-### 3. Protected Route Access
+### Password Reset
+- User requests password reset with their email via `/forgot-password` page
+- Form submission calls `/api/auth/password/reset` which sends reset email via Supabase
+- User clicks the reset link in email → navigates to `/reset-password?code=xxx`
+- User submits new password which calls `/api/auth/password`
+- Password is updated in the database and user is redirected to login
+
+### Protected Route Access
 - Next.js Middleware intercepts requests to `/dashboard/*` routes
 - Session validity is checked via `getSession()`
 - Valid sessions allow access to the requested page
@@ -1062,20 +1107,14 @@ sequenceDiagram
   - Redirect to login with the URL as a query parameter (`/login?redirectTo=/dashboard/my-lists`)
   - After successful login, redirect user back to their originally requested URL
 
-### 4. Password Reset
-- User requests password reset with their email
-- Supabase sends a reset link via email
-- User clicks the link and submits a new password
-- Password is updated in the database
-
-### 5. Session Refresh
+### Session Refresh
 - Middleware automatically detects expiring sessions
-- Refresh token is used to obtain a new session
+- Calls `/api/auth/refresh` to obtain a new session using the refresh token
 - Session cookie is updated seamlessly
 - Expired sessions trigger re-authentication
 
-### 6. User Logout
+### User Logout
 - User initiates logout
-- Supabase invalidates the session in the database
+- Web application calls `/api/auth/logout` which invalidates the session via Supabase
 - Session cookie is cleared
 - User is redirected to the login page
