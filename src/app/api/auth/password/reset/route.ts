@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { passwordResetSchema } from "@/schemas/auth";
+import { REDIRECT_ROUTES } from "@/lib/config";
 import {
   validationError,
   serverError,
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     const origin = request.nextUrl.origin;
-    const redirectTo = `${origin}/reset-password`;
+    const redirectTo = `${origin}${REDIRECT_ROUTES.auth.passwordReset}`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
