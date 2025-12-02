@@ -18,15 +18,20 @@ import {
 import { validatePassword } from "@/lib/utils/validation/password";
 
 interface PasswordResetFormProps {
-  /** PKCE code from password reset email link */
-  code?: string;
+  /** OTP token hash from password reset email link */
+  token_hash?: string;
+  /** Token type (recovery or email) */
+  type?: string;
 }
 
 /**
  * Password reset form component
  * Used for reset password flow
  */
-export function PasswordResetForm({ code }: PasswordResetFormProps) {
+export function PasswordResetForm({
+  token_hash,
+  type,
+}: PasswordResetFormProps) {
   const { state, formAction } = useFormState(passwordUpdateAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
     "weak"
@@ -70,8 +75,11 @@ export function PasswordResetForm({ code }: PasswordResetFormProps) {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
-          {/* Hidden input for PKCE code from reset email */}
-          {code && <input type="hidden" name="code" value={code} />}
+          {/* Hidden inputs for OTP token from reset email */}
+          {token_hash && (
+            <input type="hidden" name="token_hash" value={token_hash} />
+          )}
+          {type && <input type="hidden" name="type" value={type} />}
 
           {state.error && (
             <Alert variant="destructive">

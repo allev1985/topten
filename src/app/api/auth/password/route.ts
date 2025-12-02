@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { passwordUpdateSchema } from "@/schemas/auth";
-import { VERIFICATION_TYPE_EMAIL } from "@/lib/config";
 import {
   validationError,
   authError,
@@ -17,9 +16,8 @@ import { errorResponse, successResponse } from "@/lib/utils/api/response";
  * Updates the user's password with support for multiple authentication methods.
  *
  * Authentication priority order:
- * 1. PKCE code - from password reset email link (exchangeCodeForSession)
- * 2. OTP token - alternative email verification (verifyOtp)
- * 3. Session - existing authenticated user (getUser)
+ * 1. OTP token - from password reset email link (verifyOtp with type='recovery')
+ * 2. Session - existing authenticated user (getUser)
  *
  * After successful password update, the user is automatically signed out.
  */
@@ -38,50 +36,25 @@ export async function PUT(request: NextRequest) {
       return errorResponse(validationError(details));
     }
 
-    const { password, code, token_hash, type } = result.data;
+    const { password, token_hash, type } = result.data;
 
     const supabase = await createClient();
 
     let userEmail: string | null = null;
-    let authMethod: "PKCE" | "OTP" | "session" = "session";
+    let authMethod: "OTP" | "session" = "session";
 
-    // Authentication priority: PKCE code → OTP token → existing session
+    // Authentication priority: OTP token → existing session
 
-    // 1. Try PKCE code authentication if provided
-    if (code) {
-      authMethod = "PKCE";
-      console.info("[PasswordUpdate]", "Attempting PKCE code authentication");
-
-      const { data, error: codeError } =
-        await supabase.auth.exchangeCodeForSession(code);
-
-      if (codeError) {
-        console.error(
-          "[PasswordUpdate]",
-          `PKCE authentication failed: ${codeError.message}`
-        );
-
-        // Check for expired token
-        if (codeError.message.toLowerCase().includes("expired")) {
-          return errorResponse(
-            authError(
-              "Authentication link has expired. Please request a new one."
-            )
-          );
-        }
-
-        return errorResponse(authError("Authentication failed"));
-      }
-
-      userEmail = data.user?.email ?? null;
-    }
-    // 2. Try OTP token authentication if provided
-    else if (token_hash && type === VERIFICATION_TYPE_EMAIL) {
+    // 1. Try OTP token authentication if provided
+    if (token_hash && type) {
       authMethod = "OTP";
-      console.info("[PasswordUpdate]", "Attempting OTP token authentication");
+      console.info(
+        "[PasswordUpdate]",
+        `Attempting OTP token authentication (type: ${type})`
+      );
 
       const { data, error: otpError } = await supabase.auth.verifyOtp({
-        type: VERIFICATION_TYPE_EMAIL,
+        type: type as "recovery" | "email",
         token_hash,
       });
 
@@ -105,7 +78,7 @@ export async function PUT(request: NextRequest) {
 
       userEmail = data.user?.email ?? null;
     }
-    // 3. Fall back to existing session
+    // 2. Fall back to existing session
     else {
       authMethod = "session";
       console.info(

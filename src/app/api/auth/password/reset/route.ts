@@ -43,7 +43,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const origin = request.nextUrl.origin;
+    const redirectTo = `${origin}/reset-password`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
 
     // Log errors internally but always return success for enumeration protection
     if (error) {

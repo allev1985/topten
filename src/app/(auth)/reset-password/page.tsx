@@ -11,7 +11,8 @@ import { PasswordResetForm } from "./password-reset-form";
 
 interface ResetPasswordPageProps {
   searchParams: Promise<{
-    code?: string;
+    token_hash?: string;
+    type?: string;
   }>;
 }
 
@@ -23,10 +24,10 @@ export default async function ResetPasswordPage({
   searchParams,
 }: ResetPasswordPageProps): Promise<JSX.Element> {
   const params = await searchParams;
-  const { code } = params;
+  const { token_hash, type } = params;
 
-  // If no code, show error state
-  if (!code) {
+  // If no token_hash, show error state
+  if (!token_hash) {
     return (
       <main>
         <Card className="w-full max-w-sm">
@@ -54,7 +55,7 @@ export default async function ResetPasswordPage({
 
   return (
     <main>
-      <PasswordResetForm code={code} />
+      <PasswordResetForm token_hash={token_hash} type={type} />
     </main>
   );
 }
