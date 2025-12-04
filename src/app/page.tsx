@@ -19,23 +19,31 @@ export default async function Home() {
 
   // Check authentication status using getUser() for security
   // This validates the JWT token server-side
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  // Note: Middleware already handles session refresh, so errors here
+  // (like invalid refresh tokens) are expected for guest users
+  let isAuthenticated = false;
 
-  // Convert to boolean for serializable prop
-  // Fail-closed: default to false on error for security
-  const isAuthenticated = error ? false : !!user;
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  // Development logging for debugging
-  if (process.env.NODE_ENV === "development") {
-    console.log("[Landing Page] Auth check:", {
-      isAuthenticated,
-      userId: user?.id,
-      hasError: !!error,
-      errorMessage: error?.message,
-    });
+    // Convert to boolean for serializable prop
+    isAuthenticated = !!user;
+
+    // Development logging for debugging
+    if (process.env.NODE_ENV === "development" && user) {
+      console.log("[Landing Page] Authenticated user:", {
+        userId: user.id,
+      });
+    }
+  } catch {
+    // Silently handle auth errors for public landing page
+    // Middleware has already attempted session refresh
+    // Any errors here indicate no valid session (guest user)
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Landing Page] Guest user (auth check failed silently)");
+    }
   }
 
   // Pass boolean to Client Component (avoids serialization issues)
