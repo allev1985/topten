@@ -1,20 +1,20 @@
 /**
  * Type Contracts for Auth-Aware Landing Page Feature
- * 
+ *
  * This file defines the TypeScript interfaces and types used for passing
  * authentication state from Server Components to Client Components.
- * 
+ *
  * @module contracts/landing-page
  */
 
 /**
  * Props interface for the LandingPageClient component
- * 
+ *
  * This interface defines the data contract between the server-rendered
  * page component and the client-side interactive wrapper component.
- * 
+ *
  * @interface LandingPageClientProps
- * 
+ *
  * @example
  * ```typescript
  * // Server Component usage (src/app/page.tsx)
@@ -22,13 +22,13 @@
  *   const supabase = await createClient();
  *   const { data: { user } } = await supabase.auth.getUser();
  *   const isAuthenticated = !!user;
- *   
+ *
  *   return <LandingPageClient isAuthenticated={isAuthenticated} />;
  * }
- * 
+ *
  * // Client Component usage (src/components/shared/LandingPageClient.tsx)
  * 'use client';
- * 
+ *
  * export default function LandingPageClient({ isAuthenticated }: LandingPageClientProps) {
  *   return (
  *     <div>
@@ -45,18 +45,18 @@
 export interface LandingPageClientProps {
   /**
    * Indicates whether the current user is authenticated
-   * 
+   *
    * This value is computed server-side by calling Supabase's `auth.getUser()`
    * and converting the result to a boolean: `!!user`.
-   * 
+   *
    * @remarks
    * - `true`: User has a valid session and is authenticated
    * - `false`: User is a guest (not authenticated) or auth check failed
-   * 
+   *
    * @remarks
    * When the auth check fails (network error, invalid token, etc.), this
    * value defaults to `false` as a security measure (fail-closed approach).
-   * 
+   *
    * @remarks
    * This is a serializable primitive type, safe to pass from Server Components
    * to Client Components without causing hydration errors.
@@ -66,12 +66,12 @@ export interface LandingPageClientProps {
 
 /**
  * Internal type representing the result of a server-side auth check
- * 
+ *
  * This type is used within the Server Component but is NOT passed to clients.
  * It represents the transformation from Supabase's User object to a boolean.
- * 
+ *
  * @internal
- * 
+ *
  * @example
  * ```typescript
  * // Server Component implementation
@@ -104,10 +104,10 @@ export interface AuthCheckResult {
 
 /**
  * Type guard to check if an auth check result indicates an authenticated user
- * 
+ *
  * @param result - The auth check result to validate
  * @returns True if the result indicates an authenticated user
- * 
+ *
  * @example
  * ```typescript
  * const result: AuthCheckResult = { isAuthenticated: true, user: mockUser };
@@ -119,16 +119,16 @@ export interface AuthCheckResult {
  */
 export function isAuthCheckAuthenticated(
   result: AuthCheckResult
-): result is AuthCheckResult & { user: NonNullable<AuthCheckResult['user']> } {
+): result is AuthCheckResult & { user: NonNullable<AuthCheckResult["user"]> } {
   return result.isAuthenticated && result.user !== undefined;
 }
 
 /**
  * Error type for auth check failures
- * 
+ *
  * Used to represent errors that occur during the authentication check process.
  * These errors are handled gracefully by defaulting to non-authenticated state.
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -150,7 +150,7 @@ export interface AuthCheckError {
   /**
    * The type of error that occurred
    */
-  type: 'AUTH_SERVICE_ERROR' | 'NETWORK_ERROR' | 'INVALID_TOKEN' | 'UNKNOWN';
+  type: "AUTH_SERVICE_ERROR" | "NETWORK_ERROR" | "INVALID_TOKEN" | "UNKNOWN";
 
   /**
    * Human-readable error message
@@ -174,7 +174,7 @@ export interface AuthCheckError {
 export const AUTH_STATE = {
   /** User is authenticated with valid session */
   AUTHENTICATED: true,
-  
+
   /** User is not authenticated or auth check failed */
   NOT_AUTHENTICATED: false,
 } as const;
@@ -182,4 +182,4 @@ export const AUTH_STATE = {
 /**
  * Type representing possible auth states
  */
-export type AuthState = typeof AUTH_STATE[keyof typeof AUTH_STATE];
+export type AuthState = (typeof AUTH_STATE)[keyof typeof AUTH_STATE];
