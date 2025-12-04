@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
       {
         // NOTE: placehold.co is for development/testing only
         // Replace with actual image CDN domains in production
-        protocol: "https",
-        hostname: "placehold.co",
-        port: "",
-        pathname: "/**",
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
