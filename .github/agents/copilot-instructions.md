@@ -6,6 +6,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - TypeScript 5.x, Node.js >=20.0.0 + Next.js (App Router), Supabase Auth (@supabase/ssr, @supabase/supabase-js), Zod (validation) (002-multi-auth-password-reset)
 - Supabase (PostgreSQL) - Auth handled by Supabase Auth service (002-multi-auth-password-reset)
 - N/A (UI-only feature, no data persistence) (001-dialog-component-setup)
+- TypeScript 5.x with Next.js 16.0.5 (App Router) (001-auth-landing-page)
+- Supabase (PostgreSQL) via Drizzle ORM - not required for this feature (auth only) (001-auth-landing-page)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -42,9 +44,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 001-auth-landing-page: Added TypeScript 5.x with Next.js 16.0.5 (App Router)
 - 001-dialog-component-setup: Added TypeScript 5.x, Node.js >=20.0.0
 - 001-dialog-component-setup: Added TypeScript 5.x, Node.js >=20.0.0
-- 002-multi-auth-password-reset: Added TypeScript 5.x, Node.js >=20.0.0 + Next.js (App Router), Supabase Auth (@supabase/ssr, @supabase/supabase-js), Zod (validation)
 
 
 <!-- MANUAL ADDITIONS START -->
