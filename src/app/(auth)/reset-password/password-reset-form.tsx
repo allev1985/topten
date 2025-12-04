@@ -17,11 +17,21 @@ import {
 } from "@/components/ui/card";
 import { validatePassword } from "@/lib/utils/validation/password";
 
+interface PasswordResetFormProps {
+  /** OTP token hash from password reset email link */
+  token_hash?: string;
+  /** Token type (recovery or email) */
+  type?: string;
+}
+
 /**
  * Password reset form component
  * Used for reset password flow
  */
-export function PasswordResetForm() {
+export function PasswordResetForm({
+  token_hash,
+  type,
+}: PasswordResetFormProps) {
   const { state, formAction } = useFormState(passwordUpdateAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
     "weak"
@@ -65,6 +75,12 @@ export function PasswordResetForm() {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          {/* Hidden inputs for OTP token from reset email */}
+          {token_hash && (
+            <input type="hidden" name="token_hash" value={token_hash} />
+          )}
+          {type && <input type="hidden" name="type" value={type} />}
+
           {state.error && (
             <Alert variant="destructive">
               <AlertDescription>{state.error}</AlertDescription>

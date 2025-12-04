@@ -75,7 +75,7 @@ describe("POST /api/auth/password/reset", () => {
       expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
         "test@example.com",
         expect.objectContaining({
-          redirectTo: expect.stringContaining("/auth/reset-password"),
+          redirectTo: expect.stringContaining("/reset-password"),
         })
       );
     });

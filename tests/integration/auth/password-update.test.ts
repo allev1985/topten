@@ -5,12 +5,17 @@ import { NextRequest } from "next/server";
 // Mock the Supabase server client
 const mockGetUser = vi.fn();
 const mockUpdateUser = vi.fn();
+const mockVerifyOtp = vi.fn();
+const mockSignOut = vi.fn();
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(() =>
     Promise.resolve({
       auth: {
         getUser: mockGetUser,
         updateUser: mockUpdateUser,
+        verifyOtp: mockVerifyOtp,
+        signOut: mockSignOut,
       },
     })
   ),
@@ -28,6 +33,11 @@ describe("PUT /api/auth/password", () => {
       data: { user: { id: "user-123", email: "test@example.com" } },
       error: null,
     });
+    mockVerifyOtp.mockResolvedValue({
+      data: { user: { id: "user-123", email: "test@example.com" } },
+      error: null,
+    });
+    mockSignOut.mockResolvedValue({ error: null });
   });
 
   const createRequest = (body: unknown): NextRequest => {
@@ -40,10 +50,12 @@ describe("PUT /api/auth/password", () => {
     });
   };
 
-  describe("password update success", () => {
-    it("returns 200 for valid password update (authenticated user)", async () => {
+  describe("OTP token authentication", () => {
+    it("returns 200 for valid password update with recovery token", async () => {
       const request = createRequest({
         password: "NewSecurePass123!",
+        token_hash: "valid-token-hash",
+        type: "recovery",
       });
 
       const response = await PUT(request);
@@ -52,10 +64,77 @@ describe("PUT /api/auth/password", () => {
       expect(response.status).toBe(200);
       expect(body.success).toBe(true);
       expect(body.message).toBe("Password updated successfully");
+      expect(mockVerifyOtp).toHaveBeenCalledWith({
+        type: "recovery",
+        token_hash: "valid-token-hash",
+      });
     });
 
-    it("returns 200 for valid password update (reset token session)", async () => {
-      // Reset token sessions behave the same as authenticated users
+    it("returns 200 for valid password update with email token", async () => {
+      const request = createRequest({
+        password: "NewSecurePass123!",
+        token_hash: "valid-token-hash",
+        type: "email",
+      });
+
+      const response = await PUT(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(mockVerifyOtp).toHaveBeenCalledWith({
+        type: "email",
+        token_hash: "valid-token-hash",
+      });
+    });
+
+    it("returns 401 for invalid OTP token", async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Invalid token" },
+      });
+
+      const request = createRequest({
+        password: "NewSecurePass123!",
+        token_hash: "invalid-token",
+        type: "recovery",
+      });
+
+      const response = await PUT(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe("AUTH_ERROR");
+      expect(body.error.message).toBe("Authentication failed");
+    });
+
+    it("returns 401 for expired OTP token", async () => {
+      mockVerifyOtp.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Token has expired" },
+      });
+
+      const request = createRequest({
+        password: "NewSecurePass123!",
+        token_hash: "expired-token",
+        type: "recovery",
+      });
+
+      const response = await PUT(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe("AUTH_ERROR");
+      expect(body.error.message).toBe(
+        "Authentication link has expired. Please request a new one."
+      );
+    });
+  });
+
+  describe("session-based authentication", () => {
+    it("returns 200 for valid password update (authenticated user)", async () => {
       const request = createRequest({
         password: "NewSecurePass123!",
       });
@@ -78,6 +157,78 @@ describe("PUT /api/auth/password", () => {
       expect(mockUpdateUser).toHaveBeenCalledWith({
         password: "NewSecurePass123!",
       });
+    });
+
+    it("returns 401 for unauthenticated request", async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Not authenticated" },
+      });
+
+      const request = createRequest({
+        password: "NewSecurePass123!",
+      });
+
+      const response = await PUT(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe("AUTH_ERROR");
+    });
+  });
+
+  describe("sign out after reset", () => {
+    it("calls signOut after successful password update via OTP", async () => {
+      const request = createRequest({
+        password: "NewSecurePass123!",
+        token_hash: "valid-token",
+        type: "recovery",
+      });
+
+      await PUT(request);
+
+      expect(mockSignOut).toHaveBeenCalled();
+    });
+
+    it("calls signOut after successful password update via session", async () => {
+      const request = createRequest({
+        password: "NewSecurePass123!",
+      });
+
+      await PUT(request);
+
+      expect(mockSignOut).toHaveBeenCalled();
+    });
+
+    it("returns success even if signOut fails (logs error)", async () => {
+      mockSignOut.mockRejectedValue(new Error("Sign out failed"));
+
+      const request = createRequest({
+        password: "NewSecurePass123!",
+      });
+
+      const response = await PUT(request);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      expect(body.message).toBe("Password updated successfully");
+    });
+  });
+
+  describe("authentication priority", () => {
+    it("prioritizes OTP token over session when both available", async () => {
+      const request = createRequest({
+        password: "NewSecurePass123!",
+        token_hash: "valid-token",
+        type: "recovery",
+      });
+
+      await PUT(request);
+
+      expect(mockVerifyOtp).toHaveBeenCalled();
+      expect(mockGetUser).not.toHaveBeenCalled();
     });
   });
 

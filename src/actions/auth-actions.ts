@@ -318,6 +318,8 @@ export async function passwordResetRequestAction(
  * Password update server action
  * Updates password using reset token (unauthenticated flow)
  * Calls /api/auth/password PUT endpoint
+ *
+ * Supports OTP token authentication from password reset email links
  */
 export async function passwordUpdateAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -325,6 +327,8 @@ export async function passwordUpdateAction(
 ): Promise<ActionState<PasswordUpdateSuccessData>> {
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
+  const tokenHashValue = formData.get("token_hash");
+  const typeValue = formData.get("type");
 
   // Validate password matches
   if (password !== confirmPassword) {
@@ -351,6 +355,14 @@ export async function passwordUpdateAction(
   const baseUrl = getAppUrl();
   const cookieHeader = await getCookieHeader();
 
+  // Extract token_hash and type if provided (OTP authentication from reset email)
+  const token_hash =
+    typeof tokenHashValue === "string" && tokenHashValue
+      ? tokenHashValue
+      : undefined;
+  const type =
+    typeof typeValue === "string" && typeValue ? typeValue : undefined;
+
   try {
     const response = await fetch(`${baseUrl}/api/auth/password`, {
       method: "PUT",
@@ -360,6 +372,8 @@ export async function passwordUpdateAction(
       },
       body: JSON.stringify({
         password: result.data.password,
+        ...(token_hash && { token_hash }),
+        ...(type && { type }),
       }),
     });
 

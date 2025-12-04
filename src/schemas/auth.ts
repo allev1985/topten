@@ -101,6 +101,10 @@ export const passwordResetSchema = z.object({
 /**
  * Schema for validating password update requests
  * Uses same password validation as signup
+ *
+ * Authentication methods (in priority order):
+ * 1. OTP token_hash + type='recovery' - from password reset email link
+ * 2. Session - existing authenticated user
  */
 export const passwordUpdateSchema = z.object({
   password: z
@@ -117,6 +121,10 @@ export const passwordUpdateSchema = z.object({
       PASSWORD_REQUIREMENTS.specialCharRegex,
       "Password must contain at least one special character"
     ),
+  /** OTP token hash from password reset email */
+  token_hash: z.string().min(1).optional(),
+  /** Token type for OTP verification (required when token_hash is provided) */
+  type: z.enum(["recovery", "email"]).optional(),
 });
 
 // Type exports for use in other modules

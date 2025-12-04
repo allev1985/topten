@@ -33,6 +33,8 @@ export const REDIRECT_ROUTES = {
     success: "/dashboard",
     /** Redirect for auth errors */
     error: "/auth/error",
+    /** Redirect for password reset flow */
+    passwordReset: "/reset-password",
   },
 } as const;
 
