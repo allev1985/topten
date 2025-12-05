@@ -13,14 +13,14 @@ export interface LandingPageClientProps {
   /**
    * Indicates whether the current user is authenticated
    *
-   * This value is computed server-side by calling Supabase's `auth.getUser()`
-   * and converting the result to a boolean: `!!user`.
+   * This value is computed server-side by calling Supabase's `auth.getSession()`
+   * and checking if a session exists: `!!session`.
    *
-   * - `true`: User has a valid session and is authenticated
-   * - `false`: User is a guest (not authenticated) or auth check failed
+   * - `true`: User has an active session and is authenticated
+   * - `false`: User is a guest (not authenticated) or no session exists
    *
-   * When the auth check fails (network error, invalid token, etc.), this
-   * value defaults to `false` as a security measure (fail-closed approach).
+   * Uses getSession() for lightweight checks on public pages.
+   * Protected routes use getUser() for full JWT validation in middleware.
    *
    * This is a serializable primitive type, safe to pass from Server Components
    * to Client Components without causing hydration errors.
