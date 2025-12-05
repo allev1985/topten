@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import LandingPageClient from "@/app/_components/landing-page-client";
+import LandingPageClient from "@/components/shared/LandingPageClient";
 
 describe("Landing Page Navigation Integration", () => {
   describe("page structure", () => {

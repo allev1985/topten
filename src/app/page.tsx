@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LandingPageClient from "./_components/landing-page-client";
+import LandingPageClient from "@/components/shared/LandingPageClient";
 
 export const metadata: Metadata = {
   title: "YourFavs - Curate and share your favorite places",
