@@ -9,6 +9,9 @@ describe("LandingPageClient - Authenticated User", () => {
       // Future iterations may add personalized content for authenticated users
       render(<LandingPageClient />);
 
+      // Verify header is present
+      expect(screen.getByRole("banner")).toBeInTheDocument();
+
       expect(
         screen.getByRole("heading", { name: "YourFavs" })
       ).toBeInTheDocument();
