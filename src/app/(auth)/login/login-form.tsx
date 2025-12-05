@@ -22,21 +22,31 @@ export interface LoginFormProps {
   redirectTo?: string;
   /** Initial email value (e.g., from URL params) */
   defaultEmail?: string;
+  /** Callback invoked on successful authentication (before redirect) */
+  onSuccess?: (data: { redirectTo: string }) => void;
 }
 
 /**
  * Login form component
  * Handles authentication with email/password
  */
-export function LoginForm({ redirectTo, defaultEmail }: LoginFormProps) {
+export function LoginForm({
+  redirectTo,
+  defaultEmail,
+  onSuccess,
+}: LoginFormProps) {
   const router = useRouter();
   const { state, formAction } = useFormState(loginAction);
 
   useEffect(() => {
     if (state.isSuccess && state.data?.redirectTo) {
-      router.push(state.data.redirectTo);
+      if (onSuccess) {
+        onSuccess(state.data);
+      } else {
+        router.push(state.data.redirectTo);
+      }
     }
-  }, [state.isSuccess, state.data, router]);
+  }, [state.isSuccess, state.data, router, onSuccess]);
 
   return (
     <Card className="w-full max-w-sm">
