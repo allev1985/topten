@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Create a feature specification for implementing a Login Modal Panel Component based on the following requirements..."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Quick Login from Landing Page (Priority: P1)
 
@@ -63,7 +63,7 @@ A user with assistive technology (screen reader, keyboard navigation) wants to a
 - How does the system handle very long error messages? Error messages should wrap appropriately within the modal without breaking layout.
 - What happens when viewport is too small for modal content? The modal should be scrollable on small screens/viewports.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -87,19 +87,21 @@ A user with assistive technology (screen reader, keyboard navigation) wants to a
 ### Dependencies and Assumptions
 
 **Dependencies:**
+
 - Existing login form component with complete authentication functionality
 - Dialog component from the UI component library for modal implementation
 - Authentication backend service that handles credential validation
 - Landing page with Header component containing "Log In" trigger button
 
 **Assumptions:**
+
 - Users have JavaScript enabled in their browsers (modal interaction requires client-side functionality)
 - The existing login form handles all authentication logic and does not require modification beyond making it reusable
 - Modal will be the only authentication entry point from the landing page (no alternative login methods needed)
 - Form state reset on modal close is acceptable (users won't lose partially entered data if they accidentally close)
 - Redirect behavior after successful login is already implemented and working correctly
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
