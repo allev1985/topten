@@ -1,7 +1,7 @@
 <!-- Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
+- Version change: 1.1.0 → 1.2.0
 - Modified principles:
-  - I. Code Quality & Maintainability → expanded with explicit DRY principle
+  - I. Code Quality & Maintainability → added Framework Code Integrity principle
 - Added sections: none
 - Removed sections: none
 - Templates requiring updates:
@@ -33,6 +33,15 @@ the relevant decision records.
 
 Complexity or non-obvious behavior MUST be explicitly justified in
 documentation or code comments linked to the relevant decision records.
+
+**Framework Code Integrity**: Code generated or provided by frameworks,
+libraries, or CLI tools (e.g., shadcn/ui components in `components/ui/`)
+MUST NOT be modified directly. Such code is managed by the framework and
+may be regenerated or updated, causing modifications to be lost. To customize
+framework-generated code, contributors MUST use composition patterns (wrapping
+components), extension mechanisms provided by the framework, or configuration
+options. Direct modifications MUST be explicitly justified in decision records
+only when no alternative exists.
 
 **Rationale**: High code quality and adherence to DRY reduce defects,
 minimize maintenance burden, accelerate onboarding, and make iterative
@@ -120,4 +129,4 @@ understanding and applying these principles.
   include an explicit "Constitution Check" step verifying alignment with
   code quality, testing, UX, and performance requirements.
 
-**Version**: 1.1.0 | **Ratified**: 2025-11-28 | **Last Amended**: 2025-11-29
+**Version**: 1.2.0 | **Ratified**: 2025-11-28 | **Last Amended**: 2025-12-06
