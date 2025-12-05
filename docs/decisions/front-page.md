@@ -2,8 +2,8 @@
 
 ## Epic Overview
 
-**Epic:** YourFavs Landing Page with Authentication
-**Goal:** Build a visual-first landing page that serves as the primary entry point for all non-authenticated users, with modal-based authentication flows.
+**Epic:** YourFavs Landing Page
+**Goal:** Build a visual-first landing page that serves as the primary entry point for all users, with modal-based authentication flows.
 
 **Context:**
 - Platform: Next.js 14+ with App Router
@@ -24,7 +24,7 @@
 
 **To Build:**
 - Dialog component for modals (add via shadcn CLI)
-- Landing page with auth-aware content
+- Landing page with static content
 - Modal wrappers for existing auth forms
 - Hero section with image grid
 - Responsive header with CTAs
@@ -33,14 +33,14 @@
 1. User visits / → sees landing page
 2. User clicks "Start Curating" → signup modal opens
 3. User signs up → receives email verification
-4. User logs in → redirected to /dashboard
-5. Authenticated users see "Go to Dashboard" instead of auth CTAs
+4. User verifies email and logs in → redirected to /dashboard
 
 **Technical Approach:**
-- Server Component checks auth state via Supabase
+- Server Component renders static content
 - Client Component manages modal state and interactions
 - Auth forms handle Supabase integration directly
 - Placeholder images for rapid deployment
+- Landing page always shows same content for all users
 
 ---
 
@@ -94,115 +94,94 @@ Add missing shadcn/ui Dialog component and configure Next.js for external images
 
 ---
 
-## Story 2: Landing Page Shell & Auth Detection
+## Story 2: Landing Page Shell
 
 **Priority:** P0 - Blocker  
-**Estimated Lines:** ~120 (including tests)  
-**Story Points:** 3  
+**Estimated Lines:** ~80 (including tests)  
+**Story Points:** 2  
 **Dependencies:** Story 1
 
 ### Description
-Transform the current basic landing page into a proper shell with server-side authentication detection and a Client Component wrapper. The current `src/app/page.tsx` has basic content that needs to be replaced with the auth-aware landing page structure.
+Transform the current basic landing page into a proper shell with a Client Component wrapper. The current `src/app/page.tsx` has basic content that needs to be replaced with the landing page structure.
 
 ### Context
 **Current State:**
 - Basic landing page exists at `src/app/page.tsx` with simple HTML structure
-- No auth detection
 - No client/server component split
 
 **Target State:**
-The landing page should be a Server Component that checks authentication state and passes it to a Client Component. This pattern ensures fast initial render while enabling client-side interactivity for modals. The page must work for both authenticated and non-authenticated users.
+The landing page should be a Server Component that renders the initial shell and passes control to a Client Component. This pattern ensures fast initial render while enabling client-side interactivity for modals.
 
 **Technical Details:**
-- `src/app/page.tsx`: Server Component that checks auth state
-- `src/components/shared/LandingPageClient.tsx`: Client Component shell that receives auth state
-- Uses `createClient()` from `@/lib/supabase/server` for auth check
-- Auth state passed as boolean prop to avoid serialization issues
+- `src/app/page.tsx`: Server Component
+- `src/components/shared/LandingPageClient.tsx`: Client Component shell
 
 ### Tasks
-1. Update `src/app/page.tsx` to async Server Component with auth check
-2. Implement Supabase auth check using `createClient()` from `@/lib/supabase/server`
-3. Create `src/components/shared/LandingPageClient.tsx` shell with auth prop
-4. Add placeholder content to verify routing
-5. Write tests for auth detection logic
+1. Update `src/app/page.tsx` to Server Component
+2. Create `src/components/shared/LandingPageClient.tsx` shell
+3. Add placeholder content to verify routing
+4. Write tests for rendering
 
 ### Acceptance Criteria
 - [ ] Visiting `/` renders without errors
-- [ ] Server Component successfully checks auth state using `createClient()`
-- [ ] Auth state (boolean) passed to Client Component
-- [ ] Page works for authenticated users
-- [ ] Page works for non-authenticated users
+- [ ] Page works for all users
 - [ ] No hydration errors in console
-- [ ] Uses `@/lib/supabase/server` import (existing utility)
 
 ### Testing Requirements
 **Target Coverage:** 70%
 
 **Unit Tests:**
-- [ ] Mock Supabase `getUser()` returning authenticated user
-- [ ] Mock Supabase `getUser()` returning null
-- [ ] Verify `isAuthenticated` prop is true when user exists
-- [ ] Verify `isAuthenticated` prop is false when user is null
+- [ ] Verify page renders correctly
 
 **Integration Tests:**
-- [ ] Page renders without crashing (authenticated)
-- [ ] Page renders without crashing (non-authenticated)
+- [ ] Page renders without crashing
 - [ ] No console errors during render
 
 ### Files Created/Modified
 - `src/app/page.tsx` (~15 lines, modified)
-- `src/components/shared/LandingPageClient.tsx` (~40 lines, created)
-- `tests/unit/app/page.test.tsx` (~70 lines, created)
+- `src/components/shared/LandingPageClient.tsx` (~20 lines, created)
+- `tests/unit/app/page.test.tsx` (~30 lines, created)
 
 ### Example Test Cases
 ```typescript
-// Test: Server component checks auth correctly
+// Test: Page renders
 describe('Landing Page', () => {
-  it('passes isAuthenticated=true when user exists', async () => {
-    // Mock Supabase to return user
+  it('renders correctly', async () => {
     // Render page
-    // Assert LandingPageClient receives isAuthenticated={true}
-  })
-  
-  it('passes isAuthenticated=false when no user', async () => {
-    // Mock Supabase to return null
-    // Render page
-    // Assert LandingPageClient receives isAuthenticated={false}
+    // Assert LandingPageClient is rendered
   })
 })
 ```
 
 ### Definition of Done
 - Page accessible at `/` route
-- Auth detection working correctly
 - Tests passing at 70%+ coverage
 - No TypeScript errors
 - Ready for Header component integration
 
 ---
 
-## Story 3: Header Component with Auth-Aware CTAs
+## Story 3: Header Component
 
 **Priority:** P0 - Critical  
-**Estimated Lines:** ~150 (including tests)  
-**Story Points:** 5  
+**Estimated Lines:** ~100 (including tests)  
+**Story Points:** 3  
 **Dependencies:** Story 2
 
 ### Description
-Build the navigation header with YourFavs logo and authentication-aware call-to-action buttons. Header displays different CTAs based on authentication state and triggers auth modals (wired in later story).
+Build the navigation header with YourFavs logo and call-to-action buttons. Header displays CTAs and triggers auth modals (wired in later story).
 
 ### Context
-The header is the primary navigation element visible on every landing page load. It must clearly communicate authentication state and provide easy access to auth flows. The header is a Client Component because it needs to handle click events for opening modals.
+The header is the primary navigation element visible on every landing page load. It provides easy access to auth flows. The header is a Client Component because it needs to handle click events for opening modals.
 
 **Design:**
 - Logo: MapPin icon in orange circle + "YourFavs" text
-- Not authenticated: "Log In" (ghost button) + "Start Curating" (primary button)
-- Authenticated: "Go to Dashboard" (primary button linking to /dashboard)
+- Actions: "Log In" (ghost button) + "Start Curating" (primary button)
 - Header is static scroll (not fixed)
 
 ### Technical Details
 - Component: `src/components/shared/Header.tsx` (Client Component)
-- Props: `isAuthenticated: boolean`, `onLoginClick: () => void`, `onSignupClick: () => void`
+- Props: `onLoginClick: () => void`, `onSignupClick: () => void`
 - Uses lucide-react for MapPin icon (already installed)
 - Uses shadcn Button component with variants (already exists)
 - Logo links to `/` using Next.js Link
@@ -210,7 +189,7 @@ The header is the primary navigation element visible on every landing page load.
 ### Tasks
 1. Create Header component structure
 2. Implement logo with icon and text
-3. Add conditional rendering for auth CTAs
+3. Add CTAs
 4. Wire up click handlers (pass through props)
 5. Add Tailwind styling for layout and spacing
 6. Integrate Header into LandingPageClient
@@ -221,9 +200,7 @@ The header is the primary navigation element visible on every landing page load.
 - [ ] Logo displays MapPin icon in orange circle
 - [ ] Logo text reads "YourFavs"
 - [ ] Logo links to `/` route
-- [ ] When `isAuthenticated=false`: Shows "Log In" and "Start Curating" buttons
-- [ ] When `isAuthenticated=true`: Shows "Go to Dashboard" button
-- [ ] "Go to Dashboard" links to `/dashboard` route
+- [ ] Shows "Log In" and "Start Curating" buttons
 - [ ] Click handlers fire when buttons clicked
 - [ ] Header spans full width with proper padding
 - [ ] Buttons are properly spaced and aligned
@@ -233,12 +210,10 @@ The header is the primary navigation element visible on every landing page load.
 **Target Coverage:** 65%
 
 **Unit Tests:**
-- [ ] Header renders with isAuthenticated=false
-- [ ] Header renders with isAuthenticated=true
+- [ ] Header renders correctly
 - [ ] "Log In" button calls onLoginClick when clicked
 - [ ] "Start Curating" button calls onSignupClick when clicked
 - [ ] Logo links to correct route
-- [ ] "Go to Dashboard" links to correct route
 - [ ] All buttons have correct variants
 
 **Accessibility Tests:**
@@ -248,23 +223,16 @@ The header is the primary navigation element visible on every landing page load.
 
 ### Files Created
 - `src/components/shared/Header.tsx` (~50 lines)
-- `tests/unit/components/shared/Header.test.tsx` (~100 lines)
+- `tests/unit/components/shared/Header.test.tsx` (~60 lines)
 
 ### Example Test Cases
 ```typescript
-// Test: Header shows correct CTAs based on auth
+// Test: Header shows correct CTAs
 describe('Header', () => {
-  it('shows login and signup buttons when not authenticated', () => {
-    // Render with isAuthenticated=false
+  it('shows login and signup buttons', () => {
+    // Render
     // Assert "Log In" button exists
     // Assert "Start Curating" button exists
-    // Assert "Go to Dashboard" does not exist
-  })
-  
-  it('shows dashboard button when authenticated', () => {
-    // Render with isAuthenticated=true
-    // Assert "Go to Dashboard" exists
-    // Assert login/signup buttons do not exist
   })
   
   it('calls onLoginClick when Log In clicked', () => {
@@ -285,7 +253,6 @@ describe('Header', () => {
 
 ### Definition of Done
 - Header component rendering correctly
-- Auth state properly reflected in UI
 - Click handlers working
 - Tests passing at 65%+ coverage
 - Accessibility requirements met
@@ -428,7 +395,7 @@ Create a modal wrapper for the existing login form to enable login from the land
 1. User clicks "Log In" → Dialog opens with LoginForm
 2. User enters email/password → Submits form
 3. Form calls server action `loginAction`
-4. Success → Dialog closes and page refreshes to show authenticated state
+4. Success → Redirects to dashboard
 5. Error → Error message displayed inline in form
 
 ### Technical Details
@@ -742,15 +709,15 @@ Message: "We've sent you a confirmation link. Click it to verify your account an
 ## Story 7: Hero Section Integration & CTA Wiring
 
 **Priority:** P0 - Critical  
-**Estimated Lines:** ~180 (including tests)  
+**Estimated Lines:** ~150 (including tests)  
 **Story Points:** 5  
 **Dependencies:** Stories 2, 3, 4, 6
 
 ### Description
-Complete the LandingPageClient component by adding the hero text section and wiring up the primary CTA button. This brings together all components into the final landing page layout with proper auth-aware behavior.
+Complete the LandingPageClient component by adding the hero text section and wiring up the primary CTA button. This brings together all components into the final landing page layout.
 
 ### Context
-The hero section is the main content area of the landing page, split into two columns: text content (left) with CTA button, and image grid (right). The CTA button behavior changes based on authentication state, matching the pattern established in the Header.
+The hero section is the main content area of the landing page, split into two columns: text content (left) with CTA button, and image grid (right).
 
 **Layout:**
 ```
@@ -765,8 +732,7 @@ The hero section is the main content area of the landing page, split into two co
 ```
 
 **CTA Behavior:**
-- Not authenticated: Opens signup modal
-- Authenticated: Links to /dashboard
+- Opens signup modal
 
 ### Technical Details
 **Hero Text Content:**
@@ -791,7 +757,7 @@ The hero section is the main content area of the landing page, split into two co
 1. Update LandingPageClient with hero text content
 2. Add Sparkles icon from lucide-react
 3. Implement grid layout (40/60 split)
-4. Add primary CTA button with auth-aware behavior
+4. Add primary CTA button
 5. Connect Header button handlers to modal state
 6. Connect CTA button handler to modal state
 7. Add responsive breakpoints for mobile
@@ -811,10 +777,8 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Layout stacks vertically on mobile (<1024px)
 
 **CTA Button Behavior:**
-- [ ] When not authenticated: Button is interactive (onClick handler)
-- [ ] When not authenticated: Clicking opens signup modal
-- [ ] When authenticated: Button is Link component
-- [ ] When authenticated: Links to /dashboard
+- [ ] Button is interactive (onClick handler)
+- [ ] Clicking opens signup modal
 - [ ] Button text reads "Create Your First List"
 - [ ] Button has proper size (size="lg")
 
@@ -823,7 +787,7 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] signupOpen state controls SignupModal
 - [ ] Header "Log In" button sets loginOpen=true
 - [ ] Header "Start Curating" button sets signupOpen=true
-- [ ] Hero CTA button sets signupOpen=true (when not authenticated)
+- [ ] Hero CTA button sets signupOpen=true
 - [ ] Modals close when onOpenChange(false) called
 
 **Layout & Spacing:**
@@ -846,8 +810,7 @@ The hero section is the main content area of the landing page, split into two co
 **State Management Tests:**
 - [ ] Clicking Header "Log In" opens LoginModal
 - [ ] Clicking Header "Start Curating" opens SignupModal
-- [ ] Clicking Hero CTA opens SignupModal (not authenticated)
-- [ ] Hero CTA links to dashboard (authenticated)
+- [ ] Clicking Hero CTA opens SignupModal
 - [ ] Only one modal opens at a time
 - [ ] Closing modal sets state to false
 
@@ -865,23 +828,17 @@ The hero section is the main content area of the landing page, split into two co
 ```typescript
 describe('LandingPageClient Integration', () => {
   it('renders all sections correctly', () => {
-    // Render with isAuthenticated=false
+    // Render component
     // Assert Header exists
     // Assert hero text exists
     // Assert image grid exists
     // Assert CTA button exists
   })
   
-  it('opens signup modal when CTA clicked (not authenticated)', () => {
-    // Render with isAuthenticated=false
+  it('opens signup modal when CTA clicked', () => {
+    // Render component
     // Click "Create Your First List" button
     // Assert SignupModal open={true}
-  })
-  
-  it('CTA links to dashboard when authenticated', () => {
-    // Render with isAuthenticated=true
-    // Assert CTA is Link component
-    // Assert href="/dashboard"
   })
   
   it('header buttons control modal state', () => {
@@ -908,7 +865,7 @@ const content = {
 ### Definition of Done
 - Complete landing page layout implemented
 - All components integrated and rendering
-- CTA button working correctly for both auth states
+- CTA button opens signup modal
 - Modal state management working
 - Responsive design implemented
 - Tests passing at 65%+ coverage
@@ -959,7 +916,7 @@ While basic responsive design is implemented in component stories, this story fo
 6. Manually verify email (outside test)
 7. Click "Log In" to open modal
 8. Fill login form in modal
-9. Page refreshes, authenticated state shown
+9. Redirect to /dashboard
 
 ### Tasks
 1. Review all components at each breakpoint
@@ -1043,8 +1000,8 @@ test('completes login flow', async ({ page }) => {
   await page.fill('input[name="password"]', 'password123');
   // Submit form
   await page.click('button[type="submit"]');
-  // Page reloads and shows authenticated header
-  await expect(page.locator('text=Go to Dashboard')).toBeVisible();
+  // Redirect to dashboard
+  await expect(page).toHaveURL('/dashboard');
 });
 ```
 
