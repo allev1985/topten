@@ -15,6 +15,12 @@ describe("LandingPageClient Accessibility", () => {
       const main = screen.getByRole("main");
       expect(main).toBeInTheDocument();
     });
+
+    it("uses banner landmark for header", () => {
+      render(<LandingPageClient />);
+      const banner = screen.getByRole("banner");
+      expect(banner).toBeInTheDocument();
+    });
   });
 
   describe("text content", () => {
@@ -37,8 +43,9 @@ describe("LandingPageClient Accessibility", () => {
     it("renders content that is keyboard accessible", () => {
       const { container } = render(<LandingPageClient />);
       // The landing page should be accessible via keyboard navigation
-      // Since there are no interactive elements in v1, we just verify the content is present
+      // Header contains interactive elements (logo link and buttons)
       expect(container.querySelector("main")).toBeInTheDocument();
+      expect(container.querySelector("header")).toBeInTheDocument();
     });
   });
 
@@ -46,7 +53,8 @@ describe("LandingPageClient Accessibility", () => {
     it("has accessible text content for screen readers", () => {
       render(<LandingPageClient />);
       // Verify that screen readers can access the text content
-      expect(screen.getByText("YourFavs")).toBeInTheDocument();
+      // Note: "YourFavs" appears twice - once in header logo, once in h1
+      expect(screen.getAllByText("YourFavs")).toHaveLength(2);
       expect(
         screen.getByText(/curate and share your favorite places/i)
       ).toBeInTheDocument();

@@ -43,10 +43,10 @@ describe("LandingPageClient - Responsive Design", () => {
 
     it("maintains proper spacing on small screens", () => {
       const { container } = render(<LandingPageClient />);
-      const main = container.querySelector("main");
+      const contentDiv = container.querySelector("main > div");
 
       // Verify gap for spacing
-      expect(main?.className).toContain("gap-6");
+      expect(contentDiv?.className).toContain("gap-6");
     });
   });
 

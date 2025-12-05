@@ -37,8 +37,7 @@ describe("LandingPageClient", () => {
       const { container } = render(<LandingPageClient />);
       const wrapper = container.querySelector("div");
       expect(wrapper?.className).toContain("min-h-screen");
-      expect(wrapper?.className).toContain("items-center");
-      expect(wrapper?.className).toContain("justify-center");
+      expect(wrapper?.className).toContain("flex-col");
     });
 
     it("applies responsive text sizing", () => {
