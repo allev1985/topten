@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Header from "@/components/shared/Header";
+import LoginModal from "@/components/shared/LoginModal";
 
 export default function LandingPageClient() {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
   const handleLogin = () => {
-    // TODO: Open login modal (future feature)
-    console.log("Login clicked");
+    setIsLoginModalOpen(true);
   };
 
   const handleSignup = () => {
@@ -16,6 +19,12 @@ export default function LandingPageClient() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
       <Header onLogin={handleLogin} onSignup={handleSignup} />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        redirectTo="/dashboard"
+      />
 
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-6 text-center">

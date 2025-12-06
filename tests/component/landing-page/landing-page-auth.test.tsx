@@ -1,6 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import LandingPageClient from "@/components/shared/LandingPageClient";
+
+// Mock Next.js router
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
 
 describe("LandingPageClient - Authenticated User", () => {
   describe("rendering for authenticated users", () => {
