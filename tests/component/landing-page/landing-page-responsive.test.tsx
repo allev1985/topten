@@ -2,102 +2,63 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import LandingPageClient from "@/components/shared/LandingPageClient";
 
-// Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
 }));
 
-describe("LandingPageClient - Responsive Design", () => {
-  describe("layout responsiveness", () => {
-    it("applies responsive container classes", () => {
+describe("LandingPageClient - Responsive Layout", () => {
+  describe("desktop layout", () => {
+    it("applies grid layout classes for two-column display", () => {
       const { container } = render(<LandingPageClient />);
-      const wrapper = container.querySelector("div");
+      const gridContainer = container.querySelector(".grid");
 
-      // Verify responsive classes are present
-      expect(wrapper?.className).toContain("flex");
-      expect(wrapper?.className).toContain("min-h-screen");
+      expect(gridContainer?.className).toContain("grid-cols-1");
+      expect(gridContainer?.className).toContain("lg:grid-cols-5");
     });
 
-    it("uses responsive text sizing", () => {
-      render(<LandingPageClient />);
-      const heading = screen.getByRole("heading", { name: "YourFavs" });
+    it("allocates correct column spans for text and images", () => {
+      const { container } = render(<LandingPageClient />);
 
-      // Verify responsive text sizing is applied
-      expect(heading.className).toContain("text-4xl");
-    });
+      // Text column should be col-span-1 lg:col-span-2
+      const textColumn = screen
+        .getByRole("heading", { level: 1 })
+        .closest(".col-span-1");
+      expect(textColumn?.className).toContain("lg:col-span-2");
 
-    it("constrains content width for readability", () => {
-      render(<LandingPageClient />);
-      const tagline = screen.getByText(
-        /curate and share your favorite places/i
-      );
-
-      // Verify max-width constraint for readability
-      expect(tagline.className).toContain("max-w-md");
+      // Image column should be col-span-1 lg:col-span-3
+      const imageColumn = container.querySelector(".lg\\:col-span-3");
+      expect(imageColumn).toBeInTheDocument();
     });
   });
 
-  describe("mobile viewport compatibility", () => {
-    it("renders content in column layout", () => {
+  describe("mobile layout", () => {
+    it("stacks content vertically on mobile", () => {
+      const { container } = render(<LandingPageClient />);
+      const gridContainer = container.querySelector(".grid");
+
+      // Both columns should have col-span-1 (full width on mobile)
+      expect(gridContainer?.className).toContain("grid-cols-1");
+    });
+  });
+
+  describe("spacing and padding", () => {
+    it("applies responsive padding to main element", () => {
       const { container } = render(<LandingPageClient />);
       const main = container.querySelector("main");
 
-      // Verify column layout (mobile-first approach)
-      expect(main?.className).toContain("flex-col");
+      expect(main?.className).toContain("px-4");
+      expect(main?.className).toContain("md:px-8");
+      expect(main?.className).toContain("py-12");
+      expect(main?.className).toContain("md:py-16");
     });
 
-    it("maintains proper spacing on small screens", () => {
+    it("constrains content to max-width", () => {
       const { container } = render(<LandingPageClient />);
-      const contentDiv = container.querySelector("main > div");
+      const heroContainer = container.querySelector(".max-w-7xl");
 
-      // Verify gap for spacing
-      expect(contentDiv?.className).toContain("gap-6");
-    });
-  });
-
-  describe("content accessibility across viewports", () => {
-    it("ensures text is readable on all viewport sizes", () => {
-      render(<LandingPageClient />);
-
-      // Verify text content is accessible
-      expect(
-        screen.getByRole("heading", { name: "YourFavs" })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/curate and share your favorite places/i)
-      ).toBeInTheDocument();
-    });
-
-    it("maintains semantic structure across viewports", () => {
-      render(<LandingPageClient />);
-
-      const main = screen.getByRole("main");
-      const heading = screen.getByRole("heading", { level: 1 });
-
-      // Verify semantic structure is maintained
-      expect(main).toContainElement(heading);
-    });
-  });
-
-  describe("future responsive enhancements", () => {
-    it("provides foundation for responsive images", () => {
-      // Current version has no images
-      // Future versions may add hero images with responsive srcset
-      render(<LandingPageClient />);
-
-      const main = screen.getByRole("main");
-      expect(main).toBeInTheDocument();
-    });
-
-    it("provides foundation for responsive navigation", () => {
-      // Current version has no navigation
-      // Future versions may add responsive navigation (hamburger menu on mobile)
-      render(<LandingPageClient />);
-
-      const wrapper = screen.getByRole("main").parentElement;
-      expect(wrapper).toBeInTheDocument();
+      expect(heroContainer).toBeInTheDocument();
     });
   });
 });
