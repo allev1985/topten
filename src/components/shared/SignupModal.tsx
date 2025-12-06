@@ -54,7 +54,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
             </AlertDescription>
           </Alert>
         ) : (
-          <SignupForm onSuccess={handleSuccess} />
+          <SignupForm variant="inline" onSuccess={handleSuccess} />
         )}
       </DialogContent>
     </Dialog>

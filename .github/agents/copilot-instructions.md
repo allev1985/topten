@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - N/A (presentational component only) (001-header-component)
 - TypeScript 5.x with Next.js 16.0.5 (App Router) (001-landing-page-polish)
 - N/A (frontend-only changes) (001-landing-page-polish)
+- TypeScript (Next.js 15 with App Router) + React 19, Next.js 15, Tailwind CSS, shadcn/ui (003-fix-modal-headers)
+- N/A (UI-only change) (003-fix-modal-headers)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -48,9 +50,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 003-fix-modal-headers: Added TypeScript (Next.js 15 with App Router) + React 19, Next.js 15, Tailwind CSS, shadcn/ui
 - 001-landing-page-polish: Added TypeScript 5.x with Next.js 16.0.5 (App Router)
 - 001-header-component: Added TypeScript 5.x with React 19.2.0 and Next.js 16.0.5 (App Router)
-- 001-landing-page: Added TypeScript 5.x, React 19.2.0, Next.js 16.0.5 + Next.js App Router, React 19, Tailwind CSS 4, shadcn/ui (New York style)
 
 
 <!-- MANUAL ADDITIONS START -->

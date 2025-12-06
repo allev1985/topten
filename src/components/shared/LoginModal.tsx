@@ -32,7 +32,11 @@ export default function LoginModal({
             Enter your credentials to access your account
           </DialogDescription>
         </DialogHeader>
-        <LoginForm redirectTo={redirectTo} onSuccess={handleSuccess} />
+        <LoginForm
+          variant="inline"
+          redirectTo={redirectTo}
+          onSuccess={handleSuccess}
+        />
       </DialogContent>
     </Dialog>
   );
