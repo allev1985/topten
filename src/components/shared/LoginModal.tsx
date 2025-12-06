@@ -9,15 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface LoginModalProps {
-  /** Controls modal visibility */
-  isOpen: boolean;
-  /** Callback when modal should close */
-  onClose: () => void;
-  /** Optional redirect URL after successful login */
-  redirectTo?: string;
-}
+import type { LoginModalProps } from "@/types/components";
 
 export default function LoginModal({
   isOpen,
