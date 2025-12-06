@@ -92,7 +92,10 @@ test.describe("Login Modal Flow - User Story 1", () => {
     // Wait for error to appear or modal to remain visible
     await Promise.race([
       page.locator('[role="alert"]').first().waitFor({ timeout: 3000 }),
-      page.locator("text=/invalid|incorrect|wrong/i").first().waitFor({ timeout: 3000 }),
+      page
+        .locator("text=/invalid|incorrect|wrong/i")
+        .first()
+        .waitFor({ timeout: 3000 }),
     ]).catch(() => {
       // Error message may not appear immediately
     });

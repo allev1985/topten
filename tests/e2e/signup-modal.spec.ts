@@ -40,7 +40,9 @@ test.describe("Signup Modal Flow - User Story 1: Mobile Signup", () => {
 
     // Wait for either error or success message
     await Promise.race([
-      page.locator("text=/already exists|already registered|User already/i").waitFor({ timeout: 5000 }),
+      page
+        .locator("text=/already exists|already registered|User already/i")
+        .waitFor({ timeout: 5000 }),
       page.locator('[role="alert"]').first().waitFor({ timeout: 5000 }),
     ]).catch(() => {
       // If neither appears, that's acceptable - just verify form is still visible
@@ -49,9 +51,12 @@ test.describe("Signup Modal Flow - User Story 1: Mobile Signup", () => {
     // If no specific error found, at least verify modal is still open
     // (successful signup would show success message)
     await expect(page.getByRole("dialog")).toBeVisible();
-    
+
     // Success message should NOT be visible if there was an error
-    const successVisible = await page.getByText("Check your email!").isVisible().catch(() => false);
+    const successVisible = await page
+      .getByText("Check your email!")
+      .isVisible()
+      .catch(() => false);
     if (!successVisible) {
       // Form is still visible, which indicates error was handled
       await expect(page.getByLabel("Email")).toBeVisible();
@@ -215,7 +220,10 @@ test.describe("Signup Modal Flow - User Story 1: Mobile Signup", () => {
     // Wait for validation errors to appear
     await Promise.race([
       page.locator('[role="alert"]').first().waitFor({ timeout: 2000 }),
-      page.locator("text=/required|invalid/i").first().waitFor({ timeout: 2000 }),
+      page
+        .locator("text=/required|invalid/i")
+        .first()
+        .waitFor({ timeout: 2000 }),
     ]).catch(() => {
       // No error found, which is acceptable if form has other validation
     });
@@ -230,9 +238,7 @@ test.describe("Signup Modal Flow - User Story 4: Keyboard Navigation", () => {
     await page.goto("/");
   });
 
-  test("keyboard navigation - activate signup with Enter", async ({
-    page,
-  }) => {
+  test("keyboard navigation - activate signup with Enter", async ({ page }) => {
     // Tab to signup button
     await page.keyboard.press("Tab"); // Logo
     await page.keyboard.press("Tab"); // Log In

@@ -491,7 +491,7 @@ test.describe("Landing Page", () => {
 
       // Verify focus is on an interactive element
       const focused = await page.evaluateHandle(() => document.activeElement);
-      const tagName = await focused.evaluate((el) => el.tagName);
+      const tagName = await focused.evaluate((el) => el?.tagName ?? "");
       expect(["BUTTON", "A"]).toContain(tagName);
     });
   });
@@ -506,12 +506,17 @@ test.describe("Landing Page", () => {
           let lcpValue = 0;
           const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
-            const lastEntry = entries[entries.length - 1] as PerformanceEntry & {
+            const lastEntry = entries[
+              entries.length - 1
+            ] as PerformanceEntry & {
               startTime: number;
             };
             lcpValue = lastEntry.startTime;
           });
-          observer.observe({ type: "largest-contentful-paint", buffered: true });
+          observer.observe({
+            type: "largest-contentful-paint",
+            buffered: true,
+          });
 
           // Wait for load event, then disconnect and return LCP
           setTimeout(() => {
