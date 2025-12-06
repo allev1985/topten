@@ -2,69 +2,72 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import LandingPageClient from "@/components/shared/LandingPageClient";
 
-// Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
 }));
 
-describe("LandingPageClient Accessibility", () => {
-  describe("semantic HTML", () => {
-    it("uses proper heading hierarchy", () => {
+describe("LandingPageClient - Accessibility", () => {
+  describe("heading hierarchy", () => {
+    it("has exactly one h1 element", () => {
+      render(<LandingPageClient />);
+      const headings = screen.getAllByRole("heading", { level: 1 });
+      expect(headings).toHaveLength(1);
+    });
+
+    it("uses h1 for the main headline", () => {
       render(<LandingPageClient />);
       const h1 = screen.getByRole("heading", { level: 1 });
-      expect(h1).toHaveTextContent("YourFavs");
+      expect(h1).toHaveTextContent("Curate and share your favourite places");
+    });
+  });
+
+  describe("interactive elements", () => {
+    it("CTA button is keyboard focusable", () => {
+      render(<LandingPageClient />);
+      const ctaButton = screen.getByRole("button", {
+        name: "Create Your First List",
+      });
+
+      ctaButton.focus();
+      expect(ctaButton).toHaveFocus();
+    });
+
+    it("CTA button has accessible name", () => {
+      render(<LandingPageClient />);
+      const ctaButton = screen.getByRole("button", {
+        name: "Create Your First List",
+      });
+
+      expect(ctaButton).toHaveAccessibleName("Create Your First List");
+    });
+  });
+
+  describe("decorative elements", () => {
+    it("marks sparkles icon as decorative", () => {
+      const { container } = render(<LandingPageClient />);
+      const sparklesIcon = container.querySelector('[aria-hidden="true"]');
+
+      expect(sparklesIcon).toBeInTheDocument();
+    });
+  });
+
+  describe("semantic HTML", () => {
+    it("uses button element for CTA", () => {
+      render(<LandingPageClient />);
+      const cta = screen.getByRole("button", {
+        name: "Create Your First List",
+      });
+
+      expect(cta.tagName).toBe("BUTTON");
     });
 
     it("uses main landmark for primary content", () => {
       render(<LandingPageClient />);
       const main = screen.getByRole("main");
+
       expect(main).toBeInTheDocument();
-    });
-
-    it("uses banner landmark for header", () => {
-      render(<LandingPageClient />);
-      const banner = screen.getByRole("banner");
-      expect(banner).toBeInTheDocument();
-    });
-  });
-
-  describe("text content", () => {
-    it("provides meaningful heading text", () => {
-      render(<LandingPageClient />);
-      const heading = screen.getByRole("heading", { name: "YourFavs" });
-      expect(heading).toBeVisible();
-    });
-
-    it("provides descriptive tagline", () => {
-      render(<LandingPageClient />);
-      const tagline = screen.getByText(
-        /curate and share your favorite places/i
-      );
-      expect(tagline).toBeVisible();
-    });
-  });
-
-  describe("keyboard navigation", () => {
-    it("renders content that is keyboard accessible", () => {
-      const { container } = render(<LandingPageClient />);
-      // The landing page should be accessible via keyboard navigation
-      // Header contains interactive elements (logo link and buttons)
-      expect(container.querySelector("main")).toBeInTheDocument();
-      expect(container.querySelector("header")).toBeInTheDocument();
-    });
-  });
-
-  describe("screen reader compatibility", () => {
-    it("has accessible text content for screen readers", () => {
-      render(<LandingPageClient />);
-      // Verify that screen readers can access the text content
-      // Note: "YourFavs" appears twice - once in header logo, once in h1
-      expect(screen.getAllByText("YourFavs")).toHaveLength(2);
-      expect(
-        screen.getByText(/curate and share your favorite places/i)
-      ).toBeInTheDocument();
     });
   });
 });

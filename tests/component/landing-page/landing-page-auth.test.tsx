@@ -20,10 +20,12 @@ describe("LandingPageClient - Authenticated User", () => {
       expect(screen.getByRole("banner")).toBeInTheDocument();
 
       expect(
-        screen.getByRole("heading", { name: "YourFavs" })
+        screen.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/curate and share your favorite places/i)
+        screen.getByText(/Build focused, meaningful collections/i)
       ).toBeInTheDocument();
     });
 

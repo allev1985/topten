@@ -1,11 +1,128 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Landing Page", () => {
+  test.describe("Hero Section", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    });
+
+    test("displays all hero section content", async ({ page }) => {
+      // Tagline
+      await expect(
+        page.getByText("Your personal guide to the world")
+      ).toBeVisible();
+
+      // Headline
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+
+      // Subheading
+      await expect(
+        page.getByText(/Build focused, meaningful collections/i)
+      ).toBeVisible();
+
+      // CTA Button
+      await expect(
+        page.getByRole("button", { name: "Create Your First List" })
+      ).toBeVisible();
+
+      // Hero Image Grid
+      await expect(page.locator('img[alt*="coffee"]')).toBeVisible();
+    });
+
+    test("complete signup flow from hero CTA", async ({ page }) => {
+      // Click hero CTA button
+      await page
+        .getByRole("button", { name: "Create Your First List" })
+        .click();
+
+      // Signup modal should appear
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page.getByText("Create your account")).toBeVisible();
+
+      // Close modal
+      await page.keyboard.press("Escape");
+
+      // Should return to landing page
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+    });
+
+    test("responsive layout on mobile", async ({ page }) => {
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+
+      // All content should be visible and stacked
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Create Your First List" })
+      ).toBeVisible();
+
+      // No horizontal scroll
+      const scrollWidth = await page.evaluate(
+        () => document.documentElement.scrollWidth
+      );
+      const clientWidth = await page.evaluate(
+        () => document.documentElement.clientWidth
+      );
+      expect(scrollWidth).toBe(clientWidth);
+    });
+
+    test("responsive layout on desktop", async ({ page }) => {
+      // Set desktop viewport
+      await page.setViewportSize({ width: 1920, height: 1080 });
+
+      // All content should be visible side-by-side
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Create Your First List" })
+      ).toBeVisible();
+
+      // Image grid should be visible
+      await expect(page.locator('img[alt*="coffee"]')).toBeVisible();
+    });
+
+    test("keyboard navigation works for CTA button", async ({ page }) => {
+      // Tab to CTA button
+      await page.keyboard.press("Tab"); // Skip to first focusable (likely header logo)
+      await page.keyboard.press("Tab"); // Header login
+      await page.keyboard.press("Tab"); // Header signup
+      await page.keyboard.press("Tab"); // Hero CTA
+
+      // Should focus CTA button
+      await expect(
+        page.getByRole("button", { name: "Create Your First List" })
+      ).toBeFocused();
+
+      // Press Enter to activate
+      await page.keyboard.press("Enter");
+
+      // Modal should open
+      await expect(page.getByRole("dialog")).toBeVisible();
+    });
+  });
+
   test.describe("page load", () => {
     test("loads successfully at root URL", async ({ page }) => {
       await page.goto("/");
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
     });
 
@@ -14,12 +131,14 @@ test.describe("Landing Page", () => {
 
       // Check heading
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
 
-      // Check tagline
+      // Check subheading
       await expect(
-        page.getByText(/curate and share your favorite places/i)
+        page.getByText(/Build focused, meaningful collections/i)
       ).toBeVisible();
     });
   });
@@ -29,7 +148,9 @@ test.describe("Landing Page", () => {
       const startTime = Date.now();
       await page.goto("/");
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
       const loadTime = Date.now() - startTime;
 
@@ -46,7 +167,9 @@ test.describe("Landing Page", () => {
 
       await page.goto("/");
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
 
       expect(errors).toHaveLength(0);
@@ -65,7 +188,9 @@ test.describe("Landing Page", () => {
 
       await page.goto("/");
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
 
       expect(warnings).toHaveLength(0);
@@ -77,7 +202,7 @@ test.describe("Landing Page", () => {
       await page.goto("/");
 
       const h1 = page.locator("h1");
-      await expect(h1).toHaveText("YourFavs");
+      await expect(h1).toHaveText("Curate and share your favourite places");
     });
 
     test("uses main landmark", async ({ page }) => {
@@ -99,8 +224,8 @@ test.describe("Landing Page", () => {
 
       // Core content should be visible even without JavaScript
       const content = await page.content();
-      expect(content).toContain("YourFavs");
-      expect(content).toContain("Curate and share your favorite places");
+      expect(content).toContain("Curate and share your favourite places");
+      expect(content).toContain("Build focused, meaningful collections");
 
       await context.close();
     });
@@ -112,10 +237,12 @@ test.describe("Landing Page", () => {
       await page.goto("/");
 
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
       await expect(
-        page.getByText(/curate and share your favorite places/i)
+        page.getByText(/Build focused, meaningful collections/i)
       ).toBeVisible();
     });
 
@@ -124,10 +251,12 @@ test.describe("Landing Page", () => {
       await page.goto("/");
 
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
       await expect(
-        page.getByText(/curate and share your favorite places/i)
+        page.getByText(/Build focused, meaningful collections/i)
       ).toBeVisible();
     });
 
@@ -136,10 +265,12 @@ test.describe("Landing Page", () => {
       await page.goto("/");
 
       await expect(
-        page.getByRole("heading", { name: "YourFavs" })
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
       ).toBeVisible();
       await expect(
-        page.getByText(/curate and share your favorite places/i)
+        page.getByText(/Build focused, meaningful collections/i)
       ).toBeVisible();
     });
 
@@ -160,7 +291,9 @@ test.describe("Landing Page", () => {
 
         // Verify content is visible at all viewport sizes
         await expect(
-          page.getByRole("heading", { name: "YourFavs" })
+          page.getByRole("heading", {
+            name: "Curate and share your favourite places",
+          })
         ).toBeVisible();
 
         // Verify no layout shift or overlap issues
@@ -180,7 +313,7 @@ test.describe("Landing Page", () => {
 
       // Verify all 4 images are visible
       const images = page.locator(
-        'img[alt*="coffee"], img[alt*="library"], img[alt*="market"], img[alt*="gallery"]',
+        'img[alt*="coffee"], img[alt*="library"], img[alt*="market"], img[alt*="gallery"]'
       );
       await expect(images).toHaveCount(4);
 
@@ -198,7 +331,7 @@ test.describe("Landing Page", () => {
 
       // Verify all 4 images are visible
       const images = page.locator(
-        'img[alt*="coffee"], img[alt*="library"], img[alt*="market"], img[alt*="gallery"]',
+        'img[alt*="coffee"], img[alt*="library"], img[alt*="market"], img[alt*="gallery"]'
       );
       await expect(images).toHaveCount(4);
     });
@@ -238,7 +371,9 @@ test.describe("Landing Page", () => {
     // from the test server environment, causing image loading failures that
     // result in layout shift. In production with properly accessible image CDN,
     // this test should pass with CLS < 0.1
-    test.skip("prevents layout shift during image loading", async ({ page }) => {
+    test.skip("prevents layout shift during image loading", async ({
+      page,
+    }) => {
       // Navigate with network throttling to simulate slow loading
       await page.goto("/");
 
@@ -248,8 +383,12 @@ test.describe("Landing Page", () => {
           let clsValue = 0;
           const observer = new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-              if ((entry as any).hadRecentInput) continue;
-              clsValue += (entry as any).value;
+              const layoutShiftEntry = entry as unknown as {
+                hadRecentInput?: boolean;
+                value: number;
+              };
+              if (layoutShiftEntry.hadRecentInput) continue;
+              clsValue += layoutShiftEntry.value;
             }
           });
           observer.observe({ type: "layout-shift", buffered: true });
