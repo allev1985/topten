@@ -19,7 +19,11 @@ import {
 import { validatePassword } from "@/lib/utils/validation/password";
 
 export interface SignupFormProps {
-  /** Callback invoked on successful signup (prevents default redirect) */
+  /**
+   * Callback invoked on successful signup (prevents default redirect).
+   * When provided (modal context): Callback is invoked instead of redirecting
+   * When omitted (standalone page): Redirects to /verify-email after signup
+   */
   onSuccess?: () => void;
 }
 
@@ -39,10 +43,10 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   useEffect(() => {
     if (state.isSuccess && state.data?.redirectTo) {
       if (onSuccess) {
-        // If onSuccess callback provided (modal context), call it instead of redirecting
+        // Modal context: Call onSuccess callback to show success message
         onSuccess();
       } else {
-        // Otherwise redirect normally (standalone page context)
+        // Standalone page context: Redirect to verify-email page
         router.push(state.data.redirectTo);
       }
     }

@@ -86,19 +86,23 @@ describe("SignupModal - Interaction", () => {
 
   it("resets success state when modal closes and reopens", async () => {
     const user = userEvent.setup();
+    const onClose = vi.fn();
     const { rerender } = render(
-      <SignupModal isOpen={true} onClose={vi.fn()} />
+      <SignupModal isOpen={true} onClose={onClose} />
     );
 
     // Trigger success
     await user.click(screen.getByText("Mock Success"));
     expect(screen.getByText("Check your email!")).toBeInTheDocument();
 
-    // Close modal
-    rerender(<SignupModal isOpen={false} onClose={vi.fn()} />);
+    // Close modal by pressing Escape (triggers handleOpenChange)
+    await user.keyboard("{Escape}");
+
+    // Rerender with modal closed
+    rerender(<SignupModal isOpen={false} onClose={onClose} />);
 
     // Reopen modal
-    rerender(<SignupModal isOpen={true} onClose={vi.fn()} />);
+    rerender(<SignupModal isOpen={true} onClose={onClose} />);
 
     // Should show form again, not success message
     expect(screen.getByTestId("mock-signup-form")).toBeInTheDocument();

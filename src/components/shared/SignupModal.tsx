@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SignupForm } from "@/components/auth/signup-form";
 import {
   Dialog,
@@ -20,19 +20,14 @@ import type { SignupModalProps } from "@/types/components";
 export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Reset success state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setShowSuccess(false);
-    }
-  }, [isOpen]);
-
   const handleSuccess = () => {
     setShowSuccess(true);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      // Reset success state when modal closes
+      setShowSuccess(false);
       onClose();
     }
   };

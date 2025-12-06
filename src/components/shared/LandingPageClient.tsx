@@ -13,13 +13,13 @@ export default function LandingPageClient() {
     setIsLoginModalOpen(true);
   };
 
-  const handleSignup = () => {
+  const openSignupModal = () => {
     setIsSignupModalOpen(true);
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
-      <Header onLogin={handleLogin} onSignup={handleSignup} />
+      <Header onLogin={handleLogin} onSignup={openSignupModal} />
 
       <LoginModal
         isOpen={isLoginModalOpen}
