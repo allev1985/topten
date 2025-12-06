@@ -3,27 +3,33 @@
 import { useState } from "react";
 import Header from "@/components/shared/Header";
 import LoginModal from "@/components/shared/LoginModal";
+import SignupModal from "@/components/shared/SignupModal";
 
 export default function LandingPageClient() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
   const handleLogin = () => {
     setIsLoginModalOpen(true);
   };
 
-  const handleSignup = () => {
-    // TODO: Open signup modal (future feature)
-    console.log("Signup clicked");
+  const openSignupModal = () => {
+    setIsSignupModalOpen(true);
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
-      <Header onLogin={handleLogin} onSignup={handleSignup} />
+      <Header onLogin={handleLogin} onSignup={openSignupModal} />
 
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         redirectTo="/dashboard"
+      />
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
       />
 
       <main className="flex flex-1 flex-col items-center justify-center">

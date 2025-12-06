@@ -13,3 +13,13 @@ export interface LoginModalProps {
   /** Optional redirect URL after successful login */
   redirectTo?: string;
 }
+
+/**
+ * Props for SignupModal component
+ */
+export interface SignupModalProps {
+  /** Controls modal visibility */
+  isOpen: boolean;
+  /** Callback when modal should close */
+  onClose: () => void;
+}

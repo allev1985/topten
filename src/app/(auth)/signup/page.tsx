@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { SignupForm } from "./signup-form";
+import { SignupForm } from "@/components/auth/signup-form";
 
 /**
  * Signup page
