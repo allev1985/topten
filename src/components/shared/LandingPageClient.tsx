@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Header from "@/components/shared/Header";
+import HeroImageGrid from "@/components/shared/HeroImageGrid";
 import LoginModal from "@/components/shared/LoginModal";
 import SignupModal from "@/components/shared/SignupModal";
 
@@ -32,7 +33,11 @@ export default function LandingPageClient() {
         onClose={() => setIsSignupModalOpen(false)}
       />
 
-      <main className="flex flex-1 flex-col items-center justify-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-12 px-4 py-8">
+        {/* Hero Image Grid */}
+        <HeroImageGrid />
+
+        {/* Existing content */}
         <div className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
             YourFavs
