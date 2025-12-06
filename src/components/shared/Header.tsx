@@ -29,10 +29,10 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onLogin}>
+          <Button variant="ghost" onClick={onLogin} className="min-h-[44px]">
             Log In
           </Button>
-          <Button variant="default" onClick={onSignup}>
+          <Button variant="default" onClick={onSignup} className="min-h-[44px]">
             Start Curating
           </Button>
         </div>

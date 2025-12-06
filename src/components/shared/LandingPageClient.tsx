@@ -35,12 +35,12 @@ export default function LandingPageClient() {
         onClose={() => setIsSignupModalOpen(false)}
       />
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 md:px-8 md:py-16">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-8 md:py-12 lg:py-16">
         {/* Hero Section Container */}
         <div className="w-full max-w-7xl">
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-5 lg:gap-12">
+          <div className="grid grid-cols-1 items-center gap-6 md:gap-8 lg:grid-cols-5 lg:gap-12">
             {/* Hero Text Column (40% on desktop) */}
-            <div className="col-span-1 flex flex-col justify-center space-y-6 lg:col-span-2">
+            <div className="col-span-1 flex flex-col justify-center space-y-4 md:space-y-6 lg:col-span-2">
               {/* Tagline with Sparkles Icon */}
               <div className="flex items-center gap-2">
                 <Sparkles
@@ -70,7 +70,7 @@ export default function LandingPageClient() {
                   variant="default"
                   size="lg"
                   onClick={openSignupModal}
-                  className="font-semibold"
+                  className="min-h-[44px] font-semibold"
                 >
                   Create Your First List
                 </Button>
