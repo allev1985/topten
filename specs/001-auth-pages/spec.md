@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Create reusable form components and authentication pages for signup, login, logout, password reset, and email verification using Supabase Auth"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - New User Registration (Priority: P1)
 
@@ -119,7 +119,7 @@ A logged-in user wants to change their password from their account settings. The
 - What happens when a user navigates away during form submission? Allow browser default behavior
 - How does the system handle very long email addresses or passwords? Respect reasonable length limits with clear error messages
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -183,7 +183,7 @@ A logged-in user wants to change their password from their account settings. The
 - Email delivery for verification and password reset is handled by Supabase Auth
 - Default session duration and "Remember me" extended duration are configured in Supabase Auth settings
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

@@ -222,17 +222,17 @@ Execute sequentially, committing after each logical group (e.g., after completin
 
 ## Key Implementation Files
 
-| File | Purpose | Estimated Lines |
-|------|---------|-----------------|
-| `/src/lib/config/index.ts` | Add DEFAULT_REDIRECT constant | +2 |
-| `/src/lib/auth/errors.ts` | Add authError factory function | +10 |
-| `/src/schemas/auth.ts` | Add loginSchema | +20 |
-| `/src/lib/auth/redirect-validation.ts` | NEW: Redirect URL validation | ~90 |
-| `/src/app/api/auth/login/route.ts` | NEW: Login endpoint | ~180 |
-| `/src/app/api/auth/logout/route.ts` | NEW: Logout endpoint | ~80 |
-| `/tests/unit/lib/auth/redirect-validation.test.ts` | NEW: Unit tests | ~150 |
-| `/tests/integration/auth/login.test.ts` | NEW: Integration tests | ~250 |
-| `/tests/integration/auth/logout.test.ts` | NEW: Integration tests | ~100 |
+| File                                               | Purpose                        | Estimated Lines |
+| -------------------------------------------------- | ------------------------------ | --------------- |
+| `/src/lib/config/index.ts`                         | Add DEFAULT_REDIRECT constant  | +2              |
+| `/src/lib/auth/errors.ts`                          | Add authError factory function | +10             |
+| `/src/schemas/auth.ts`                             | Add loginSchema                | +20             |
+| `/src/lib/auth/redirect-validation.ts`             | NEW: Redirect URL validation   | ~90             |
+| `/src/app/api/auth/login/route.ts`                 | NEW: Login endpoint            | ~180            |
+| `/src/app/api/auth/logout/route.ts`                | NEW: Logout endpoint           | ~80             |
+| `/tests/unit/lib/auth/redirect-validation.test.ts` | NEW: Unit tests                | ~150            |
+| `/tests/integration/auth/login.test.ts`            | NEW: Integration tests         | ~250            |
+| `/tests/integration/auth/logout.test.ts`           | NEW: Integration tests         | ~100            |
 
 ---
 

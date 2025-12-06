@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Setup front page dependencies by: 1. Installing the Dialog component from shadcn/ui using the CLI command: pnpm dlx shadcn@latest add dialog 2. Configuring Next.js next.config.ts to allow images from placehold.co domain in the remotePatterns configuration"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Display Modal Overlays (Priority: P1)
 
@@ -47,7 +47,7 @@ Users browsing the front page during development or testing can see properly for
 - How does the system behave when users navigate away from a page while a modal is open?
 - What happens when modal content exceeds viewport height on small screens?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -63,17 +63,19 @@ Users browsing the front page during development or testing can see properly for
 ### Dependencies and Assumptions
 
 **Dependencies**:
+
 - Existing design system components (Button, Input, Label, Card, Alert) provide theming and style foundation
 - Application uses component library for UI consistency
 - External placeholder image service (placehold.co) is available during development phases
 
 **Assumptions**:
+
 - Modal interactions follow standard web accessibility practices (ESC to close, focus management)
 - Placeholder images are temporary and will be replaced with actual content before production launch
 - External image domains are configured at build time and not dynamically added
 - Modal components integrate with existing application routing and state management
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

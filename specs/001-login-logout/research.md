@@ -11,16 +11,19 @@
 **Decision**: Use `supabase.auth.signInWithPassword({ email, password })` for login
 
 **Rationale**:
+
 - Native Supabase method that handles credential verification
 - Automatically creates session and sets cookies when using SSR client
 - Returns consistent error format for both invalid email and wrong password
 - Handles email verification check (returns error if email not verified)
 
 **Alternatives Considered**:
+
 - Custom password verification + JWT: Rejected - reinvents Supabase functionality, security risk
 - signInWithOtp: Rejected - requires email, not password-based auth
 
 **Implementation Notes**:
+
 ```typescript
 const { data, error } = await supabase.auth.signInWithPassword({
   email,
@@ -47,16 +50,19 @@ if (data.session) {
 **Decision**: Use `supabase.auth.signOut()` for logout
 
 **Rationale**:
+
 - Native Supabase method that invalidates the current session
 - SSR client automatically clears session cookies
 - Idempotent - succeeds even if no active session
 - Handles global sign-out across all devices when needed
 
 **Alternatives Considered**:
+
 - Manual cookie deletion only: Rejected - doesn't invalidate server-side session
 - Token revocation API: Rejected - signOut already handles this internally
 
 **Implementation Notes**:
+
 ```typescript
 const { error } = await supabase.auth.signOut();
 // Cookies are automatically cleared by the SSR client
@@ -67,17 +73,20 @@ const { error } = await supabase.auth.signOut();
 **Decision**: Implement strict URL validation with allowlist approach
 
 **Rationale**:
+
 - OWASP recommends validating against allowlist patterns
 - Only allow relative paths starting with `/` and not `//`
 - Block dangerous schemes: `javascript:`, `data:`, `vbscript:`
 - URL decode before validation to catch encoded attacks
 
 **Alternatives Considered**:
+
 - Allowlist specific paths: Rejected - too restrictive for dynamic app
 - Domain allowlist: Rejected - app is single-domain, relative paths sufficient
 - No validation (let browser handle): Rejected - security vulnerability
 
 **Security Patterns to Implement**:
+
 1. Must start with single `/` (not `//`)
 2. Reject any URL with `:` before first `/` (blocks `javascript:`, `data:`, etc.)
 3. URL decode and re-validate
@@ -85,14 +94,15 @@ const { error } = await supabase.auth.signOut();
 5. Trim whitespace
 
 **Implementation Notes**:
+
 ```typescript
 function isValidRedirect(url: string | undefined | null): boolean {
   if (!url) return false;
   const decoded = decodeURIComponent(url).trim();
   // Must start with / but not //
-  if (!decoded.startsWith('/') || decoded.startsWith('//')) return false;
+  if (!decoded.startsWith("/") || decoded.startsWith("//")) return false;
   // Block protocol handlers
-  if (decoded.includes(':')) return false;
+  if (decoded.includes(":")) return false;
   return true;
 }
 ```
@@ -102,15 +112,18 @@ function isValidRedirect(url: string | undefined | null): boolean {
 **Decision**: Return identical error message and similar response timing for all credential failures
 
 **Rationale**:
+
 - Prevents attackers from discovering valid email addresses
 - Follows existing signup pattern in the codebase
 - OWASP recommendation for authentication endpoints
 
 **Alternatives Considered**:
+
 - Different messages for "user not found" vs "wrong password": Rejected - enables enumeration
 - Rate limiting only: Rejected - still leaks information through response differences
 
 **Implementation Notes**:
+
 - Use generic message: "Invalid email or password"
 - Log detailed error internally with masked email
 - Return 401 for all auth failures (spec says not to reveal if user exists)
@@ -120,15 +133,18 @@ function isValidRedirect(url: string | undefined | null): boolean {
 **Decision**: Rely on Supabase SSR client's default secure cookie configuration
 
 **Rationale**:
+
 - `@supabase/ssr` createServerClient automatically sets secure cookie options
 - Cookies are HTTP-only, Secure (in production), and SameSite=Lax by default
 - Follows existing pattern in `src/lib/supabase/server.ts`
 
 **Alternatives Considered**:
+
 - Custom cookie middleware: Rejected - duplicates SSR client functionality
 - localStorage tokens: Rejected - XSS vulnerable
 
 **Verification**:
+
 - Supabase SSR sets `httpOnly: true`, `secure: true` (when HTTPS), `sameSite: 'lax'`
 - No additional configuration needed beyond existing createClient setup
 
@@ -137,11 +153,13 @@ function isValidRedirect(url: string | undefined | null): boolean {
 **Decision**: Create `loginSchema` extending email validation from signupSchema
 
 **Rationale**:
+
 - Reuse existing email preprocessing (trim, lowercase)
 - Password validation for login is minimal (just presence check, not strength)
 - Add optional `redirectTo` field with string validation
 
 **Implementation Notes**:
+
 ```typescript
 export const loginSchema = z.object({
   email: z.preprocess(
@@ -158,13 +176,17 @@ export const loginSchema = z.object({
 **Decision**: Add `authError()` factory function to existing errors.ts
 
 **Rationale**:
+
 - Follows existing pattern (validationError, serverError, etc.)
 - Provides consistent error format for login failures
 - HTTP 401 status for authentication failures
 
 **Implementation Notes**:
+
 ```typescript
-export function authError(message: string = "Invalid email or password"): AuthError {
+export function authError(
+  message: string = "Invalid email or password"
+): AuthError {
   return new AuthError("AUTH_ERROR", message, 401);
 }
 ```
@@ -172,6 +194,7 @@ export function authError(message: string = "Invalid email or password"): AuthEr
 ## Summary
 
 All research tasks complete. Key findings:
+
 1. Use Supabase native `signInWithPassword` and `signOut` methods
 2. Implement strict redirect URL validation (relative paths only, no protocols)
 3. Return generic error messages to prevent user enumeration

@@ -13,14 +13,15 @@ This feature does not introduce new database entities. It extends the existing a
 
 Represents a request to update a user's password.
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `password` | string | ✅ | min 12 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char | New password |
-| `code` | string | ❌ | non-empty if provided | PKCE authorization code from reset email |
-| `token_hash` | string | ❌ | non-empty if provided | OTP token hash from reset email |
-| `type` | literal 'email' | ❌ | must be 'email' if provided | Token type for OTP verification |
+| Field        | Type            | Required | Validation                                                      | Description                              |
+| ------------ | --------------- | -------- | --------------------------------------------------------------- | ---------------------------------------- |
+| `password`   | string          | ✅       | min 12 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char | New password                             |
+| `code`       | string          | ❌       | non-empty if provided                                           | PKCE authorization code from reset email |
+| `token_hash` | string          | ❌       | non-empty if provided                                           | OTP token hash from reset email          |
+| `type`       | literal 'email' | ❌       | must be 'email' if provided                                     | Token type for OTP verification          |
 
 **Validation Rules**:
+
 - At least one authentication method must be present (code, token_hash, or existing session)
 - Password must meet all complexity requirements simultaneously
 - If `token_hash` is provided, `type` must also be provided
@@ -29,33 +30,33 @@ Represents a request to update a user's password.
 
 Authorization code from password reset email link.
 
-| Property | Description |
-|----------|-------------|
-| Format | Opaque string provided by Supabase |
-| Lifetime | Typically 5-10 minutes |
-| Usage | Single-use, consumed on exchange |
-| Storage | Managed by Supabase Auth |
+| Property | Description                        |
+| -------- | ---------------------------------- |
+| Format   | Opaque string provided by Supabase |
+| Lifetime | Typically 5-10 minutes             |
+| Usage    | Single-use, consumed on exchange   |
+| Storage  | Managed by Supabase Auth           |
 
 ### 3. OTP Token (Supabase-managed)
 
 Token hash from password reset email verification.
 
-| Property | Description |
-|----------|-------------|
-| Format | Hash string provided by Supabase |
-| Lifetime | Per Supabase configuration |
-| Usage | Single-use, consumed on verification |
-| Storage | Managed by Supabase Auth |
+| Property | Description                          |
+| -------- | ------------------------------------ |
+| Format   | Hash string provided by Supabase     |
+| Lifetime | Per Supabase configuration           |
+| Usage    | Single-use, consumed on verification |
+| Storage  | Managed by Supabase Auth             |
 
 ### 4. User Session (Supabase-managed)
 
 Authenticated session representing a logged-in user.
 
-| Property | Description |
-|----------|-------------|
-| Creation | After successful auth (login, PKCE exchange, OTP verify) |
-| Validation | Via `getUser()` call to Supabase |
-| Invalidation | Via `signOut()` after password update |
+| Property     | Description                                              |
+| ------------ | -------------------------------------------------------- |
+| Creation     | After successful auth (login, PKCE exchange, OTP verify) |
+| Validation   | Via `getUser()` call to Supabase                         |
+| Invalidation | Via `signOut()` after password update                    |
 
 ## State Transitions
 
@@ -127,13 +128,20 @@ Authenticated session representing a logged-in user.
 
 ```typescript
 export const passwordUpdateSchema = z.object({
-  password: z.string()
+  password: z
+    .string()
     .min(1, "Password is required")
-    .min(PASSWORD_REQUIREMENTS.minLength, `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`)
+    .min(
+      PASSWORD_REQUIREMENTS.minLength,
+      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
+    )
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(PASSWORD_REQUIREMENTS.specialCharRegex, "Password must contain at least one special character"),
+    .regex(
+      PASSWORD_REQUIREMENTS.specialCharRegex,
+      "Password must contain at least one special character"
+    ),
 });
 ```
 
@@ -141,13 +149,20 @@ export const passwordUpdateSchema = z.object({
 
 ```typescript
 export const passwordUpdateSchema = z.object({
-  password: z.string()
+  password: z
+    .string()
     .min(1, "Password is required")
-    .min(PASSWORD_REQUIREMENTS.minLength, `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`)
+    .min(
+      PASSWORD_REQUIREMENTS.minLength,
+      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
+    )
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(PASSWORD_REQUIREMENTS.specialCharRegex, "Password must contain at least one special character"),
+    .regex(
+      PASSWORD_REQUIREMENTS.specialCharRegex,
+      "Password must contain at least one special character"
+    ),
   // PKCE authorization code from password reset email
   code: z.string().min(1, "Code cannot be empty").optional(),
   // OTP token hash from password reset email
@@ -160,7 +175,9 @@ export const passwordUpdateSchema = z.object({
 ## Related Entities (No Changes Required)
 
 ### User (Supabase Auth)
+
 Managed by Supabase Auth. No direct database changes required.
 
 ### Password Reset Email (Supabase Auth)
+
 Generated by Supabase when `resetPasswordForEmail()` is called. Contains PKCE code or OTP token in URL.

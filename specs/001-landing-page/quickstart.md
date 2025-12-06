@@ -91,7 +91,8 @@ export default function LandingPage() {
 }
 ```
 
-**Purpose**: 
+**Purpose**:
+
 - Handles the root route (`/`)
 - Generates SEO metadata
 - Server-side renders the page shell
@@ -118,6 +119,7 @@ export default function LandingPageClient() {
 ```
 
 **Purpose**:
+
 - Renders the UI
 - Provides foundation for future client-side features
 - Maintains visual consistency
@@ -184,7 +186,7 @@ pnpm test tests/integration/landing-page
 ### Test Coverage Requirements
 
 - **Minimum**: 70% code coverage
-- **Target Files**: 
+- **Target Files**:
   - `src/app/_components/landing-page-client.tsx`
   - Related utilities/helpers
 
@@ -215,24 +217,24 @@ describe('LandingPageClient', () => {
 
 ```typescript
 // tests/e2e/landing-page.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('Landing Page', () => {
-  test('loads successfully', async ({ page }) => {
-    await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'YourFavs' })).toBeVisible()
-  })
+test.describe("Landing Page", () => {
+  test("loads successfully", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "YourFavs" })).toBeVisible();
+  });
 
-  test('has no console errors', async ({ page }) => {
-    const errors: string[] = []
-    page.on('console', msg => {
-      if (msg.type() === 'error') errors.push(msg.text())
-    })
-    
-    await page.goto('/')
-    expect(errors).toHaveLength(0)
-  })
-})
+  test("has no console errors", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") errors.push(msg.text());
+    });
+
+    await page.goto("/");
+    expect(errors).toHaveLength(0);
+  });
+});
 ```
 
 ---
@@ -244,12 +246,14 @@ test.describe('Landing Page', () => {
 The landing page uses a **hybrid approach**:
 
 #### Server Component (`page.tsx`)
+
 - ✅ Generates SEO metadata
 - ✅ Handles routing
 - ✅ Fast initial render (no JavaScript needed)
 - ❌ Cannot use client-side hooks or interactivity
 
 #### Client Component (`landing-page-client.tsx`)
+
 - ✅ Supports React hooks (useState, useEffect)
 - ✅ Event handlers (onClick, onChange)
 - ✅ Browser APIs (window, document)
@@ -284,12 +288,14 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Goal**: Change the heading or tagline
 
 **Steps**:
+
 1. Open `src/app/_components/landing-page-client.tsx`
 2. Modify the `<h1>` or `<p>` content
 3. Update tests to match new content
 4. Run `pnpm test` to verify
 
 **Example**:
+
 ```typescript
 // Before
 <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
@@ -311,12 +317,15 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Goal**: Add a "Get Started" button
 
 **Steps**:
+
 1. Import Button component:
+
    ```typescript
-   import { Button } from '@/components/ui/button'
+   import { Button } from "@/components/ui/button";
    ```
 
 2. Add button to JSX:
+
    ```typescript
    <div className="flex gap-4 mt-8">
      <Button size="lg">Get Started</Button>
@@ -324,14 +333,15 @@ User Request → Next.js Router → Server Component (page.tsx)
    ```
 
 3. Add click handler (if needed):
+
    ```typescript
    'use client'
-   
+
    import { useRouter } from 'next/navigation'
-   
+
    export default function LandingPageClient() {
      const router = useRouter()
-     
+
      return (
        // ... existing code
        <Button size="lg" onClick={() => router.push('/signup')}>
@@ -356,24 +366,32 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Goal**: Show a welcome modal for first-time visitors
 
 **Steps**:
+
 1. Import Dialog components:
+
    ```typescript
-   import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-   import { useState } from 'react'
+   import {
+     Dialog,
+     DialogContent,
+     DialogHeader,
+     DialogTitle,
+   } from "@/components/ui/dialog";
+   import { useState } from "react";
    ```
 
 2. Add state and dialog:
+
    ```typescript
    export default function LandingPageClient() {
      const [showWelcome, setShowWelcome] = useState(false)
-     
+
      return (
        <>
          {/* Existing content */}
          <Button onClick={() => setShowWelcome(true)}>
            Learn More
          </Button>
-         
+
          {/* Welcome dialog */}
          <Dialog open={showWelcome} onOpenChange={setShowWelcome}>
            <DialogContent>
@@ -389,9 +407,10 @@ User Request → Next.js Router → Server Component (page.tsx)
    ```
 
 3. Test modal interaction:
+
    ```typescript
    import { fireEvent } from '@testing-library/react'
-   
+
    it('opens welcome modal when button clicked', () => {
      render(<LandingPageClient />)
      const button = screen.getByRole('button', { name: /learn more/i })
@@ -407,24 +426,26 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Goal**: Change page title or description for search engines
 
 **Steps**:
+
 1. Open `src/app/page.tsx`
 2. Modify the `metadata` export:
+
    ```typescript
    export const metadata: Metadata = {
-     title: 'YourFavs - Your New Title',
-     description: 'Your new description',
-     keywords: ['favorites', 'places', 'recommendations'], // Optional
+     title: "YourFavs - Your New Title",
+     description: "Your new description",
+     keywords: ["favorites", "places", "recommendations"], // Optional
      openGraph: {
-       title: 'YourFavs',
-       description: 'Your new description',
-       images: ['/og-image.png'], // Optional
+       title: "YourFavs",
+       description: "Your new description",
+       images: ["/og-image.png"], // Optional
      },
      twitter: {
-       card: 'summary_large_image', // Optional
-       title: 'YourFavs',
-       description: 'Your new description',
+       card: "summary_large_image", // Optional
+       title: "YourFavs",
+       description: "Your new description",
      },
-   }
+   };
    ```
 
 3. Verify metadata in browser:
@@ -442,18 +463,21 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Goal**: Adjust layout for different screen sizes
 
 **Steps**:
+
 1. Use Tailwind responsive prefixes:
+
    ```typescript
    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
      YourFavs
    </h1>
-   
+
    <p className="max-w-sm md:max-w-md lg:max-w-lg text-base md:text-lg">
      Curate and share your favorite places
    </p>
    ```
 
 2. Test responsive behavior:
+
    ```bash
    # Open browser DevTools
    # Toggle device toolbar (Cmd+Shift+M / Ctrl+Shift+M)
@@ -462,11 +486,11 @@ User Request → Next.js Router → Server Component (page.tsx)
 
 3. Add responsive E2E tests:
    ```typescript
-   test('renders correctly on mobile', async ({ page }) => {
-     await page.setViewportSize({ width: 375, height: 667 })
-     await page.goto('/')
-     await expect(page.getByRole('heading')).toBeVisible()
-   })
+   test("renders correctly on mobile", async ({ page }) => {
+     await page.setViewportSize({ width: 375, height: 667 });
+     await page.goto("/");
+     await expect(page.getByRole("heading")).toBeVisible();
+   });
    ```
 
 ---
@@ -478,27 +502,29 @@ User Request → Next.js Router → Server Component (page.tsx)
 **Symptom**: Console error: "Hydration failed because the initial UI does not match what was rendered on the server"
 
 **Causes**:
+
 - Different content on server vs client
 - Time-based or random values
 - Browser-only APIs used during render
 
 **Solutions**:
+
 ```typescript
 // ❌ Bad: Different on server vs client
-const timestamp = Date.now()
+const timestamp = Date.now();
 
 // ✅ Good: Use useEffect for client-only values
 useEffect(() => {
-  setTimestamp(Date.now())
-}, [])
+  setTimestamp(Date.now());
+}, []);
 
 // ❌ Bad: Browser API during render
-const theme = localStorage.getItem('theme')
+const theme = localStorage.getItem("theme");
 
 // ✅ Good: Use useEffect or suppress warning
 useEffect(() => {
-  setTheme(localStorage.getItem('theme'))
-}, [])
+  setTheme(localStorage.getItem("theme"));
+}, []);
 ```
 
 ### Test Failures
@@ -506,19 +532,22 @@ useEffect(() => {
 **Symptom**: Component tests fail with "element not found"
 
 **Debug Steps**:
+
 1. Check test query method:
+
    ```typescript
    // ✅ Preferred: getByRole
-   screen.getByRole('heading', { name: 'YourFavs' })
-   
+   screen.getByRole("heading", { name: "YourFavs" });
+
    // ⚠️ Fallback: getByText
-   screen.getByText('YourFavs')
-   
+   screen.getByText("YourFavs");
+
    // ❌ Avoid: getByTestId (use only as last resort)
-   screen.getByTestId('landing-heading')
+   screen.getByTestId("landing-heading");
    ```
 
 2. Use `screen.debug()` to see rendered HTML:
+
    ```typescript
    render(<LandingPageClient />)
    screen.debug() // Prints HTML to console
@@ -527,7 +556,7 @@ useEffect(() => {
 3. Check async rendering:
    ```typescript
    // Use findBy* for async elements
-   await screen.findByRole('heading')
+   await screen.findByRole("heading");
    ```
 
 ### Performance Issues
@@ -535,23 +564,27 @@ useEffect(() => {
 **Symptom**: Slow page load, Lighthouse score < 90
 
 **Debug Steps**:
+
 1. Check bundle size:
+
    ```bash
    pnpm build
    # Review .next/static/chunks output
    ```
 
 2. Run Lighthouse audit:
+
    ```bash
    # In browser DevTools → Lighthouse → Run audit
    ```
 
 3. Optimize images (if added):
+
    ```typescript
    // ✅ Use Next.js Image component
    import Image from 'next/image'
    <Image src="/hero.jpg" alt="Hero" width={800} height={600} />
-   
+
    // ❌ Avoid raw <img> tags
    <img src="/hero.jpg" alt="Hero" />
    ```
@@ -561,22 +594,25 @@ useEffect(() => {
 **Symptom**: Dark mode styles not applying
 
 **Debug Steps**:
+
 1. Verify Tailwind config includes dark mode:
+
    ```javascript
    // tailwind.config.js
    module.exports = {
-     darkMode: 'class', // or 'media'
+     darkMode: "class", // or 'media'
      // ...
-   }
+   };
    ```
 
 2. Check dark: prefix usage:
+
    ```typescript
    // ✅ Correct
-   className="text-black dark:text-white"
-   
+   className = "text-black dark:text-white";
+
    // ❌ Incorrect
-   className="dark:text-white text-black" // Order matters
+   className = "dark:text-white text-black"; // Order matters
    ```
 
 3. Test dark mode toggle:
@@ -616,6 +652,7 @@ useEffect(() => {
 ## Additional Resources
 
 ### Documentation
+
 - [Next.js App Router](https://nextjs.org/docs/app)
 - [React Server Components](https://react.dev/reference/rsc/server-components)
 - [Tailwind CSS](https://tailwindcss.com/docs)
@@ -624,6 +661,7 @@ useEffect(() => {
 - [Playwright](https://playwright.dev/docs/intro)
 
 ### Project Docs
+
 - [Feature Specification](./spec.md)
 - [Implementation Plan](./plan.md)
 - [Research Document](./research.md)
@@ -631,6 +669,7 @@ useEffect(() => {
 - [Project Constitution](../../.specify/memory/constitution.md)
 
 ### Tools
+
 - [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci)
 - [React DevTools](https://react.dev/learn/react-developer-tools)
 - [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)

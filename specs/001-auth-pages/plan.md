@@ -21,15 +21,15 @@ Create reusable form components and authentication pages for signup, login, pass
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Code Quality & Maintainability | ✅ PASS | Reusable components follow DRY; existing utilities reused (validatePassword, schemas) |
-| II. Testing Discipline & Safety Nets | ✅ PASS | 65% minimum coverage target; unit tests for hooks, component tests for UI |
-| III. User Experience Consistency | ✅ PASS | All auth pages use consistent auth-card wrapper; barebone HTML maintains consistency |
-| IV. Performance & Resource Efficiency | ✅ PASS | Password strength < 100ms; no unnecessary re-renders via controlled state |
-| V. Observability & Debuggability | ✅ PASS | Existing logging in API routes; actionable error messages defined |
+| Principle                             | Status  | Evidence                                                                              |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| I. Code Quality & Maintainability     | ✅ PASS | Reusable components follow DRY; existing utilities reused (validatePassword, schemas) |
+| II. Testing Discipline & Safety Nets  | ✅ PASS | 65% minimum coverage target; unit tests for hooks, component tests for UI             |
+| III. User Experience Consistency      | ✅ PASS | All auth pages use consistent auth-card wrapper; barebone HTML maintains consistency  |
+| IV. Performance & Resource Efficiency | ✅ PASS | Password strength < 100ms; no unnecessary re-renders via controlled state             |
+| V. Observability & Debuggability      | ✅ PASS | Existing logging in API routes; actionable error messages defined                     |
 
 **Pre-Phase 0 Gate**: PASSED - All constitution principles addressed in design.
 
@@ -106,15 +106,15 @@ tests/
 
 ## Post-Phase 1 Constitution Re-Check
 
-*Re-evaluated after Phase 1 design completion.*
+_Re-evaluated after Phase 1 design completion._
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Code Quality & Maintainability | ✅ PASS | DRY enforced: `useFormState` hook centralizes state management; atomic components (FormInput, PasswordInput, etc.) reused across all pages; existing `validatePassword()` and Zod schemas reused |
-| II. Testing Discipline & Safety Nets | ✅ PASS | Test strategy defined in quickstart.md; test file locations documented; 65% coverage target; unit tests for hooks, component tests for UI components |
-| III. User Experience Consistency | ✅ PASS | AuthCard wrapper provides consistent page structure; all forms use same component hierarchy; error messaging follows consistent ActionState pattern |
-| IV. Performance & Resource Efficiency | ✅ PASS | Password strength updates client-side only (no server roundtrip); server actions avoid HTTP overhead by calling Supabase directly; minimal component re-renders via React 19 |
-| V. Observability & Debuggability | ✅ PASS | Error types documented in data-model.md; ActionState provides structured error information; existing API route logging preserved; debug tips in quickstart.md |
+| Principle                             | Status  | Evidence                                                                                                                                                                                         |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| I. Code Quality & Maintainability     | ✅ PASS | DRY enforced: `useFormState` hook centralizes state management; atomic components (FormInput, PasswordInput, etc.) reused across all pages; existing `validatePassword()` and Zod schemas reused |
+| II. Testing Discipline & Safety Nets  | ✅ PASS | Test strategy defined in quickstart.md; test file locations documented; 65% coverage target; unit tests for hooks, component tests for UI components                                             |
+| III. User Experience Consistency      | ✅ PASS | AuthCard wrapper provides consistent page structure; all forms use same component hierarchy; error messaging follows consistent ActionState pattern                                              |
+| IV. Performance & Resource Efficiency | ✅ PASS | Password strength updates client-side only (no server roundtrip); server actions avoid HTTP overhead by calling Supabase directly; minimal component re-renders via React 19                     |
+| V. Observability & Debuggability      | ✅ PASS | Error types documented in data-model.md; ActionState provides structured error information; existing API route logging preserved; debug tips in quickstart.md                                    |
 
 **Post-Phase 1 Gate**: PASSED - Design artifacts complete and constitution-compliant.
 

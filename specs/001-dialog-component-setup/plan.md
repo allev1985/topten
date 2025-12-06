@@ -8,6 +8,7 @@
 ## Summary
 
 This feature establishes foundational UI infrastructure for TopTen by:
+
 1. Installing the shadcn/ui Dialog component to enable modal overlay functionality for user confirmations, forms, and detailed content viewing
 2. Configuring Next.js to allow external placeholder images from placehold.co domain for development and testing purposes
 
@@ -16,7 +17,8 @@ The Dialog component provides accessible, keyboard-navigable modal overlays esse
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x, Node.js >=20.0.0  
-**Primary Dependencies**: 
+**Primary Dependencies**:
+
 - Next.js 16.0.5 (App Router with React 19.2.0)
 - shadcn/ui component library (new-york style, RSC-enabled)
 - Radix UI primitives (@radix-ui/react-dialog for Dialog component)
@@ -24,56 +26,65 @@ The Dialog component provides accessible, keyboard-navigable modal overlays esse
 - pnpm >=8.0.0 package manager
 
 **Storage**: N/A (UI-only feature, no data persistence)  
-**Testing**: 
+**Testing**:
+
 - Vitest for component unit tests
 - React Testing Library for component interaction testing
 - Playwright for E2E modal interaction flows
 
 **Target Platform**: Web browsers (Next.js SSR/RSC application)
 **Project Type**: Web application (Next.js App Router)  
-**Performance Goals**: 
+**Performance Goals**:
+
 - Modal open/close animations <300ms
 - External placeholder images load within 2 seconds on standard network
 - No blocking of page interactivity during image loading
 
-**Constraints**: 
+**Constraints**:
+
 - Dialog component must maintain accessibility (WCAG 2.1 AA)
 - Keyboard navigation support (ESC, Tab, Enter)
 - Screen reader compatibility
 - External image domains configured at build time only
 
-**Scale/Scope**: 
+**Scale/Scope**:
+
 - Single Dialog component installation
 - One Next.js configuration change (remotePatterns)
 - Foundation for future modal-based interactions across application
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### I. Code Quality & Maintainability
+
 - ✅ **PASS**: Dialog component installation uses shadcn/ui CLI (standard tooling, no custom implementation)
 - ✅ **PASS**: Configuration changes are minimal and follow Next.js documented patterns
 - ✅ **PASS**: Reusing existing shadcn/ui infrastructure (components.json already configured)
 - ✅ **PASS**: No code duplication - leveraging existing component library pattern established by Button, Card, Alert, etc.
 
 ### II. Testing Discipline & Safety Nets
+
 - ✅ **PASS**: Component tests will verify Dialog accessibility (keyboard navigation, ESC key)
 - ✅ **PASS**: E2E tests will validate modal open/close/dismiss interactions
 - ✅ **PASS**: Build validation ensures no configuration errors
 - ✅ **PASS**: Image loading tests verify external domain configuration
 
 ### III. User Experience Consistency
+
 - ✅ **PASS**: Dialog follows existing shadcn/ui design system (new-york style, matches Button, Card)
 - ✅ **PASS**: Keyboard patterns consistent with standard web accessibility practices
 - ✅ **PASS**: Visual consistency maintained through Tailwind theme variables
 
 ### IV. Performance & Resource Efficiency
+
 - ✅ **PASS**: Performance targets clearly defined (<300ms animations, 2s image load)
 - ✅ **PASS**: External images configured to not block page interactivity
 - ✅ **PASS**: Minimal bundle impact (Radix UI Dialog is tree-shakeable)
 
 ### V. Observability & Debuggability
+
 - ✅ **PASS**: Build errors will surface immediately if configuration is incorrect
 - ✅ **PASS**: Browser DevTools will show image loading errors if domain misconfigured
 - ⚠️ **ADVISORY**: Consider adding console warnings if modal stacking occurs (edge case)
@@ -140,9 +151,11 @@ tests/
 ### Research Tasks
 
 #### R1: shadcn/ui Dialog Component Installation
+
 **Question**: What is the exact process and requirements for installing the Dialog component via shadcn CLI?
 
 **Research Areas**:
+
 - shadcn/ui Dialog component dependencies (@radix-ui/react-dialog)
 - Installation command syntax and options
 - Files generated and modified during installation
@@ -154,9 +167,11 @@ tests/
 ---
 
 #### R2: Next.js Image Domain Configuration
+
 **Question**: What is the correct syntax and structure for configuring external image domains in Next.js 16?
 
 **Research Areas**:
+
 - Next.js 16 `next.config.ts` image configuration patterns
 - `remotePatterns` vs `domains` configuration (Next.js 13+ best practices)
 - Protocol, hostname, and path pattern syntax
@@ -168,9 +183,11 @@ tests/
 ---
 
 #### R3: Dialog Accessibility Patterns
+
 **Question**: What are the WCAG 2.1 AA requirements for modal dialogs and how does Radix UI Dialog satisfy them?
 
 **Research Areas**:
+
 - ARIA roles and attributes for dialogs (`role="dialog"`, `aria-modal`, `aria-labelledby`)
 - Focus management (trap, return focus on close)
 - Keyboard interactions (ESC to close, Tab navigation)
@@ -182,9 +199,11 @@ tests/
 ---
 
 #### R4: Modal Stacking and Edge Cases
+
 **Question**: How should the application handle edge cases like multiple simultaneous modals or navigation during modal display?
 
 **Research Areas**:
+
 - Radix UI Dialog's behavior with multiple instances
 - Next.js App Router navigation with open modals
 - Focus management across nested dialogs
@@ -195,9 +214,11 @@ tests/
 ---
 
 #### R5: Testing Strategy for Dialog Component
+
 **Question**: What testing approach best validates Dialog accessibility and interaction patterns?
 
 **Research Areas**:
+
 - React Testing Library best practices for modal components
 - Testing keyboard interactions (ESC, Tab, Enter)
 - Testing focus management and ARIA attributes
@@ -213,31 +234,37 @@ tests/
 **File**: `specs/001-dialog-component-setup/research.md`
 
 **Structure**:
+
 ```markdown
 # Research: Dialog Component and Image Configuration
 
 ## R1: shadcn/ui Dialog Installation
+
 - Decision: [installation approach]
 - Command: [exact CLI command]
 - Dependencies added: [packages]
 - Files modified: [list]
 
 ## R2: Next.js Image Configuration
+
 - Decision: [remotePatterns vs domains]
 - Configuration: [exact code snippet]
 - Rationale: [why this approach]
 
 ## R3: Accessibility Requirements
+
 - WCAG Requirements: [checklist]
 - Radix UI Coverage: [what's provided]
 - Additional Implementation: [what we need to add]
 
 ## R4: Modal Edge Cases
+
 - Stacking Policy: [allow/prevent multiple modals]
 - Navigation Behavior: [what happens on route change]
 - Implementation: [approach]
 
 ## R5: Testing Strategy
+
 - Unit Tests: [approach and tools]
 - E2E Tests: [scenarios and tools]
 - Accessibility Tests: [validation method]
@@ -254,6 +281,7 @@ tests/
 **Status**: Not applicable - this feature involves UI components and configuration only, no database entities.
 
 **File**: `specs/001-dialog-component-setup/data-model.md` will contain:
+
 ```markdown
 # Data Model: Dialog Component Setup
 
@@ -269,12 +297,14 @@ See `contracts/dialog-component-api.md` for component API surface.
 **File**: `specs/001-dialog-component-setup/contracts/dialog-component-api.md`
 
 **Content Structure**:
-```markdown
+
+````markdown
 # Dialog Component API
 
 ## Component Export Structure
 
 ### Dialog Root Components
+
 - `Dialog` - Root wrapper component
 - `DialogTrigger` - Element that opens the dialog
 - `DialogContent` - Main content container
@@ -287,6 +317,7 @@ See `contracts/dialog-component-api.md` for component API surface.
 ## Props Interface
 
 ### Dialog
+
 ```typescript
 interface DialogProps {
   open?: boolean;
@@ -295,10 +326,14 @@ interface DialogProps {
   modal?: boolean;
 }
 ```
+````
 
 ### DialogContent
+
 ```typescript
-interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+interface DialogContentProps extends React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+> {
   className?: string;
   children: React.ReactNode;
 }
@@ -307,6 +342,7 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
 ## Usage Examples
 
 ### Basic Confirmation Dialog
+
 ```tsx
 <Dialog>
   <DialogTrigger asChild>
@@ -315,9 +351,7 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
   <DialogContent>
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
-      <DialogDescription>
-        This action cannot be undone.
-      </DialogDescription>
+      <DialogDescription>This action cannot be undone.</DialogDescription>
     </DialogHeader>
     <DialogFooter>
       <Button variant="outline">Cancel</Button>
@@ -328,6 +362,7 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
 ```
 
 ### Form Input Dialog
+
 ```tsx
 <Dialog>
   <DialogTrigger asChild>
@@ -363,7 +398,8 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
 - Clicking overlay closes dialog (configurable)
 - Tab navigation trapped within dialog
 - ARIA attributes automatically applied by Radix UI
-```
+
+````
 
 ---
 
@@ -398,7 +434,7 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-```
+````
 
 ## Configuration Details
 
@@ -410,23 +446,25 @@ export default nextConfig;
 ## Usage with Next.js Image Component
 
 ```tsx
-import Image from 'next/image';
+import Image from "next/image";
 
 <Image
   src="https://placehold.co/600x400"
   alt="Placeholder image"
   width={600}
   height={400}
-/>
+/>;
 ```
 
 ## Build Validation
 
 The configuration is validated at build time:
+
 - Invalid hostnames will cause build errors
 - Missing protocol/pathname will be flagged
 - TypeScript ensures correct NextConfig typing
-```
+
+````
 
 ---
 
@@ -444,7 +482,7 @@ After installation, verify the Dialog component is available:
 
 ```bash
 ls src/components/ui/dialog.tsx
-```
+````
 
 ## Basic Usage
 
@@ -478,9 +516,7 @@ export function SimpleDialog() {
             This is a description of what the dialog is for.
           </DialogDescription>
         </DialogHeader>
-        <div>
-          {/* Your dialog content here */}
-        </div>
+        <div>{/* Your dialog content here */}</div>
       </DialogContent>
     </Dialog>
   );
@@ -490,13 +526,13 @@ export function SimpleDialog() {
 ### 3. Controlled Dialog State
 
 ```tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export function ControlledDialog() {
   const [open, setOpen] = useState(false);
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -518,7 +554,7 @@ export function ControlledDialog() {
 ### Using placehold.co in Next.js
 
 ```tsx
-import Image from 'next/image';
+import Image from "next/image";
 
 <Image
   src="https://placehold.co/400x300"
@@ -526,7 +562,7 @@ import Image from 'next/image';
   width={400}
   height={300}
   className="rounded-lg"
-/>
+/>;
 ```
 
 ### Common Placeholder Patterns
@@ -550,25 +586,26 @@ import Image from 'next/image';
 
 ```tsx
 // Example test with React Testing Library
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
-test('dialog opens and closes', async () => {
+test("dialog opens and closes", async () => {
   const user = userEvent.setup();
   render(<SimpleDialog />);
-  
+
   // Dialog should be closed initially
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
   // Open dialog
-  await user.click(screen.getByRole('button', { name: /open/i }));
-  expect(screen.getByRole('dialog')).toBeInTheDocument();
-  
+  await user.click(screen.getByRole("button", { name: /open/i }));
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+
   // Close with ESC key
-  await user.keyboard('{Escape}');
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 ```
+
 ```
 
 ---
@@ -667,3 +704,4 @@ The `/speckit.plan` command stops after Phase 1. Task breakdown will be generate
 
 **Branch**: `001-dialog-component-setup`
 **Implementation Plan**: `/home/runner/work/topten/topten/specs/001-dialog-component-setup/plan.md`
+```

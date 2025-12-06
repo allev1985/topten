@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Implement multiple authentication methods in the password reset endpoint to support PKCE code authentication, OTP token verification, and existing session authentication, with automatic sign-out after successful password reset."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Password Reset via Email Link (PKCE) (Priority: P1)
 
@@ -78,7 +78,7 @@ After any successful password reset (via any authentication method), the user is
 - What happens when a user rapidly submits multiple password reset requests? Rate limiting (handled by Supabase) prevents abuse.
 - What happens when a user uses an old reset link after already resetting their password? The code/token is already consumed and returns an authentication error.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -100,7 +100,7 @@ After any successful password reset (via any authentication method), the user is
 - **User Session**: An authenticated session representing a logged-in user, validated against the authentication service.
 - **Password**: The user's credential, subject to security requirements (length, complexity).
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

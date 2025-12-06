@@ -16,17 +16,17 @@ The Dialog component exports the following sub-components:
 
 ```typescript
 export {
-  Dialog,              // Root wrapper component
-  DialogPortal,        // Portal for rendering outside DOM hierarchy
-  DialogOverlay,       // Backdrop overlay (included in DialogContent)
-  DialogClose,         // Close button component
-  DialogTrigger,       // Trigger element wrapper
-  DialogContent,       // Main content container (includes overlay + close)
-  DialogHeader,        // Semantic header wrapper
-  DialogFooter,        // Semantic footer wrapper
-  DialogTitle,         // Accessible title component (required)
-  DialogDescription,   // Accessible description component (recommended)
-}
+  Dialog, // Root wrapper component
+  DialogPortal, // Portal for rendering outside DOM hierarchy
+  DialogOverlay, // Backdrop overlay (included in DialogContent)
+  DialogClose, // Close button component
+  DialogTrigger, // Trigger element wrapper
+  DialogContent, // Main content container (includes overlay + close)
+  DialogHeader, // Semantic header wrapper
+  DialogFooter, // Semantic footer wrapper
+  DialogTitle, // Accessible title component (required)
+  DialogDescription, // Accessible description component (recommended)
+};
 ```
 
 **Import Path**: `@/components/ui/dialog`
@@ -39,31 +39,33 @@ export {
 
 ```typescript
 interface DialogProps {
-  open?: boolean;                    // Controlled open state
-  defaultOpen?: boolean;             // Uncontrolled default state
-  onOpenChange?: (open: boolean) => void;  // State change callback
-  modal?: boolean;                   // Whether to render as modal (default: true)
+  open?: boolean; // Controlled open state
+  defaultOpen?: boolean; // Uncontrolled default state
+  onOpenChange?: (open: boolean) => void; // State change callback
+  modal?: boolean; // Whether to render as modal (default: true)
 }
 ```
 
 **Usage**:
+
 - **Uncontrolled**: Omit `open` prop, Dialog manages state internally
 - **Controlled**: Provide `open` and `onOpenChange` for external state management
 
 **Example**:
+
 ```tsx
 // Uncontrolled
 <Dialog>
   <DialogTrigger>Open</DialogTrigger>
   <DialogContent>...</DialogContent>
-</Dialog>
+</Dialog>;
 
 // Controlled
 const [open, setOpen] = useState(false);
 <Dialog open={open} onOpenChange={setOpen}>
   <DialogTrigger>Open</DialogTrigger>
   <DialogContent>...</DialogContent>
-</Dialog>
+</Dialog>;
 ```
 
 ---
@@ -72,19 +74,20 @@ const [open, setOpen] = useState(false);
 
 ```typescript
 interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean;  // Use child element as trigger (default: false)
+  asChild?: boolean; // Use child element as trigger (default: false)
 }
 ```
 
 **Best Practice**: Use `asChild` when trigger is a custom component (e.g., Button)
 
 **Example**:
+
 ```tsx
 import { Button } from "@/components/ui/button";
 
 <DialogTrigger asChild>
   <Button variant="outline">Delete List</Button>
-</DialogTrigger>
+</DialogTrigger>;
 ```
 
 ---
@@ -95,20 +98,22 @@ import { Button } from "@/components/ui/button";
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   children: React.ReactNode;
-  onEscapeKeyDown?: (event: KeyboardEvent) => void;  // ESC key handler
-  onPointerDownOutside?: (event: PointerDownOutsideEvent) => void;  // Overlay click
-  onInteractOutside?: (event: InteractOutsideEvent) => void;  // Any outside interaction
+  onEscapeKeyDown?: (event: KeyboardEvent) => void; // ESC key handler
+  onPointerDownOutside?: (event: PointerDownOutsideEvent) => void; // Overlay click
+  onInteractOutside?: (event: InteractOutsideEvent) => void; // Any outside interaction
 }
 ```
 
 **Default Behavior**:
+
 - ESC key closes dialog
 - Clicking overlay closes dialog
 - Focus trapped within dialog
 
 **Preventing Default Close**:
+
 ```tsx
-<DialogContent 
+<DialogContent
   onEscapeKeyDown={(e) => e.preventDefault()}
   onPointerDownOutside={(e) => e.preventDefault()}
 >
@@ -126,25 +131,27 @@ interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-type DialogFooterProps = DialogHeaderProps;  // Same interface
+type DialogFooterProps = DialogHeaderProps; // Same interface
 ```
 
 **Purpose**: Semantic wrappers for dialog layout sections
 
 **Styling**:
+
 - `DialogHeader`: Flex column with bottom spacing
 - `DialogFooter`: Flex row (reversed on mobile), right-aligned on desktop
 
 **Example**:
+
 ```tsx
 <DialogContent>
   <DialogHeader>
     <DialogTitle>Confirm Deletion</DialogTitle>
     <DialogDescription>This action cannot be undone.</DialogDescription>
   </DialogHeader>
-  
+
   {/* Main content here */}
-  
+
   <DialogFooter>
     <Button variant="outline">Cancel</Button>
     <Button variant="destructive">Delete</Button>
@@ -168,6 +175,7 @@ interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
 **Rendered As**: `<h2>` element by default
 
 **Example**:
+
 ```tsx
 <DialogTitle>Are you absolutely sure?</DialogTitle>
 ```
@@ -188,10 +196,11 @@ interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphEleme
 **Rendered As**: `<p>` element
 
 **Example**:
+
 ```tsx
 <DialogDescription>
-  This will permanently delete your list and all associated places.
-  This action cannot be undone.
+  This will permanently delete your list and all associated places. This action
+  cannot be undone.
 </DialogDescription>
 ```
 
@@ -209,6 +218,7 @@ interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 **Purpose**: Programmatic close trigger (alternative to overlay/ESC)
 
 **Example**:
+
 ```tsx
 <DialogFooter>
   <DialogClose asChild>
@@ -229,7 +239,12 @@ interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 Radix UI automatically applies:
 
 ```html
-<div role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-desc">
+<div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-desc"
+>
   <h2 id="dialog-title">Title</h2>
   <p id="dialog-desc">Description</p>
 </div>
@@ -237,13 +252,13 @@ Radix UI automatically applies:
 
 ### Keyboard Interactions
 
-| Key | Action |
-|-----|--------|
-| **ESC** | Closes dialog, returns focus to trigger |
-| **Tab** | Cycles focus forward through focusable elements |
+| Key           | Action                                           |
+| ------------- | ------------------------------------------------ |
+| **ESC**       | Closes dialog, returns focus to trigger          |
+| **Tab**       | Cycles focus forward through focusable elements  |
 | **Shift+Tab** | Cycles focus backward through focusable elements |
-| **Enter** | Activates focused button/link |
-| **Space** | Activates focused button |
+| **Enter**     | Activates focused button/link                    |
+| **Space**     | Activates focused button                         |
 
 ### Focus Management
 
@@ -260,15 +275,21 @@ Radix UI automatically applies:
 **Use Case**: Confirming destructive actions (delete, archive, cancel)
 
 ```tsx
-function DeleteListDialog({ listId, listName }: { listId: string; listName: string }) {
+function DeleteListDialog({
+  listId,
+  listName,
+}: {
+  listId: string;
+  listName: string;
+}) {
   const [open, setOpen] = useState(false);
-  
+
   async function handleDelete() {
     await deleteList(listId);
     setOpen(false);
     // Redirect or update UI
   }
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -303,23 +324,23 @@ function DeleteListDialog({ listId, listName }: { listId: string; listName: stri
 **Use Case**: Creating/editing entities without full-page navigation
 
 ```tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function CreateListDialog() {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  
+  const [name, setName] = useState("");
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await createList({ name });
     setOpen(false);
-    setName('');
+    setName("");
   }
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -333,7 +354,7 @@ function CreateListDialog() {
               Start curating your favorite places in a new collection.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">List Name</Label>
@@ -346,10 +367,12 @@ function CreateListDialog() {
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
             <Button type="submit">Create List</Button>
           </DialogFooter>
@@ -378,18 +401,18 @@ function PlaceDetailsDialog({ place }: { place: Place }) {
           <DialogTitle>{place.name}</DialogTitle>
           <DialogDescription>{place.address}</DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4">
           <div>
             <h3 className="font-semibold">Description</h3>
             <p>{place.description}</p>
           </div>
-          
+
           <div>
             <h3 className="font-semibold">Hours</h3>
             <p>{place.hours}</p>
           </div>
-          
+
           {place.imageUrl && (
             <Image
               src={place.imageUrl}
@@ -400,7 +423,7 @@ function PlaceDetailsDialog({ place }: { place: Place }) {
             />
           )}
         </div>
-        
+
         <DialogFooter>
           <DialogClose asChild>
             <Button>Close</Button>
@@ -427,7 +450,7 @@ function PlaceDetailsDialog({ place }: { place: Place }) {
 ### Full-Screen on Mobile
 
 ```tsx
-<DialogContent className="sm:max-w-lg max-w-full h-screen sm:h-auto">
+<DialogContent className="h-screen max-w-full sm:h-auto sm:max-w-lg">
   {/* Full screen on mobile, modal on desktop */}
 </DialogContent>
 ```
@@ -572,7 +595,7 @@ When implementing dialogs, verify:
 ```tsx
 function LazyDialog() {
   const [open, setOpen] = useState(false);
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -593,11 +616,7 @@ function LazyDialog() {
 
 ```tsx
 const MemoizedDialogContent = memo(function DialogContent({ data }: Props) {
-  return (
-    <DialogContent>
-      {/* Expensive rendering */}
-    </DialogContent>
-  );
+  return <DialogContent>{/* Expensive rendering */}</DialogContent>;
 });
 ```
 
@@ -605,9 +624,9 @@ const MemoizedDialogContent = memo(function DialogContent({ data }: Props) {
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-12-04 | Initial API contract for shadcn/ui Dialog component |
+| Version | Date       | Changes                                             |
+| ------- | ---------- | --------------------------------------------------- |
+| 1.0.0   | 2025-12-04 | Initial API contract for shadcn/ui Dialog component |
 
 ---
 

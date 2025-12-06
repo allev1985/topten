@@ -17,22 +17,23 @@ Transform the current basic Next.js server component landing page into a product
 **Testing**: Vitest 4.0.14 + React Testing Library 16.3.0 + Playwright 1.57.0  
 **Target Platform**: Web (all modern browsers: Chrome, Firefox, Safari, Edge - latest 2 versions)  
 **Project Type**: Web application (Next.js App Router)  
-**Performance Goals**: 
-  - Initial page render < 2 seconds on standard broadband (5+ Mbps)
-  - First Contentful Paint (FCP) < 1.5 seconds
-  - Zero hydration errors
-**Constraints**: 
-  - Must support both authenticated and unauthenticated users
-  - Must work with JavaScript disabled for core content
-  - Must be responsive across mobile, tablet, desktop
-**Scale/Scope**: 
-  - Single landing page at root URL (/)
-  - Serves as entry point for entire application
-  - Foundation for future interactive features (modals, auth prompts)
+**Performance Goals**:
+
+- Initial page render < 2 seconds on standard broadband (5+ Mbps)
+- First Contentful Paint (FCP) < 1.5 seconds
+- Zero hydration errors
+  **Constraints**:
+- Must support both authenticated and unauthenticated users
+- Must work with JavaScript disabled for core content
+- Must be responsive across mobile, tablet, desktop
+  **Scale/Scope**:
+- Single landing page at root URL (/)
+- Serves as entry point for entire application
+- Foundation for future interactive features (modals, auth prompts)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### I. Code Quality & Maintainability ✅
 
@@ -67,7 +68,7 @@ Transform the current basic Next.js server component landing page into a product
 
 ### IV. Performance & Resource Efficiency ✅
 
-- **Performance Targets Defined**: 
+- **Performance Targets Defined**:
   - Initial render < 2 seconds
   - FCP < 1.5 seconds
   - Zero hydration errors
@@ -94,6 +95,7 @@ Transform the current basic Next.js server component landing page into a product
 ✅ **Phase 1 Check**: PASSED - Design maintains compliance
 
 **Changes from Initial Check**:
+
 - Testing strategy now fully documented with specific test cases
 - Component contracts defined with clear responsibilities
 - Performance measurement approach detailed
@@ -146,9 +148,10 @@ tests/
         └── navigation.test.ts              # Navigation integration tests
 ```
 
-**Structure Decision**: 
+**Structure Decision**:
 
 This feature follows Next.js App Router conventions:
+
 - **Server Component** (`src/app/page.tsx`): Renders the page shell, handles SEO metadata, provides fast initial render
 - **Client Component** (`src/app/_components/landing-page-client.tsx`): Wrapper for future interactive features (modals, animations)
 - **Reuse Strategy**: Leverages existing shadcn/ui components and Tailwind utilities to maintain DRY principle
@@ -161,6 +164,7 @@ The `_components` directory follows Next.js convention for collocating component
 > **No complexity violations to track**
 
 This implementation follows standard Next.js patterns with no additional complexity:
+
 - Standard Server Component + Client Component composition
 - Reuses existing UI components and utilities
 - No new architectural patterns or abstractions introduced
@@ -173,9 +177,11 @@ This implementation follows standard Next.js patterns with no additional complex
 ### Phase 0: Outline & Research ✅ COMPLETE
 
 **Artifacts Generated**:
+
 - `research.md` - Complete architectural decisions and best practices
 
 **Key Decisions**:
+
 1. **Architecture**: Server Component + Client Component pattern
 2. **Testing**: Multi-layered approach (Component + E2E + Integration)
 3. **Performance**: Leverage Next.js built-in optimizations
@@ -187,12 +193,14 @@ This implementation follows standard Next.js patterns with no additional complex
 ### Phase 1: Design & Contracts ✅ COMPLETE
 
 **Artifacts Generated**:
+
 - `data-model.md` - N/A for this feature (placeholder created)
 - `contracts/landing-page-component.md` - Complete component contract
 - `quickstart.md` - Developer guide and common tasks
 - Agent context updated via `update-agent-context.sh`
 
 **Key Deliverables**:
+
 1. Component interface specifications
 2. Testing requirements and examples
 3. Performance contracts
@@ -214,6 +222,7 @@ The implementation plan is now complete. The next phase would be to run:
 ```
 
 This will generate `tasks.md` with:
+
 - Concrete implementation tasks
 - Task dependencies
 - Acceptance criteria
@@ -260,10 +269,12 @@ This will generate `tasks.md` with:
 **Status**: ✅ **COMPLETE** (Ready for Phase 2: Task Breakdown)
 
 **Completed Phases**:
+
 - ✅ Phase 0: Research & Architecture Decisions
 - ✅ Phase 1: Design & Contracts
 
 **Pending Phases**:
+
 - ⏸️ Phase 2: Task Breakdown (run `/speckit.tasks` to generate)
 
 **Branch**: `001-landing-page`  

@@ -17,7 +17,7 @@ interface HeaderProps {
   /**
    * Callback function invoked when the "Log In" button is clicked.
    * Should handle opening the login modal or navigating to login page.
-   * 
+   *
    * @returns void
    */
   onLogin: () => void;
@@ -25,7 +25,7 @@ interface HeaderProps {
   /**
    * Callback function invoked when the "Start Curating" button is clicked.
    * Should handle opening the signup modal or navigating to signup page.
-   * 
+   *
    * @returns void
    */
   onSignup: () => void;
@@ -38,9 +38,9 @@ export default function Header(props: HeaderProps): JSX.Element;
 
 ### Required Props
 
-| Prop | Type | Description | Validation |
-|------|------|-------------|------------|
-| `onLogin` | `() => void` | Handler for login button clicks | Must be a function; will be called with no arguments |
+| Prop       | Type         | Description                      | Validation                                           |
+| ---------- | ------------ | -------------------------------- | ---------------------------------------------------- |
+| `onLogin`  | `() => void` | Handler for login button clicks  | Must be a function; will be called with no arguments |
 | `onSignup` | `() => void` | Handler for signup button clicks | Must be a function; will be called with no arguments |
 
 ### Optional Props
@@ -256,12 +256,12 @@ Potential future enhancements (NOT in current contract):
 
 ### Direct Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `react` | 19.2.0 | Component rendering |
-| `next` | 16.0.5 | Link component for navigation |
-| `lucide-react` | 0.555.0 | MapPin icon |
-| `@/components/ui/button` | - | Reusable Button component |
+| Package                  | Version | Purpose                       |
+| ------------------------ | ------- | ----------------------------- |
+| `react`                  | 19.2.0  | Component rendering           |
+| `next`                   | 16.0.5  | Link component for navigation |
+| `lucide-react`           | 0.555.0 | MapPin icon                   |
+| `@/components/ui/button` | -       | Reusable Button component     |
 
 ### Peer Dependencies
 

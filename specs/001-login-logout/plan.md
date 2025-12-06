@@ -21,16 +21,16 @@ Implement login and logout API routes for the YourFavs authentication system usi
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Code Quality & Maintainability | ✅ PASS | Reuses existing patterns from signup/verify; extends existing schemas and error types |
-| I. DRY Compliance | ✅ PASS | Reuses `AuthError`, `maskEmail`, `createClient`, existing validation patterns |
-| II. Testing Discipline | ✅ PASS | Spec requires >65% coverage; will follow signup.test.ts patterns |
-| III. UX Consistency | ✅ PASS | Follows existing error response format and HTTP status conventions |
-| IV. Performance & Resource Efficiency | ✅ PASS | <3 second target defined in SC-001 |
-| V. Observability & Debuggability | ✅ PASS | Logging with masked emails, structured error responses |
+| Principle                             | Status  | Notes                                                                                 |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| I. Code Quality & Maintainability     | ✅ PASS | Reuses existing patterns from signup/verify; extends existing schemas and error types |
+| I. DRY Compliance                     | ✅ PASS | Reuses `AuthError`, `maskEmail`, `createClient`, existing validation patterns         |
+| II. Testing Discipline                | ✅ PASS | Spec requires >65% coverage; will follow signup.test.ts patterns                      |
+| III. UX Consistency                   | ✅ PASS | Follows existing error response format and HTTP status conventions                    |
+| IV. Performance & Resource Efficiency | ✅ PASS | <3 second target defined in SC-001                                                    |
+| V. Observability & Debuggability      | ✅ PASS | Logging with masked emails, structured error responses                                |
 
 **Gate Status**: PASSED - No violations identified.
 
@@ -90,16 +90,16 @@ tests/
 
 ## Post-Design Constitution Re-Check
 
-*Re-evaluation after Phase 1 design completion*
+_Re-evaluation after Phase 1 design completion_
 
-| Principle | Status | Verification |
-|-----------|--------|--------------|
-| I. Code Quality & Maintainability | ✅ PASS | Design extends existing modules (`errors.ts`, `auth.ts`) rather than creating new patterns |
-| I. DRY Compliance | ✅ PASS | Reuses `signupSchema` email validation pattern; uses existing `AuthError` class |
-| II. Testing Discipline | ✅ PASS | Test structure defined in quickstart.md; follows signup.test.ts patterns |
-| III. UX Consistency | ✅ PASS | Response format matches existing auth endpoints; consistent error codes |
-| IV. Performance & Resource Efficiency | ✅ PASS | Single Supabase call per endpoint; no heavy processing |
-| V. Observability & Debuggability | ✅ PASS | Structured logging defined with `[Login]`/`[Logout]` prefixes |
+| Principle                             | Status  | Verification                                                                               |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| I. Code Quality & Maintainability     | ✅ PASS | Design extends existing modules (`errors.ts`, `auth.ts`) rather than creating new patterns |
+| I. DRY Compliance                     | ✅ PASS | Reuses `signupSchema` email validation pattern; uses existing `AuthError` class            |
+| II. Testing Discipline                | ✅ PASS | Test structure defined in quickstart.md; follows signup.test.ts patterns                   |
+| III. UX Consistency                   | ✅ PASS | Response format matches existing auth endpoints; consistent error codes                    |
+| IV. Performance & Resource Efficiency | ✅ PASS | Single Supabase call per endpoint; no heavy processing                                     |
+| V. Observability & Debuggability      | ✅ PASS | Structured logging defined with `[Login]`/`[Logout]` prefixes                              |
 
 **Post-Design Gate Status**: PASSED
 

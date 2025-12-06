@@ -6,6 +6,7 @@
 ## Summary
 
 Implement multiple authentication methods in the password reset endpoint to support:
+
 1. PKCE code authentication (primary "forgot password" flow)
 2. OTP token verification (alternative email verification flow)
 3. Existing session authentication (authenticated user password change)
@@ -26,15 +27,15 @@ Authentication is validated in priority order: PKCE code → OTP token → exist
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Evidence |
-|-----------|--------|----------|
-| I. Code Quality & Maintainability | ✅ PASS | Follows existing patterns in `verify/route.ts`. Extends existing `passwordUpdateSchema`. DRY: reuses Supabase auth methods, existing error handling utilities, existing response helpers. |
-| II. Testing Discipline | ✅ PASS | Integration tests required in `tests/integration/auth/password-update.test.ts`. Tests cover all auth methods, success/failure cases, and sign-out behavior. |
-| III. User Experience Consistency | ✅ PASS | Uses existing auth flow patterns (verify endpoint). Error messages consistent with existing auth error responses. Redirects follow existing patterns. |
-| IV. Performance & Resource Efficiency | ✅ PASS | Target: <30s completion, <2s error response. Supabase auth calls are fast. No complex computation required. |
-| V. Observability & Debuggability | ✅ PASS | Structured logging via console.info/error (matches existing pattern). Sensitive data (passwords, tokens, codes) NOT logged per SC-006. |
+| Principle                             | Status  | Evidence                                                                                                                                                                                  |
+| ------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I. Code Quality & Maintainability     | ✅ PASS | Follows existing patterns in `verify/route.ts`. Extends existing `passwordUpdateSchema`. DRY: reuses Supabase auth methods, existing error handling utilities, existing response helpers. |
+| II. Testing Discipline                | ✅ PASS | Integration tests required in `tests/integration/auth/password-update.test.ts`. Tests cover all auth methods, success/failure cases, and sign-out behavior.                               |
+| III. User Experience Consistency      | ✅ PASS | Uses existing auth flow patterns (verify endpoint). Error messages consistent with existing auth error responses. Redirects follow existing patterns.                                     |
+| IV. Performance & Resource Efficiency | ✅ PASS | Target: <30s completion, <2s error response. Supabase auth calls are fast. No complex computation required.                                                                               |
+| V. Observability & Debuggability      | ✅ PASS | Structured logging via console.info/error (matches existing pattern). Sensitive data (passwords, tokens, codes) NOT logged per SC-006.                                                    |
 
 **Gate Status**: ✅ PASS - All principles satisfied, no violations requiring justification.
 
@@ -92,14 +93,14 @@ tests/
 
 ## Post-Design Constitution Re-Check
 
-*Re-evaluation after Phase 1 design completion.*
+_Re-evaluation after Phase 1 design completion._
 
-| Principle | Status | Evidence Post-Design |
-|-----------|--------|----------------------|
-| I. Code Quality & Maintainability | ✅ PASS | Design follows DRY - reuses existing patterns from verify/route.ts. Schema extension is minimal. No unnecessary abstraction. |
-| II. Testing Discipline | ✅ PASS | Test strategy defined in quickstart.md. Covers all auth methods, error cases, and sign-out behavior. |
-| III. User Experience Consistency | ✅ PASS | Error messages match existing auth flows. Redirect behavior consistent with current implementation. |
-| IV. Performance & Resource Efficiency | ✅ PASS | No additional API calls beyond existing pattern. Sequential auth checks are efficient. |
-| V. Observability & Debuggability | ✅ PASS | Logging strategy confirmed - auth method logged, sensitive data never logged. |
+| Principle                             | Status  | Evidence Post-Design                                                                                                         |
+| ------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| I. Code Quality & Maintainability     | ✅ PASS | Design follows DRY - reuses existing patterns from verify/route.ts. Schema extension is minimal. No unnecessary abstraction. |
+| II. Testing Discipline                | ✅ PASS | Test strategy defined in quickstart.md. Covers all auth methods, error cases, and sign-out behavior.                         |
+| III. User Experience Consistency      | ✅ PASS | Error messages match existing auth flows. Redirect behavior consistent with current implementation.                          |
+| IV. Performance & Resource Efficiency | ✅ PASS | No additional API calls beyond existing pattern. Sequential auth checks are efficient.                                       |
+| V. Observability & Debuggability      | ✅ PASS | Logging strategy confirmed - auth method logged, sensitive data never logged.                                                |
 
 **Post-Design Gate Status**: ✅ PASS - Design aligns with all constitution principles.

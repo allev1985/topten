@@ -20,9 +20,9 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 
 **Purpose**: Verify project prerequisites and prepare for component installation
 
-- [X] T001 Verify shadcn/ui configuration exists in components.json at repository root
-- [X] T002 Verify existing UI components are present in src/components/ui/ (button.tsx, input.tsx, label.tsx)
-- [X] T003 Verify pnpm package manager is available (pnpm --version)
+- [x] T001 Verify shadcn/ui configuration exists in components.json at repository root
+- [x] T002 Verify existing UI components are present in src/components/ui/ (button.tsx, input.tsx, label.tsx)
+- [x] T003 Verify pnpm package manager is available (pnpm --version)
 
 **Checkpoint**: Project prerequisites validated - ready for component installation
 
@@ -36,16 +36,16 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 
 ### Implementation for User Story 1
 
-- [X] T004 [US1] Install Dialog component using shadcn CLI: `pnpm dlx shadcn@latest add dialog` from repository root
-- [X] T005 [US1] Verify Dialog component installed at src/components/ui/dialog.tsx
-- [X] T006 [US1] Verify @radix-ui/react-dialog dependency added to package.json
-- [X] T007 [US1] Create test page at src/app/test-dialog/page.tsx with simple dialog example from quickstart.md
-- [X] T008 [US1] Verify dialog opens and closes correctly in development mode (pnpm dev)
-- [X] T009 [US1] Test keyboard navigation (ESC closes, Tab cycles focus within dialog)
-- [X] T010 [US1] Test focus management (focus returns to trigger on close)
-- [X] T011 [US1] Verify dialog has proper ARIA attributes (role="dialog", aria-modal="true")
-- [X] T012 [US1] Run build to ensure no compilation errors: `pnpm build`
-- [X] T013 [US1] Remove test page at src/app/test-dialog/page.tsx
+- [x] T004 [US1] Install Dialog component using shadcn CLI: `pnpm dlx shadcn@latest add dialog` from repository root
+- [x] T005 [US1] Verify Dialog component installed at src/components/ui/dialog.tsx
+- [x] T006 [US1] Verify @radix-ui/react-dialog dependency added to package.json
+- [x] T007 [US1] Create test page at src/app/test-dialog/page.tsx with simple dialog example from quickstart.md
+- [x] T008 [US1] Verify dialog opens and closes correctly in development mode (pnpm dev)
+- [x] T009 [US1] Test keyboard navigation (ESC closes, Tab cycles focus within dialog)
+- [x] T010 [US1] Test focus management (focus returns to trigger on close)
+- [x] T011 [US1] Verify dialog has proper ARIA attributes (role="dialog", aria-modal="true")
+- [x] T012 [US1] Run build to ensure no compilation errors: `pnpm build`
+- [x] T013 [US1] Remove test page at src/app/test-dialog/page.tsx
 
 **Checkpoint**: Dialog component fully functional - can be used throughout application for modal interactions
 
@@ -59,15 +59,15 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 
 ### Implementation for User Story 2
 
-- [X] T014 [US2] Update next.config.ts to add remotePatterns for placehold.co per contracts/nextjs-image-config.md
-- [X] T015 [US2] Verify configuration syntax follows TypeScript NextConfig type
-- [X] T016 [US2] Create test page at src/app/test-images/page.tsx with placeholder image examples
-- [X] T017 [US2] Test basic placeholder image loads: https://placehold.co/600x400
-- [X] T018 [US2] Test placeholder with custom text: https://placehold.co/400x300?text=Test
-- [X] T019 [US2] Test responsive placeholder image with fill prop
-- [X] T020 [US2] Run build to verify image configuration is valid: `pnpm build`
-- [X] T021 [US2] Verify no console warnings about unconfigured image hosts
-- [X] T022 [US2] Remove test page at src/app/test-images/page.tsx
+- [x] T014 [US2] Update next.config.ts to add remotePatterns for placehold.co per contracts/nextjs-image-config.md
+- [x] T015 [US2] Verify configuration syntax follows TypeScript NextConfig type
+- [x] T016 [US2] Create test page at src/app/test-images/page.tsx with placeholder image examples
+- [x] T017 [US2] Test basic placeholder image loads: https://placehold.co/600x400
+- [x] T018 [US2] Test placeholder with custom text: https://placehold.co/400x300?text=Test
+- [x] T019 [US2] Test responsive placeholder image with fill prop
+- [x] T020 [US2] Run build to verify image configuration is valid: `pnpm build`
+- [x] T021 [US2] Verify no console warnings about unconfigured image hosts
+- [x] T022 [US2] Remove test page at src/app/test-images/page.tsx
 
 **Checkpoint**: External placeholder images working - can be used for development and design iteration
 
@@ -77,12 +77,12 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 
 **Purpose**: Verify both user stories work together and validate against acceptance criteria
 
-- [X] T023 Create integration test page at src/app/test-integration/page.tsx combining Dialog with placeholder images
-- [X] T024 Test dialog containing placeholder image (per quickstart.md PlaceDetailsDialog pattern)
-- [X] T025 Verify dialog with image opens, displays image correctly, and closes properly
-- [X] T026 Run full build: `pnpm build` to ensure no errors
-- [X] T027 Test production build locally: `pnpm start` and verify all functionality
-- [X] T028 Remove integration test page at src/app/test-integration/page.tsx
+- [x] T023 Create integration test page at src/app/test-integration/page.tsx combining Dialog with placeholder images
+- [x] T024 Test dialog containing placeholder image (per quickstart.md PlaceDetailsDialog pattern)
+- [x] T025 Verify dialog with image opens, displays image correctly, and closes properly
+- [x] T026 Run full build: `pnpm build` to ensure no errors
+- [x] T027 Test production build locally: `pnpm start` and verify all functionality
+- [x] T028 Remove integration test page at src/app/test-integration/page.tsx
 
 **Checkpoint**: Both user stories independently functional and work together correctly
 
@@ -92,12 +92,12 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 
 **Purpose**: Finalize documentation and ensure quickstart guide is accurate
 
-- [X] T029 [P] Verify quickstart.md examples work as documented
-- [X] T030 [P] Verify contracts/dialog-component-api.md matches installed component exports
-- [X] T031 [P] Verify contracts/nextjs-image-config.md matches next.config.ts configuration
-- [X] T032 Update .github/copilot-instructions.md with Dialog component usage patterns (run update-agent-context.sh)
-- [X] T033 Add comment to next.config.ts documenting that placehold.co is for development only
-- [X] T034 Final build validation: `pnpm build` with no errors or warnings
+- [x] T029 [P] Verify quickstart.md examples work as documented
+- [x] T030 [P] Verify contracts/dialog-component-api.md matches installed component exports
+- [x] T031 [P] Verify contracts/nextjs-image-config.md matches next.config.ts configuration
+- [x] T032 Update .github/copilot-instructions.md with Dialog component usage patterns (run update-agent-context.sh)
+- [x] T033 Add comment to next.config.ts documenting that placehold.co is for development only
+- [x] T034 Final build validation: `pnpm build` with no errors or warnings
 
 **Checkpoint**: Feature complete, documented, and ready for use by development team
 
@@ -122,6 +122,7 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 ### Within Each User Story
 
 **User Story 1 (Dialog Component)**:
+
 1. Install component (T004)
 2. Verify installation (T005-T006)
 3. Create test page and validate (T007-T011)
@@ -129,6 +130,7 @@ All paths are relative to repository root: `/home/runner/work/topten/topten`
 5. Cleanup (T013)
 
 **User Story 2 (Image Configuration)**:
+
 1. Update configuration (T014-T015)
 2. Create test page (T016)
 3. Test various image patterns (T017-T019)
@@ -195,16 +197,19 @@ With multiple developers:
 After completing all tasks, verify against spec.md success criteria:
 
 ### User Story 1 Success Criteria
+
 - [ ] **SC-001**: Modal interactions complete in under 5 seconds (trigger to completion)
 - [ ] **SC-002**: Application builds successfully with zero errors related to modal functionality
 - [ ] **SC-004**: Keyboard accessible with 100% success rate (ESC, Tab, Enter navigation)
 - [ ] **SC-005**: Screen readers announce dialog content with proper role and label information
 
 ### User Story 2 Success Criteria
+
 - [ ] **SC-002**: Application builds successfully with zero errors related to image functionality
 - [ ] **SC-003**: External placeholder images load within 2 seconds on standard network
 
 ### Overall Success Criteria
+
 - [ ] **SC-002**: Build succeeds with zero errors: `pnpm build` exits with code 0
 - [ ] Dialog component installed and accessible via `@/components/ui/dialog`
 - [ ] Next.js configured to allow images from https://placehold.co
@@ -247,6 +252,7 @@ During testing, verify behavior for edge cases identified in spec.md:
 - **Total**: 34 tasks
 
 **Estimated Effort**:
+
 - Setup: 15 minutes
 - User Story 1: 45 minutes (installation + validation)
 - User Story 2: 30 minutes (configuration + validation)

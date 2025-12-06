@@ -18,11 +18,17 @@ import {
 } from "@/components/ui/card";
 import { validatePassword } from "@/lib/utils/validation/password";
 
+export interface SignupFormProps {
+  /** Callback invoked on successful signup (prevents default redirect) */
+  onSuccess?: () => void;
+}
+
 /**
  * Signup form client component
  * Handles form state and client-side interactions
+ * Can be used standalone or within a modal
  */
-export function SignupForm() {
+export function SignupForm({ onSuccess }: SignupFormProps) {
   const router = useRouter();
   const { state, formAction } = useFormState(signupAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
@@ -32,9 +38,15 @@ export function SignupForm() {
 
   useEffect(() => {
     if (state.isSuccess && state.data?.redirectTo) {
-      router.push(state.data.redirectTo);
+      if (onSuccess) {
+        // If onSuccess callback provided (modal context), call it instead of redirecting
+        onSuccess();
+      } else {
+        // Otherwise redirect normally (standalone page context)
+        router.push(state.data.redirectTo);
+      }
     }
-  }, [state.isSuccess, state.data, router]);
+  }, [state.isSuccess, state.data, router, onSuccess]);
 
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

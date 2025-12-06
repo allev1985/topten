@@ -18,12 +18,13 @@ The Dialog component manages local React state for open/close behavior:
 
 ```typescript
 interface DialogState {
-  open: boolean;           // Whether dialog is currently displayed
-  trigger?: HTMLElement;   // Reference to trigger element (for focus return)
+  open: boolean; // Whether dialog is currently displayed
+  trigger?: HTMLElement; // Reference to trigger element (for focus return)
 }
 ```
 
 **State Management**:
+
 - Uncontrolled: Dialog manages its own state internally
 - Controlled: Parent component manages `open` state via props
 
@@ -38,8 +39,12 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 // Component prop types (from Radix UI)
 type DialogProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>;
-type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>;
-type DialogTriggerProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>;
+type DialogContentProps = React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+>;
+type DialogTriggerProps = React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Trigger
+>;
 // ... etc
 ```
 
@@ -85,8 +90,8 @@ The Next.js image configuration does not define data models but configures allow
 // next.config.ts
 images: {
   remotePatterns: [
-    { protocol: 'https', hostname: 'placehold.co', pathname: '/**' }
-  ]
+    { protocol: "https", hostname: "placehold.co", pathname: "/**" },
+  ];
 }
 ```
 
@@ -97,5 +102,6 @@ images: {
 ## Summary
 
 This feature is **data-model-free**. For component API surface and usage patterns, see:
+
 - **Component API**: `contracts/dialog-component-api.md`
 - **Usage Guide**: `quickstart.md`

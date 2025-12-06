@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2025-11-28
 
 ## Active Technologies
+
 - TypeScript 5.x, Node.js >=20.0.0 + Next.js (App Router), Supabase Auth (@supabase/ssr, @supabase/supabase-js), Zod (validation) (002-multi-auth-password-reset)
 - Supabase (PostgreSQL) - Auth handled by Supabase Auth service (002-multi-auth-password-reset)
 - N/A (UI-only feature, no data persistence) (001-dialog-component-setup)
@@ -46,10 +47,10 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+
 - 001-header-component: Added TypeScript 5.x with React 19.2.0 and Next.js 16.0.5 (App Router)
 - 001-landing-page: Added TypeScript 5.x, React 19.2.0, Next.js 16.0.5 + Next.js App Router, React 19, Tailwind CSS 4, shadcn/ui (New York style)
 - 001-dialog-component-setup: Added TypeScript 5.x, Node.js >=20.0.0
-
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

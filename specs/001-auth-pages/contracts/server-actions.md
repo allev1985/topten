@@ -13,6 +13,7 @@ This document defines the contract for server actions used in the Authentication
 Server actions provide form handling for authentication flows. They are called via React's `useActionState` hook and return a standardized `ActionState` object.
 
 All server actions:
+
 - Accept `FormData` from native HTML forms
 - Validate input using existing Zod schemas
 - Return `ActionState<T>` with success data or error information
@@ -63,6 +64,7 @@ Signs up a new user with email and password.
 **File**: `src/actions/auth-actions.ts`
 
 **Signature**:
+
 ```typescript
 export async function signupAction(
   prevState: ActionState<SignupSuccessData>,
@@ -77,31 +79,38 @@ export async function signupAction(
 | `password` | string | Yes | Min 12 chars, uppercase, lowercase, digit, symbol |
 
 **Success Response**:
+
 ```typescript
 interface SignupSuccessData {
-  message: string;    // "Please check your email to verify your account"
+  message: string; // "Please check your email to verify your account"
   redirectTo: string; // "/verify-email"
 }
 ```
 
 **Error Responses**:
 
-| Scenario | `error` | `fieldErrors` |
-|----------|---------|---------------|
-| Invalid email format | null | `{ email: ["Invalid email format"] }` |
-| Password too short | null | `{ password: ["Password must be at least 12 characters"] }` |
-| Multiple validation errors | null | `{ email: [...], password: [...] }` |
-| Server error | "An unexpected error occurred" | `{}` |
+| Scenario                   | `error`                        | `fieldErrors`                                               |
+| -------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| Invalid email format       | null                           | `{ email: ["Invalid email format"] }`                       |
+| Password too short         | null                           | `{ password: ["Password must be at least 12 characters"] }` |
+| Multiple validation errors | null                           | `{ email: [...], password: [...] }`                         |
+| Server error               | "An unexpected error occurred" | `{}`                                                        |
 
 **Example Usage**:
+
 ```tsx
-const [state, formAction, isPending] = useActionState(signupAction, initialActionState);
+const [state, formAction, isPending] = useActionState(
+  signupAction,
+  initialActionState
+);
 
 <form action={formAction}>
   <input name="email" type="email" />
   <input name="password" type="password" />
-  <button type="submit" disabled={isPending}>Sign Up</button>
-</form>
+  <button type="submit" disabled={isPending}>
+    Sign Up
+  </button>
+</form>;
 ```
 
 ---
@@ -113,6 +122,7 @@ Authenticates a user with email and password.
 **File**: `src/actions/auth-actions.ts`
 
 **Signature**:
+
 ```typescript
 export async function loginAction(
   prevState: ActionState<LoginSuccessData>,
@@ -129,6 +139,7 @@ export async function loginAction(
 | `rememberMe` | string | No | "on" if checked |
 
 **Success Response**:
+
 ```typescript
 interface LoginSuccessData {
   redirectTo: string; // Validated redirect URL or "/dashboard"
@@ -137,15 +148,16 @@ interface LoginSuccessData {
 
 **Error Responses**:
 
-| Scenario | `error` | `fieldErrors` |
-|----------|---------|---------------|
-| Invalid credentials | "Invalid email or password" | `{}` |
-| Email not verified | "Please verify your email before logging in" | `{}` |
-| Invalid email format | null | `{ email: ["Invalid email format"] }` |
-| Empty password | null | `{ password: ["Password is required"] }` |
-| Server error | "An unexpected error occurred" | `{}` |
+| Scenario             | `error`                                      | `fieldErrors`                            |
+| -------------------- | -------------------------------------------- | ---------------------------------------- |
+| Invalid credentials  | "Invalid email or password"                  | `{}`                                     |
+| Email not verified   | "Please verify your email before logging in" | `{}`                                     |
+| Invalid email format | null                                         | `{ email: ["Invalid email format"] }`    |
+| Empty password       | null                                         | `{ password: ["Password is required"] }` |
+| Server error         | "An unexpected error occurred"               | `{}`                                     |
 
 **Security Notes**:
+
 - Same error message for wrong email and wrong password (user enumeration protection)
 - `redirectTo` is validated to prevent open redirect attacks
 
@@ -158,6 +170,7 @@ Requests a password reset email.
 **File**: `src/actions/auth-actions.ts`
 
 **Signature**:
+
 ```typescript
 export async function passwordResetRequestAction(
   prevState: ActionState<PasswordResetRequestSuccessData>,
@@ -171,6 +184,7 @@ export async function passwordResetRequestAction(
 | `email` | string | Yes | Valid email format |
 
 **Success Response**:
+
 ```typescript
 interface PasswordResetRequestSuccessData {
   message: string; // "If an account exists, a password reset email has been sent"
@@ -179,12 +193,13 @@ interface PasswordResetRequestSuccessData {
 
 **Error Responses**:
 
-| Scenario | `error` | `fieldErrors` |
-|----------|---------|---------------|
-| Invalid email format | null | `{ email: ["Invalid email format"] }` |
-| Server error | "An unexpected error occurred" | `{}` |
+| Scenario             | `error`                        | `fieldErrors`                         |
+| -------------------- | ------------------------------ | ------------------------------------- |
+| Invalid email format | null                           | `{ email: ["Invalid email format"] }` |
+| Server error         | "An unexpected error occurred" | `{}`                                  |
 
 **Security Notes**:
+
 - Always returns success message regardless of whether email exists (user enumeration protection)
 - Same response time for existing and non-existing emails
 
@@ -197,6 +212,7 @@ Updates password using reset token (unauthenticated flow).
 **File**: `src/actions/auth-actions.ts`
 
 **Signature**:
+
 ```typescript
 export async function passwordUpdateAction(
   prevState: ActionState<PasswordUpdateSuccessData>,
@@ -211,24 +227,26 @@ export async function passwordUpdateAction(
 | `confirmPassword` | string | Yes | Must match `password` |
 
 **Success Response**:
+
 ```typescript
 interface PasswordUpdateSuccessData {
-  message: string;    // "Password updated successfully"
+  message: string; // "Password updated successfully"
   redirectTo: string; // "/login"
 }
 ```
 
 **Error Responses**:
 
-| Scenario | `error` | `fieldErrors` |
-|----------|---------|---------------|
-| Password mismatch | null | `{ confirmPassword: ["Passwords do not match"] }` |
-| Password too weak | null | `{ password: ["Password must be at least 12 characters"] }` |
-| Session expired | "Session has expired. Please request a new reset link." | `{}` |
-| Invalid token | "Invalid reset link. Please request a new one." | `{}` |
-| Server error | "An unexpected error occurred" | `{}` |
+| Scenario          | `error`                                                 | `fieldErrors`                                               |
+| ----------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| Password mismatch | null                                                    | `{ confirmPassword: ["Passwords do not match"] }`           |
+| Password too weak | null                                                    | `{ password: ["Password must be at least 12 characters"] }` |
+| Session expired   | "Session has expired. Please request a new reset link." | `{}`                                                        |
+| Invalid token     | "Invalid reset link. Please request a new one."         | `{}`                                                        |
+| Server error      | "An unexpected error occurred"                          | `{}`                                                        |
 
 **Prerequisites**:
+
 - User must have clicked a valid password reset link
 - Session must be established from the reset token exchange
 
@@ -241,6 +259,7 @@ Changes password for authenticated user.
 **File**: `src/actions/auth-actions.ts`
 
 **Signature**:
+
 ```typescript
 export async function passwordChangeAction(
   prevState: ActionState<PasswordUpdateSuccessData>,
@@ -256,6 +275,7 @@ export async function passwordChangeAction(
 | `confirmPassword` | string | Yes | Must match `password` |
 
 **Success Response**:
+
 ```typescript
 interface PasswordUpdateSuccessData {
   message: string; // "Password updated successfully"
@@ -264,15 +284,16 @@ interface PasswordUpdateSuccessData {
 
 **Error Responses**:
 
-| Scenario | `error` | `fieldErrors` |
-|----------|---------|---------------|
-| Incorrect current password | "Current password is incorrect" | `{}` |
-| Password mismatch | null | `{ confirmPassword: ["Passwords do not match"] }` |
-| Password too weak | null | `{ password: ["Password must be at least 12 characters"] }` |
-| Not authenticated | "Authentication required" | `{}` |
-| Server error | "An unexpected error occurred" | `{}` |
+| Scenario                   | `error`                         | `fieldErrors`                                               |
+| -------------------------- | ------------------------------- | ----------------------------------------------------------- |
+| Incorrect current password | "Current password is incorrect" | `{}`                                                        |
+| Password mismatch          | null                            | `{ confirmPassword: ["Passwords do not match"] }`           |
+| Password too weak          | null                            | `{ password: ["Password must be at least 12 characters"] }` |
+| Not authenticated          | "Authentication required"       | `{}`                                                        |
+| Server error               | "An unexpected error occurred"  | `{}`                                                        |
 
 **Prerequisites**:
+
 - User must be authenticated
 - Current password must be verified
 
@@ -281,18 +302,21 @@ interface PasswordUpdateSuccessData {
 ## Validation Rules
 
 ### Email Validation
+
 - Must be non-empty
 - Must be valid email format (contains @, valid domain)
 - Trimmed and lowercased before validation
 
 ### Password Validation (New Password)
+
 - Minimum 12 characters
 - At least one uppercase letter (A-Z)
 - At least one lowercase letter (a-z)
 - At least one digit (0-9)
-- At least one special character (!@#$%^&*()_+-=[]{};':"\\|,.<>/?)
+- At least one special character (!@#$%^&\*()\_+-=[]{};':"\\|,.<>/?)
 
 ### Redirect URL Validation
+
 - Must start with `/` (relative path)
 - Must not start with `//` (protocol-relative)
 - Must not contain protocol handlers (javascript:, data:, etc.)
@@ -348,10 +372,13 @@ Server actions map API errors to `ActionState` as follows:
 ```typescript
 // src/hooks/use-form-state.ts
 
-import { useActionState } from 'react';
+import { useActionState } from "react";
 
 export function useFormState<T>(
-  action: (prevState: ActionState<T>, formData: FormData) => Promise<ActionState<T>>,
+  action: (
+    prevState: ActionState<T>,
+    formData: FormData
+  ) => Promise<ActionState<T>>,
   initialState?: Partial<ActionState<T>>
 ) {
   const [state, formAction, isPending] = useActionState(action, {
