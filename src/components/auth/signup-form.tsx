@@ -20,6 +20,13 @@ import { validatePassword } from "@/lib/utils/validation/password";
 
 export interface SignupFormProps {
   /**
+   * Controls the presentation wrapper.
+   * - "card": Renders form wrapped in Card with header (standalone page usage)
+   * - "inline": Renders form content only without Card wrapper (modal usage)
+   * @default "card"
+   */
+  variant?: "card" | "inline";
+  /**
    * Callback invoked on successful signup (prevents default redirect).
    * When provided (modal context): Callback is invoked instead of redirecting
    * When omitted (standalone page): Redirects to /verify-email after signup
@@ -31,8 +38,10 @@ export interface SignupFormProps {
  * Signup form client component
  * Handles form state and client-side interactions
  * Can be used standalone or within a modal
+ *
+ * @param variant - Controls presentation: "card" for standalone pages, "inline" for modals
  */
-export function SignupForm({ onSuccess }: SignupFormProps) {
+export function SignupForm({ variant = "card", onSuccess }: SignupFormProps) {
   const router = useRouter();
   const { state, formAction } = useFormState(signupAction);
   const [strength, setStrength] = useState<"weak" | "medium" | "strong">(
@@ -61,6 +70,104 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     }
   };
 
+  const formContent = (
+    <form action={formAction} className="space-y-4">
+      {state.error && (
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="Enter your email"
+          aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
+          aria-describedby={
+            state.fieldErrors.email?.[0] ? "email-error" : undefined
+          }
+        />
+        {state.fieldErrors.email?.[0] && (
+          <span
+            id="email-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
+            {state.fieldErrors.email[0]}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          required
+          autoComplete="new-password"
+          placeholder="Create a password"
+          onChange={handlePasswordChange}
+          aria-invalid={state.fieldErrors.password?.[0] ? "true" : undefined}
+          aria-describedby={
+            [
+              state.fieldErrors.password?.[0] ? "password-error" : null,
+              "password-strength",
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
+        />
+        {hasInput && (
+          <span
+            id="password-strength"
+            aria-live="polite"
+            className="text-muted-foreground text-sm"
+          >
+            Password strength: {strength}
+          </span>
+        )}
+        {state.fieldErrors.password?.[0] && (
+          <span
+            id="password-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
+            {state.fieldErrors.password[0]}
+          </span>
+        )}
+      </div>
+
+      <Button
+        type="submit"
+        disabled={state.isPending}
+        aria-busy={state.isPending}
+      >
+        {state.isPending ? "Submitting..." : "Create Account"}
+      </Button>
+    </form>
+  );
+
+  const footerContent = (
+    <p>
+      Already have an account? <a href="/login">Sign in</a>
+    </p>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="space-y-4">
+        {formContent}
+        {footerContent}
+      </div>
+    );
+  }
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -69,95 +176,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           Enter your email and password to sign up
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form action={formAction} className="space-y-4">
-          {state.error && (
-            <Alert variant="destructive">
-              <AlertDescription>{state.error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="Enter your email"
-              aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
-              aria-describedby={
-                state.fieldErrors.email?.[0] ? "email-error" : undefined
-              }
-            />
-            {state.fieldErrors.email?.[0] && (
-              <span
-                id="email-error"
-                role="alert"
-                className="text-destructive text-sm"
-              >
-                {state.fieldErrors.email[0]}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              placeholder="Create a password"
-              onChange={handlePasswordChange}
-              aria-invalid={
-                state.fieldErrors.password?.[0] ? "true" : undefined
-              }
-              aria-describedby={
-                [
-                  state.fieldErrors.password?.[0] ? "password-error" : null,
-                  "password-strength",
-                ]
-                  .filter(Boolean)
-                  .join(" ") || undefined
-              }
-            />
-            {hasInput && (
-              <span
-                id="password-strength"
-                aria-live="polite"
-                className="text-muted-foreground text-sm"
-              >
-                Password strength: {strength}
-              </span>
-            )}
-            {state.fieldErrors.password?.[0] && (
-              <span
-                id="password-error"
-                role="alert"
-                className="text-destructive text-sm"
-              >
-                {state.fieldErrors.password[0]}
-              </span>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={state.isPending}
-            aria-busy={state.isPending}
-          >
-            {state.isPending ? "Submitting..." : "Create Account"}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <p>
-          Already have an account? <a href="/login">Sign in</a>
-        </p>
-      </CardFooter>
+      <CardContent>{formContent}</CardContent>
+      <CardFooter>{footerContent}</CardFooter>
     </Card>
   );
 }
