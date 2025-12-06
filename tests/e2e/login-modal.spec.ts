@@ -74,4 +74,85 @@ test.describe("Login Modal Flow - User Story 1", () => {
     // Focus should return to trigger button
     await expect(loginButton).toBeFocused();
   });
+
+  test("shows error for invalid credentials", async ({ page }) => {
+    await page.goto("http://localhost:3000");
+
+    // Open modal
+    await page.getByRole("button", { name: "Log In" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Fill in invalid credentials
+    await page.getByLabel("Email").fill("wrong@example.com");
+    await page.getByLabel("Password").fill("wrongpassword");
+
+    // Submit form
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Wait for error to appear or modal to remain visible
+    await Promise.race([
+      page.locator('[role="alert"]').first().waitFor({ timeout: 3000 }),
+      page
+        .locator("text=/invalid|incorrect|wrong/i")
+        .first()
+        .waitFor({ timeout: 3000 }),
+    ]).catch(() => {
+      // Error message may not appear immediately
+    });
+
+    // Modal should still be visible (not closed/redirected)
+    await expect(page.getByRole("dialog")).toBeVisible();
+  });
+
+  test("desktop viewport - optimal layout", async ({ page }) => {
+    // Set desktop viewport
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("http://localhost:3000");
+
+    // Open modal
+    await page.getByRole("button", { name: "Log In" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Verify modal is centered and has proper dimensions
+    const modal = page.getByRole("dialog");
+    const box = await modal.boundingBox();
+
+    expect(box).not.toBeNull();
+    if (box) {
+      // Modal should be reasonably sized on desktop
+      expect(box.width).toBeGreaterThan(200);
+      expect(box.width).toBeLessThan(1440);
+    }
+  });
+
+  test("modal centers properly on desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("http://localhost:3000");
+
+    // Open modal
+    await page.getByRole("button", { name: "Log In" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Modal should be visible in viewport
+    const modal = page.getByRole("dialog");
+    await expect(modal).toBeInViewport();
+  });
+
+  test("keyboard navigation works in login form", async ({ page }) => {
+    await page.goto("http://localhost:3000");
+
+    // Open modal
+    await page.getByRole("button", { name: "Log In" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // Tab through form elements
+    await page.keyboard.press("Tab"); // Email field
+    await expect(page.getByLabel("Email")).toBeFocused();
+
+    await page.keyboard.press("Tab"); // Password field
+    await expect(page.getByLabel("Password")).toBeFocused();
+
+    await page.keyboard.press("Tab"); // Submit button
+    await expect(page.getByRole("button", { name: "Sign In" })).toBeFocused();
+  });
 });

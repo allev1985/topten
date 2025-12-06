@@ -34,7 +34,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create your account</DialogTitle>
           <DialogDescription>

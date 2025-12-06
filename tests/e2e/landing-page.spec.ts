@@ -407,4 +407,238 @@ test.describe("Landing Page", () => {
       expect(cls).toBeLessThan(0.25);
     });
   });
+
+  test.describe("User Story 3: Tablet Browse", () => {
+    test("tablet viewport - optimal image grid layout", async ({ page }) => {
+      // Set tablet viewport (iPad size)
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto("/");
+
+      // Verify all images are visible
+      const images = page.locator(
+        'img[alt*="coffee"], img[alt*="library"], img[alt*="market"], img[alt*="gallery"]'
+      );
+      await expect(images).toHaveCount(4);
+
+      // Wait for images to load
+      await page.waitForLoadState("networkidle");
+
+      // Verify images have proper dimensions (not zero)
+      for (let i = 0; i < 4; i++) {
+        const img = images.nth(i);
+        const box = await img.boundingBox();
+        expect(box).not.toBeNull();
+        if (box) {
+          expect(box.height).toBeGreaterThan(0);
+          expect(box.width).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    test("tablet viewport - no horizontal scroll", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto("/");
+
+      const scrollWidth = await page.evaluate(
+        () => document.documentElement.scrollWidth
+      );
+      const clientWidth = await page.evaluate(
+        () => document.documentElement.clientWidth
+      );
+      expect(scrollWidth).toBe(clientWidth);
+    });
+
+    test("tablet viewport - proper text readability", async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto("/");
+
+      // Verify headline is visible and has appropriate size
+      const headline = page.getByRole("heading", {
+        name: "Curate and share your favourite places",
+      });
+      await expect(headline).toBeVisible();
+
+      // Verify subheading text is visible
+      await expect(
+        page.getByText(/Build focused, meaningful collections/i)
+      ).toBeVisible();
+    });
+  });
+
+  test.describe("User Story 4: Keyboard Navigation", () => {
+    test("keyboard navigation - tab through header", async ({ page }) => {
+      await page.goto("/");
+
+      // Tab through header elements
+      await page.keyboard.press("Tab"); // Logo/skip link
+      await page.keyboard.press("Tab"); // Log In button
+
+      await expect(page.getByRole("button", { name: "Log In" })).toBeFocused();
+
+      await page.keyboard.press("Tab"); // Start Curating button
+
+      await expect(
+        page.getByRole("button", { name: "Start Curating" })
+      ).toBeFocused();
+    });
+
+    test("focus indicators visible on all elements", async ({ page }) => {
+      await page.goto("/");
+
+      // Tab to first button
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+
+      // Verify focus is on an interactive element
+      const focused = await page.evaluateHandle(() => document.activeElement);
+      const tagName = await focused.evaluate((el) => el?.tagName ?? "");
+      expect(["BUTTON", "A"]).toContain(tagName);
+    });
+  });
+
+  test.describe("User Story 5: Performance", () => {
+    test("performance - Largest Contentful Paint ≤ 2.5s", async ({ page }) => {
+      await page.goto("/");
+
+      // Measure LCP using Performance API
+      const lcp = await page.evaluate(() => {
+        return new Promise<number>((resolve, reject) => {
+          let lcpValue = 0;
+          const observer = new PerformanceObserver((list) => {
+            const entries = list.getEntries();
+            const lastEntry = entries[
+              entries.length - 1
+            ] as PerformanceEntry & {
+              startTime: number;
+            };
+            lcpValue = lastEntry.startTime;
+          });
+          observer.observe({
+            type: "largest-contentful-paint",
+            buffered: true,
+          });
+
+          // Wait for load event, then disconnect and return LCP
+          setTimeout(() => {
+            observer.disconnect();
+            if (lcpValue === 0) {
+              reject(new Error("LCP not measured within timeout"));
+            } else {
+              resolve(lcpValue);
+            }
+          }, 3000);
+        });
+      });
+
+      // LCP should be ≤ 2500ms (2.5 seconds)
+      expect(lcp).toBeGreaterThan(0);
+      expect(lcp).toBeLessThanOrEqual(2500);
+    });
+
+    test("performance - Cumulative Layout Shift ≤ 0.1", async ({ page }) => {
+      await page.goto("/");
+
+      // Measure CLS using Performance API
+      const cls = await page.evaluate(() => {
+        return new Promise<number>((resolve) => {
+          let clsValue = 0;
+          const observer = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              const layoutShiftEntry = entry as unknown as {
+                hadRecentInput?: boolean;
+                value: number;
+              };
+              if (layoutShiftEntry.hadRecentInput) continue;
+              clsValue += layoutShiftEntry.value;
+            }
+          });
+          observer.observe({ type: "layout-shift", buffered: true });
+
+          // Wait for page to be fully loaded
+          setTimeout(() => {
+            observer.disconnect();
+            resolve(clsValue);
+          }, 3000);
+        });
+      });
+
+      // CLS should be ≤ 0.1 (good)
+      expect(cls).toBeLessThanOrEqual(0.1);
+    });
+
+    test("performance - page visible within 2 seconds", async ({ page }) => {
+      const startTime = Date.now();
+      await page.goto("/");
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+      const loadTime = Date.now() - startTime;
+
+      expect(loadTime).toBeLessThan(2000);
+    });
+
+    test("performance - no console errors during load", async ({ page }) => {
+      const errors: string[] = [];
+      page.on("console", (msg) => {
+        if (msg.type() === "error") {
+          errors.push(msg.text());
+        }
+      });
+
+      await page.goto("/");
+      await expect(
+        page.getByRole("heading", {
+          name: "Curate and share your favourite places",
+        })
+      ).toBeVisible();
+
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  test.describe("User Story 6: Accessibility", () => {
+    test("accessibility - all buttons have aria-labels or text", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Verify buttons are accessible via getByRole
+      await expect(page.getByRole("button", { name: "Log In" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Start Curating" })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Create Your First List" })
+      ).toBeVisible();
+    });
+
+    test("accessibility - heading hierarchy is correct", async ({ page }) => {
+      await page.goto("/");
+
+      // Should have exactly one h1
+      const h1Count = await page.locator("h1").count();
+      expect(h1Count).toBe(1);
+
+      // h1 should contain the main headline
+      const h1 = page.locator("h1");
+      await expect(h1).toHaveText("Curate and share your favourite places");
+    });
+
+    test("accessibility - images have alt text", async ({ page }) => {
+      await page.goto("/");
+
+      // All images should have alt attributes
+      const images = page.locator("img");
+      const count = await images.count();
+
+      for (let i = 0; i < count; i++) {
+        const img = images.nth(i);
+        const alt = await img.getAttribute("alt");
+        expect(alt).not.toBeNull();
+        expect(alt).not.toBe("");
+      }
+    });
+  });
 });
