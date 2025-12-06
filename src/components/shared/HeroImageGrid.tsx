@@ -1,17 +1,5 @@
 import Image from "next/image";
-
-/**
- * Configuration for a single image in the hero grid
- */
-interface ImageConfig {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  priority: boolean;
-  gridClasses: string;
-}
+import type { ImageConfig } from "@/types/components";
 
 /**
  * Static configuration for all 4 images in the hero grid
