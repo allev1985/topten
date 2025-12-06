@@ -28,8 +28,8 @@ description: "Task list for Landing Page implementation"
 
 **Purpose**: Project structure preparation and validation
 
-- [x] T001 Verify existing project structure matches plan.md requirements
-- [x] T002 Verify Next.js App Router configuration and dependencies are correct
+- [X] T001 Verify existing project structure matches plan.md requirements
+- [X] T002 Verify Next.js App Router configuration and dependencies are correct
 
 ---
 
@@ -39,9 +39,9 @@ description: "Task list for Landing Page implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T003 Create `src/app/_components/` directory for collocated private components
-- [x] T004 [P] Create test directory structure: `tests/component/landing-page/`, `tests/integration/landing-page/`
-- [x] T005 [P] Verify test infrastructure (Vitest, React Testing Library, Playwright) is configured correctly
+- [X] T003 Create `src/app/_components/` directory for collocated private components
+- [X] T004 [P] Create test directory structure: `tests/component/landing-page/`, `tests/integration/landing-page/`
+- [X] T005 [P] Verify test infrastructure (Vitest, React Testing Library, Playwright) is configured correctly
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -52,7 +52,6 @@ description: "Task list for Landing Page implementation"
 **Goal**: Enable first-time visitors to load the YourFavs landing page at the root URL with fast initial render, proper branding display, and zero hydration errors.
 
 **Independent Test**: Navigate to `http://localhost:3000/` in a browser and verify:
-
 - Page renders within 2 seconds
 - "YourFavs" heading is visible
 - "Curate and share your favorite places" tagline is visible
@@ -63,16 +62,16 @@ description: "Task list for Landing Page implementation"
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [x] T006 [P] [US1] Create component test for LandingPageClient rendering in tests/component/landing-page/landing-page-client.test.tsx
-- [x] T007 [P] [US1] Create component test for accessibility requirements in tests/component/landing-page/landing-page-client.test.tsx
-- [x] T008 [P] [US1] Create E2E test for page load and performance in tests/e2e/landing-page.spec.ts
+- [X] T006 [P] [US1] Create component test for LandingPageClient rendering in tests/component/landing-page/landing-page-client.test.tsx
+- [X] T007 [P] [US1] Create component test for accessibility requirements in tests/component/landing-page/landing-page-client.test.tsx
+- [X] T008 [P] [US1] Create E2E test for page load and performance in tests/e2e/landing-page.spec.ts
 
 ### Implementation for User Story 1
 
-- [x] T009 [US1] Create LandingPageClient component in src/app/\_components/landing-page-client.tsx
-- [x] T010 [US1] Update src/app/page.tsx to use Server Component pattern with metadata and LandingPageClient import
-- [x] T011 [US1] Verify no hydration errors by running dev server and checking browser console
-- [x] T012 [US1] Run component tests and verify 70%+ coverage for landing page components
+- [X] T009 [US1] Create LandingPageClient component in src/app/_components/landing-page-client.tsx
+- [X] T010 [US1] Update src/app/page.tsx to use Server Component pattern with metadata and LandingPageClient import
+- [X] T011 [US1] Verify no hydration errors by running dev server and checking browser console
+- [X] T012 [US1] Run component tests and verify 70%+ coverage for landing page components
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. The landing page loads fast, displays branding correctly, and has no hydration errors.
 
@@ -82,8 +81,7 @@ description: "Task list for Landing Page implementation"
 
 **Goal**: Ensure authenticated users can access the landing page without errors and the page renders appropriately for logged-in users.
 
-**Independent Test**:
-
+**Independent Test**: 
 1. Log in as a test user
 2. Navigate to `http://localhost:3000/`
 3. Verify page renders without errors
@@ -92,14 +90,14 @@ description: "Task list for Landing Page implementation"
 
 ### Tests for User Story 2
 
-- [x] T013 [P] [US2] Create component test for authenticated user state in tests/component/landing-page/landing-page-auth.test.tsx
+- [X] T013 [P] [US2] Create component test for authenticated user state in tests/component/landing-page/landing-page-auth.test.tsx
 - [ ] T014 [P] [US2] Create E2E test for authenticated user flow in tests/e2e/landing-page.spec.ts
 
 ### Implementation for User Story 2
 
-- [x] T015 [US2] Enhance LandingPageClient to handle authenticated user state in src/app/\_components/landing-page-client.tsx
-- [x] T016 [US2] Add integration test for navigation from landing page when authenticated in tests/integration/landing-page/navigation.test.ts
-- [x] T017 [US2] Verify all tests pass for authenticated user scenarios
+- [X] T015 [US2] Enhance LandingPageClient to handle authenticated user state in src/app/_components/landing-page-client.tsx
+- [X] T016 [US2] Add integration test for navigation from landing page when authenticated in tests/integration/landing-page/navigation.test.ts
+- [X] T017 [US2] Verify all tests pass for authenticated user scenarios
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Both anonymous and authenticated users can access the landing page successfully.
 
@@ -110,7 +108,6 @@ description: "Task list for Landing Page implementation"
 **Goal**: Ensure the landing page renders correctly and consistently across various devices (mobile, tablet, desktop) and browsers (Chrome, Firefox, Safari, Edge).
 
 **Independent Test**:
-
 1. Load landing page in multiple browsers (Chrome, Firefox, Safari, Edge)
 2. Test on different viewport sizes (mobile: 375px, tablet: 768px, desktop: 1280px)
 3. Verify consistent rendering across all platforms
@@ -118,17 +115,17 @@ description: "Task list for Landing Page implementation"
 
 ### Tests for User Story 3
 
-- [x] T018 [P] [US3] Create E2E test for mobile viewport in tests/e2e/landing-page.spec.ts
-- [x] T019 [P] [US3] Create E2E test for tablet viewport in tests/e2e/landing-page.spec.ts
-- [x] T020 [P] [US3] Create E2E test for desktop viewport in tests/e2e/landing-page.spec.ts
-- [x] T021 [P] [US3] Create E2E test for cross-browser compatibility in tests/e2e/landing-page.spec.ts
+- [X] T018 [P] [US3] Create E2E test for mobile viewport in tests/e2e/landing-page.spec.ts
+- [X] T019 [P] [US3] Create E2E test for tablet viewport in tests/e2e/landing-page.spec.ts
+- [X] T020 [P] [US3] Create E2E test for desktop viewport in tests/e2e/landing-page.spec.ts
+- [X] T021 [P] [US3] Create E2E test for cross-browser compatibility in tests/e2e/landing-page.spec.ts
 
 ### Implementation for User Story 3
 
-- [x] T022 [US3] Add responsive design utilities to LandingPageClient in src/app/\_components/landing-page-client.tsx
-- [x] T023 [US3] Create component test for responsive breakpoints in tests/component/landing-page/landing-page-responsive.test.tsx
-- [x] T024 [US3] Run cross-browser E2E tests and verify all pass
-- [x] T025 [US3] Test progressive enhancement (JavaScript disabled scenario)
+- [X] T022 [US3] Add responsive design utilities to LandingPageClient in src/app/_components/landing-page-client.tsx
+- [X] T023 [US3] Create component test for responsive breakpoints in tests/component/landing-page/landing-page-responsive.test.tsx
+- [X] T024 [US3] Run cross-browser E2E tests and verify all pass
+- [X] T025 [US3] Test progressive enhancement (JavaScript disabled scenario)
 
 **Checkpoint**: All user stories should now be independently functional. Landing page works for all user types, on all target devices, and in all target browsers.
 
@@ -138,14 +135,14 @@ description: "Task list for Landing Page implementation"
 
 **Purpose**: Improvements that affect multiple user stories and ensure production readiness
 
-- [x] T026 [P] Run full test suite and verify minimum 70% code coverage achieved
+- [X] T026 [P] Run full test suite and verify minimum 70% code coverage achieved
 - [ ] T027 [P] Run Lighthouse audit and verify performance targets met (< 2s initial render, < 1.5s FCP)
 - [ ] T028 [P] Verify WCAG 2.1 Level AA accessibility compliance using automated tools
-- [x] T029 [P] Run ESLint and Prettier to ensure code quality standards
-- [x] T030 Verify quickstart.md examples work correctly
-- [x] T031 Create integration test for navigation to/from landing page in tests/integration/landing-page/navigation.test.ts
-- [x] T032 Final E2E test run across all browsers to ensure no regressions
-- [x] T033 Verify zero console errors/warnings in production build
+- [X] T029 [P] Run ESLint and Prettier to ensure code quality standards
+- [X] T030 Verify quickstart.md examples work correctly
+- [X] T031 Create integration test for navigation to/from landing page in tests/integration/landing-page/navigation.test.ts
+- [X] T032 Final E2E test run across all browsers to ensure no regressions
+- [X] T033 Verify zero console errors/warnings in production build
 
 ---
 
@@ -246,21 +243,18 @@ With multiple developers:
 ## Verification Steps
 
 ### After Each Task
-
 - [ ] Run relevant tests (unit/component/E2E)
 - [ ] Check for TypeScript errors (`pnpm typecheck`)
 - [ ] Run linter (`pnpm lint`)
 - [ ] Verify in browser (no console errors)
 
 ### After Each User Story
-
 - [ ] Run full test suite for that story
 - [ ] Check code coverage (should contribute to 70% target)
 - [ ] Manual testing of acceptance scenarios from spec.md
 - [ ] Verify no regressions in previous stories
 
 ### Before Final Completion
-
 - [ ] Full test suite passes (component + integration + E2E)
 - [ ] Code coverage ≥ 70%
 - [ ] Lighthouse performance score meets targets
@@ -306,7 +300,6 @@ With multiple developers:
 ## File Modifications Summary
 
 ### Files to Create
-
 - `src/app/_components/landing-page-client.tsx` - Client Component
 - `tests/component/landing-page/landing-page-client.test.tsx` - Component rendering tests
 - `tests/component/landing-page/landing-page-auth.test.tsx` - Authenticated user tests
@@ -315,11 +308,9 @@ With multiple developers:
 - `tests/integration/landing-page/navigation.test.ts` - Navigation integration tests
 
 ### Files to Modify
-
 - `src/app/page.tsx` - Transform to Server Component with metadata and client component import
 
 ### Directories to Create
-
 - `src/app/_components/` - Private collocated components
 - `tests/component/landing-page/` - Component test directory
 - `tests/integration/landing-page/` - Integration test directory

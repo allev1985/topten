@@ -225,21 +225,21 @@
 
 **Purpose**: Improvements that affect multiple user stories and final validation
 
-- [x] T073 [P] Run full test suite with coverage (pnpm test:coverage)
-- [x] T074 Verify test coverage meets 65% minimum requirement
-- [x] T075 [P] Run linter and fix any issues (pnpm lint)
-- [x] T076 [P] Run code formatter (pnpm format)
-- [x] T077 Run TypeScript type checking for entire project (pnpm typecheck)
-- [x] T078 Run production build to verify no build errors (pnpm build)
-- [x] T079 Test on mobile viewport (320px width) - verify modal is scrollable and usable
-- [x] T080 Test on tablet viewport (768px width) - verify modal displays correctly
-- [x] T081 Test on desktop viewport (1920px width) - verify modal centered and sized appropriately
-- [x] T082 Verify standalone /login page still works correctly (regression test)
-- [x] T083 Test error handling: enter invalid credentials → verify error displays in modal
-- [x] T084 Test error handling: enter invalid email format → verify field error
-- [x] T085 Test performance: measure modal open response time (<500ms target)
-- [x] T086 [P] Document any deviations from quickstart.md in implementation notes
-- [x] T087 Run quickstart.md validation checklist from Step 6
+- [X] T073 [P] Run full test suite with coverage (pnpm test:coverage)
+- [X] T074 Verify test coverage meets 65% minimum requirement
+- [X] T075 [P] Run linter and fix any issues (pnpm lint)
+- [X] T076 [P] Run code formatter (pnpm format)
+- [X] T077 Run TypeScript type checking for entire project (pnpm typecheck)
+- [X] T078 Run production build to verify no build errors (pnpm build)
+- [X] T079 Test on mobile viewport (320px width) - verify modal is scrollable and usable
+- [X] T080 Test on tablet viewport (768px width) - verify modal displays correctly
+- [X] T081 Test on desktop viewport (1920px width) - verify modal centered and sized appropriately
+- [X] T082 Verify standalone /login page still works correctly (regression test)
+- [X] T083 Test error handling: enter invalid credentials → verify error displays in modal
+- [X] T084 Test error handling: enter invalid email format → verify field error
+- [X] T085 Test performance: measure modal open response time (<500ms target)
+- [X] T086 [P] Document any deviations from quickstart.md in implementation notes
+- [X] T087 Run quickstart.md validation checklist from Step 6
 - [ ] T088 Create pull request with comprehensive description referencing spec.md
 
 ---

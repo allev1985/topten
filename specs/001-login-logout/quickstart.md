@@ -64,24 +64,24 @@ import { DEFAULT_REDIRECT } from "@/lib/config";
  */
 export function isValidRedirect(url: string | undefined | null): boolean {
   if (!url || typeof url !== "string") return false;
-
+  
   const trimmed = url.trim();
-
+  
   // Must start with / but not //
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
     return false;
   }
-
+  
   // Block protocol handlers (javascript:, data:, etc.)
   // Check for : before the first / after the initial /
   const pathPart = trimmed.slice(1); // Remove leading /
   const colonIndex = pathPart.indexOf(":");
   const slashIndex = pathPart.indexOf("/");
-
+  
   if (colonIndex !== -1 && (slashIndex === -1 || colonIndex < slashIndex)) {
     return false;
   }
-
+  
   // Try decoding and re-validating (with depth limit to prevent DoS)
   try {
     const decoded = decodeURIComponent(trimmed);
@@ -98,10 +98,7 @@ export function isValidRedirect(url: string | undefined | null): boolean {
       const decodedPath = decoded.slice(1);
       const decodedColon = decodedPath.indexOf(":");
       const decodedSlash = decodedPath.indexOf("/");
-      if (
-        decodedColon !== -1 &&
-        (decodedSlash === -1 || decodedColon < decodedSlash)
-      ) {
+      if (decodedColon !== -1 && (decodedSlash === -1 || decodedColon < decodedSlash)) {
         return false;
       }
     }
@@ -109,7 +106,7 @@ export function isValidRedirect(url: string | undefined | null): boolean {
     // Invalid URL encoding
     return false;
   }
-
+  
   return true;
 }
 
@@ -231,13 +228,12 @@ export async function POST(request: NextRequest) {
       // Check for unverified email using Supabase error status/code
       // Supabase returns status 400 with code 'email_not_confirmed' for unverified emails
       // Fallback to message check for broader compatibility
-      const isUnverified =
+      const isUnverified = 
         error.code === "email_not_confirmed" ||
-        (error.status === 400 &&
-          error.message.toLowerCase().includes("not confirmed"));
-
+        (error.status === 400 && error.message.toLowerCase().includes("not confirmed"));
+      
       const authErr = authError(
-        isUnverified
+        isUnverified 
           ? "Please verify your email before logging in"
           : "Invalid email or password"
       );
@@ -284,12 +280,10 @@ import { serverError } from "@/lib/auth/errors";
 export async function POST() {
   try {
     const supabase = await createClient();
-
+    
     // Get current user for logging (optional)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { error } = await supabase.auth.signOut();
 
     if (error) {
@@ -299,9 +293,7 @@ export async function POST() {
 
     console.info(
       "[Logout]",
-      user
-        ? `User logged out: ${user.id}`
-        : "Logout request (no active session)"
+      user ? `User logged out: ${user.id}` : "Logout request (no active session)"
     );
 
     return NextResponse.json({
@@ -344,7 +336,6 @@ pnpm test -- --filter auth
 ### Manual Testing
 
 1. **Login with valid credentials**:
-
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -352,7 +343,6 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 2. **Login with redirect**:
-
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -360,7 +350,6 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 3. **Logout**:
-
 ```bash
 curl -X POST http://localhost:3000/api/auth/logout \
   -H "Cookie: <session-cookie>"
@@ -379,13 +368,10 @@ curl -X POST http://localhost:3000/api/auth/logout \
 ## Troubleshooting
 
 ### "Email not confirmed" error
-
 User needs to verify their email first via the signup verification flow.
 
 ### Cookies not being set
-
 Ensure HTTPS is used in production. In development, Supabase SSR may use different cookie settings.
 
 ### Redirect validation too strict
-
 If legitimate paths are being rejected, review the `isValidRedirect` function and add necessary patterns.

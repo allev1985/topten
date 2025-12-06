@@ -20,7 +20,6 @@ description: "Task list for Header component implementation"
 ## Path Conventions
 
 This is a Next.js web application with:
-
 - Components: `src/components/shared/` and `src/components/ui/`
 - Tests: `tests/component/header/`
 - Integration tests: `tests/component/landing-page/`

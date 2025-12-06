@@ -50,7 +50,7 @@ export function initialFormState<T = unknown>(): FormState<T> {
 /**
  * Action state for server actions (excludes isPending which comes from useActionState)
  */
-export type ActionState<T = unknown> = Omit<FormState<T>, "isPending">;
+export type ActionState<T = unknown> = Omit<FormState<T>, 'isPending'>;
 ```
 
 ---
@@ -68,7 +68,7 @@ export interface FormInputProps {
   /** Form field name */
   name: string;
   /** Input type */
-  type: "text" | "email";
+  type: 'text' | 'email';
   /** Label text */
   label: string;
   /** Whether field is required */
@@ -101,7 +101,7 @@ export interface PasswordInputProps {
   /** Whether field is required */
   required?: boolean;
   /** HTML autocomplete attribute */
-  autoComplete?: "current-password" | "new-password";
+  autoComplete?: 'current-password' | 'new-password';
   /** Error message to display */
   error?: string;
   /** Default value for server-side rendering */
@@ -128,7 +128,7 @@ export interface FormButtonProps {
   /** Whether form submission is pending */
   pending?: boolean;
   /** Button type */
-  type?: "submit" | "button";
+  type?: 'submit' | 'button';
   /** Click handler (for non-submit buttons) */
   onClick?: () => void;
   /** Whether button is disabled */
@@ -277,10 +277,7 @@ export async function passwordChangeAction(
  * Wraps React 19's useActionState with consistent interface
  */
 export function useFormState<T>(
-  action: (
-    prevState: ActionState<T>,
-    formData: FormData
-  ) => Promise<ActionState<T>>,
+  action: (prevState: ActionState<T>, formData: FormData) => Promise<ActionState<T>>,
   initialState?: Partial<ActionState<T>>
 ): {
   /** Current form state */
@@ -302,7 +299,7 @@ export function useFormState<T>(
 export interface PasswordValidationResult {
   isValid: boolean;
   errors: string[];
-  strength: "weak" | "medium" | "strong";
+  strength: 'weak' | 'medium' | 'strong';
   checks: {
     minLength: boolean;
     hasLowercase: boolean;
@@ -408,19 +405,14 @@ export interface FieldError {
 /**
  * Map API error details to field errors record
  */
-export function mapFieldErrors(
-  details: FieldError[]
-): Record<string, string[]> {
-  return details.reduce(
-    (acc, { field, message }) => {
-      if (!acc[field]) {
-        acc[field] = [];
-      }
-      acc[field].push(message);
-      return acc;
-    },
-    {} as Record<string, string[]>
-  );
+export function mapFieldErrors(details: FieldError[]): Record<string, string[]> {
+  return details.reduce((acc, { field, message }) => {
+    if (!acc[field]) {
+      acc[field] = [];
+    }
+    acc[field].push(message);
+    return acc;
+  }, {} as Record<string, string[]>);
 }
 ```
 

@@ -23,8 +23,8 @@
 
 **Purpose**: Project initialization and foundational types needed by all auth components
 
-- [x] T001 Create form state types in `src/types/forms.ts` with `FormState<T>`, `ActionState<T>`, `initialFormState()`, `FieldError`, and `mapFieldErrors()` per data-model.md
-- [x] T002 [P] Create unit test for form types in `tests/unit/types/forms.test.ts` covering type initialization and utility functions
+- [X] T001 Create form state types in `src/types/forms.ts` with `FormState<T>`, `ActionState<T>`, `initialFormState()`, `FieldError`, and `mapFieldErrors()` per data-model.md
+- [X] T002 [P] Create unit test for form types in `tests/unit/types/forms.test.ts` covering type initialization and utility functions
 
 ---
 
@@ -36,8 +36,8 @@
 
 ### 2.1 Form State Hook
 
-- [x] T003 Create `useFormState` hook in `src/hooks/use-form-state.ts` that wraps React 19's `useActionState` and returns `{ state: FormState<T>, formAction, reset }` per data-model.md
-- [x] T004 Create unit test for `useFormState` hook in `tests/unit/hooks/use-form-state.test.ts` covering:
+- [X] T003 Create `useFormState` hook in `src/hooks/use-form-state.ts` that wraps React 19's `useActionState` and returns `{ state: FormState<T>, formAction, reset }` per data-model.md
+- [X] T004 Create unit test for `useFormState` hook in `tests/unit/hooks/use-form-state.test.ts` covering:
   - Initial state values
   - Form action invocation
   - State transitions (pending, success, error)
@@ -45,16 +45,16 @@
 
 ### 2.2 Atomic UI Components
 
-- [x] T005 [P] Create `FormInput` component in `src/components/auth/form-input.tsx` with props: id, name, type (text/email), label, required, autoComplete, error, defaultValue, placeholder, className; includes accessible label, aria-invalid, aria-describedby, and error display
-- [x] T006 [P] Create component test for `FormInput` in `tests/component/auth/form-input.test.tsx` covering:
+- [X] T005 [P] Create `FormInput` component in `src/components/auth/form-input.tsx` with props: id, name, type (text/email), label, required, autoComplete, error, defaultValue, placeholder, className; includes accessible label, aria-invalid, aria-describedby, and error display
+- [X] T006 [P] Create component test for `FormInput` in `tests/component/auth/form-input.test.tsx` covering:
   - Rendering with label and input
   - Error message display
   - ARIA attributes (aria-invalid, aria-describedby)
   - Required attribute handling
   - Default value handling
 
-- [x] T007 [P] Create `PasswordInput` component in `src/components/auth/password-input.tsx` as client component with props: id, name, label, required, autoComplete, error, defaultValue, showStrength, strengthLabel, placeholder, className; integrates `validatePassword()` for real-time strength feedback
-- [x] T008 [P] Create component test for `PasswordInput` in `tests/component/auth/password-input.test.tsx` covering:
+- [X] T007 [P] Create `PasswordInput` component in `src/components/auth/password-input.tsx` as client component with props: id, name, label, required, autoComplete, error, defaultValue, showStrength, strengthLabel, placeholder, className; integrates `validatePassword()` for real-time strength feedback
+- [X] T008 [P] Create component test for `PasswordInput` in `tests/component/auth/password-input.test.tsx` covering:
   - Rendering with label and password input
   - Password strength indicator display (weak/medium/strong)
   - Real-time strength updates on input change
@@ -62,23 +62,23 @@
   - ARIA attributes and accessibility
   - showStrength toggle behavior
 
-- [x] T009 [P] Create `FormButton` component in `src/components/auth/form-button.tsx` with props: children, pending, type, onClick, disabled, className; shows disabled state during form submission
-- [x] T010 [P] Create component test for `FormButton` in `tests/component/auth/form-button.test.tsx` covering:
+- [X] T009 [P] Create `FormButton` component in `src/components/auth/form-button.tsx` with props: children, pending, type, onClick, disabled, className; shows disabled state during form submission
+- [X] T010 [P] Create component test for `FormButton` in `tests/component/auth/form-button.test.tsx` covering:
   - Rendering with children text
   - Disabled state when pending=true
   - Click handler invocation
   - Button type attribute
   - Loading indication text
 
-- [x] T011 [P] Create `ErrorMessage` component in `src/components/auth/error-message.tsx` with props: message, className; renders error as plain text in semantic HTML with role="alert"
-- [x] T012 [P] Create component test for `ErrorMessage` in `tests/component/auth/error-message.test.tsx` covering:
+- [X] T011 [P] Create `ErrorMessage` component in `src/components/auth/error-message.tsx` with props: message, className; renders error as plain text in semantic HTML with role="alert"
+- [X] T012 [P] Create component test for `ErrorMessage` in `tests/component/auth/error-message.test.tsx` covering:
   - Rendering with message
   - Not rendering when message is null/undefined
   - Role="alert" accessibility attribute
   - className passthrough
 
-- [x] T013 [P] Create `AuthCard` component in `src/components/auth/auth-card.tsx` with props: title, description, children, footer, className; provides consistent page wrapper structure for all auth pages
-- [x] T014 [P] Create component test for `AuthCard` in `tests/component/auth/auth-card.test.tsx` covering:
+- [X] T013 [P] Create `AuthCard` component in `src/components/auth/auth-card.tsx` with props: title, description, children, footer, className; provides consistent page wrapper structure for all auth pages
+- [X] T014 [P] Create component test for `AuthCard` in `tests/component/auth/auth-card.test.tsx` covering:
   - Rendering with title and children
   - Optional description display
   - Optional footer content
@@ -97,8 +97,8 @@
 
 ### Server Actions for US1
 
-- [x] T015 [US1] Create `signupAction` server action in `src/actions/auth-actions.ts` that validates input with `signupSchema`, calls Supabase `auth.signUp()`, returns `ActionState<SignupSuccessData>` per server-actions contract
-- [x] T016 [US1] Create unit test for `signupAction` in `tests/unit/actions/auth-actions.test.ts` covering:
+- [X] T015 [US1] Create `signupAction` server action in `src/actions/auth-actions.ts` that validates input with `signupSchema`, calls Supabase `auth.signUp()`, returns `ActionState<SignupSuccessData>` per server-actions contract
+- [X] T016 [US1] Create unit test for `signupAction` in `tests/unit/actions/auth-actions.test.ts` covering:
   - Successful signup returns success state with redirectTo
   - Invalid email returns fieldErrors
   - Weak password returns fieldErrors
@@ -106,9 +106,9 @@
 
 ### Signup Page for US1
 
-- [x] T017 [US1] Create route group layout file `src/app/(auth)/layout.tsx` if it doesn't exist; minimal layout wrapper for public auth pages
-- [x] T018 [US1] Create signup page at `src/app/(auth)/signup/page.tsx` as Server Component wrapping client SignupForm in AuthCard with title "Create Account", description, and footer link to /login
-- [x] T019 [US1] Create `SignupForm` client component in `src/app/(auth)/signup/signup-form.tsx` that uses `useFormState` with `signupAction`, renders FormInput (email), PasswordInput (password with strength), FormButton, ErrorMessage, and handles redirect on success
+- [X] T017 [US1] Create route group layout file `src/app/(auth)/layout.tsx` if it doesn't exist; minimal layout wrapper for public auth pages
+- [X] T018 [US1] Create signup page at `src/app/(auth)/signup/page.tsx` as Server Component wrapping client SignupForm in AuthCard with title "Create Account", description, and footer link to /login
+- [X] T019 [US1] Create `SignupForm` client component in `src/app/(auth)/signup/signup-form.tsx` that uses `useFormState` with `signupAction`, renders FormInput (email), PasswordInput (password with strength), FormButton, ErrorMessage, and handles redirect on success
 
 **Checkpoint**: Signup flow complete (form → action → redirect to verify-email)
 
@@ -122,9 +122,9 @@
 
 ### Verification Pages for US3
 
-- [x] T020 [US3] Create verify-email waiting page at `src/app/(auth)/verify-email/page.tsx` as Server Component with AuthCard showing "Check your email" title, clear instructions, and info about checking spam folder
-- [x] T021 [US3] Create auth verify handler page at `src/app/(auth)/auth/verify/page.tsx` as Server Component that reads `token_hash`, `type`, `code` from searchParams, exchanges token via Supabase, redirects to dashboard on success or shows error with instructions on failure
-- [x] T022 [US3] Create component test for verify-email page in `tests/component/auth/verify-email-page.test.tsx` covering:
+- [X] T020 [US3] Create verify-email waiting page at `src/app/(auth)/verify-email/page.tsx` as Server Component with AuthCard showing "Check your email" title, clear instructions, and info about checking spam folder
+- [X] T021 [US3] Create auth verify handler page at `src/app/(auth)/auth/verify/page.tsx` as Server Component that reads `token_hash`, `type`, `code` from searchParams, exchanges token via Supabase, redirects to dashboard on success or shows error with instructions on failure
+- [X] T022 [US3] Create component test for verify-email page in `tests/component/auth/verify-email-page.test.tsx` covering:
   - Rendering of instructions
   - Check spam folder messaging
   - Accessible content structure
@@ -141,12 +141,12 @@
 
 ### Login Server Action for US2
 
-- [x] T023 [US2] Create `loginAction` server action in `src/actions/auth-actions.ts` that validates input with `loginSchema`, calls Supabase `auth.signInWithPassword()`, handles redirectTo validation, returns `ActionState<LoginSuccessData>` per server-actions contract
+- [X] T023 [US2] Create `loginAction` server action in `src/actions/auth-actions.ts` that validates input with `loginSchema`, calls Supabase `auth.signInWithPassword()`, handles redirectTo validation, returns `ActionState<LoginSuccessData>` per server-actions contract
 
 ### Login Components for US2
 
-- [x] T024 [US2] Create `LoginForm` component in `src/components/auth/login-form.tsx` as client component with props: redirectTo, defaultEmail; uses `useFormState` with `loginAction`, renders FormInput (email), PasswordInput (no strength), checkbox for "Remember me", FormButton, ErrorMessage, handles redirect on success
-- [x] T025 [US2] Create component test for `LoginForm` in `tests/component/auth/login-form.test.tsx` covering:
+- [X] T024 [US2] Create `LoginForm` component in `src/components/auth/login-form.tsx` as client component with props: redirectTo, defaultEmail; uses `useFormState` with `loginAction`, renders FormInput (email), PasswordInput (no strength), checkbox for "Remember me", FormButton, ErrorMessage, handles redirect on success
+- [X] T025 [US2] Create component test for `LoginForm` in `tests/component/auth/login-form.test.tsx` covering:
   - Rendering all form fields
   - Remember me checkbox
   - Error message display for invalid credentials
@@ -156,7 +156,7 @@
 
 ### Login Page for US2
 
-- [x] T026 [US2] Create login page at `src/app/(auth)/login/page.tsx` as Server Component that reads `redirectTo` and `email` from searchParams, renders AuthCard with title "Sign In", LoginForm with props, footer with links to /signup and /forgot-password, placeholder disabled social auth buttons
+- [X] T026 [US2] Create login page at `src/app/(auth)/login/page.tsx` as Server Component that reads `redirectTo` and `email` from searchParams, renders AuthCard with title "Sign In", LoginForm with props, footer with links to /signup and /forgot-password, placeholder disabled social auth buttons
 
 **Checkpoint**: Login flow complete (login → dashboard or redirectTo)
 
@@ -170,12 +170,12 @@
 
 ### Password Reset Server Action for US4
 
-- [x] T027 [US4] Create `passwordResetRequestAction` server action in `src/actions/auth-actions.ts` that validates email with `passwordResetSchema`, calls Supabase `auth.resetPasswordForEmail()`, always returns success message (user enumeration protection)
+- [X] T027 [US4] Create `passwordResetRequestAction` server action in `src/actions/auth-actions.ts` that validates email with `passwordResetSchema`, calls Supabase `auth.resetPasswordForEmail()`, always returns success message (user enumeration protection)
 
 ### Forgot Password Page for US4
 
-- [x] T028 [US4] Create `ForgotPasswordForm` client component in `src/app/(auth)/forgot-password/forgot-password-form.tsx` using `useFormState` with `passwordResetRequestAction`, renders FormInput (email), FormButton, ErrorMessage, success message display
-- [x] T029 [US4] Create forgot-password page at `src/app/(auth)/forgot-password/page.tsx` as Server Component with AuthCard title "Reset Password", description, ForgotPasswordForm, footer link to /login
+- [X] T028 [US4] Create `ForgotPasswordForm` client component in `src/app/(auth)/forgot-password/forgot-password-form.tsx` using `useFormState` with `passwordResetRequestAction`, renders FormInput (email), FormButton, ErrorMessage, success message display
+- [X] T029 [US4] Create forgot-password page at `src/app/(auth)/forgot-password/page.tsx` as Server Component with AuthCard title "Reset Password", description, ForgotPasswordForm, footer link to /login
 
 **Checkpoint**: Password reset request flow complete
 
@@ -189,12 +189,12 @@
 
 ### Password Update Server Action for US5
 
-- [x] T030 [US5] Create `passwordUpdateAction` server action in `src/actions/auth-actions.ts` that validates password with `passwordUpdateSchema`, validates confirmPassword matches, calls Supabase `auth.updateUser()`, returns success with redirectTo "/login" or appropriate error
+- [X] T030 [US5] Create `passwordUpdateAction` server action in `src/actions/auth-actions.ts` that validates password with `passwordUpdateSchema`, validates confirmPassword matches, calls Supabase `auth.updateUser()`, returns success with redirectTo "/login" or appropriate error
 
 ### Password Reset Components for US5
 
-- [x] T031 [US5] Create `PasswordResetForm` component in `src/components/auth/password-reset-form.tsx` as client component with props: onSuccess, requireCurrentPassword; uses `useFormState`, renders PasswordInput (new password with strength), PasswordInput (confirm password), optional current password field, FormButton, ErrorMessage
-- [x] T032 [US5] Create component test for `PasswordResetForm` in `tests/component/auth/password-reset-form.test.tsx` covering:
+- [X] T031 [US5] Create `PasswordResetForm` component in `src/components/auth/password-reset-form.tsx` as client component with props: onSuccess, requireCurrentPassword; uses `useFormState`, renders PasswordInput (new password with strength), PasswordInput (confirm password), optional current password field, FormButton, ErrorMessage
+- [X] T032 [US5] Create component test for `PasswordResetForm` in `tests/component/auth/password-reset-form.test.tsx` covering:
   - Rendering password and confirm password fields
   - Password strength indicator on new password
   - Error display for mismatched passwords
@@ -204,7 +204,7 @@
 
 ### Reset Password Page for US5
 
-- [x] T033 [US5] Create reset-password page at `src/app/(auth)/reset-password/page.tsx` as Server Component that reads `code` from searchParams, validates code presence, renders AuthCard with title "Set New Password", PasswordResetForm with onSuccess redirect to /login, error state for invalid/expired token with link to request new reset
+- [X] T033 [US5] Create reset-password page at `src/app/(auth)/reset-password/page.tsx` as Server Component that reads `code` from searchParams, validates code presence, renders AuthCard with title "Set New Password", PasswordResetForm with onSuccess redirect to /login, error state for invalid/expired token with link to request new reset
 
 **Checkpoint**: Password reset completion flow complete (reset-password → login)
 
@@ -218,13 +218,13 @@
 
 ### Password Change Server Action for US6
 
-- [x] T034 [US6] Create `passwordChangeAction` server action in `src/actions/auth-actions.ts` that verifies authentication, validates currentPassword, validates new password with `passwordUpdateSchema`, validates confirmPassword matches, calls Supabase `auth.updateUser()`, returns success message or appropriate error
+- [X] T034 [US6] Create `passwordChangeAction` server action in `src/actions/auth-actions.ts` that verifies authentication, validates currentPassword, validates new password with `passwordUpdateSchema`, validates confirmPassword matches, calls Supabase `auth.updateUser()`, returns success message or appropriate error
 
 ### Password Settings Page for US6
 
-- [x] T035 [US6] Create dashboard route group layout `src/app/(dashboard)/layout.tsx` if it doesn't exist; includes auth protection middleware redirect to /login for unauthenticated users
-- [x] T036 [US6] Create password settings page at `src/app/(dashboard)/settings/password/page.tsx` as Server Component that verifies authentication (redirect to /login if not), renders page with PasswordResetForm with requireCurrentPassword=true, success message display
-- [x] T037 [US6] Create `PasswordChangeForm` client component in `src/app/(dashboard)/settings/password/password-change-form.tsx` using `useFormState` with `passwordChangeAction`, renders current password field, new password with strength, confirm password, FormButton, ErrorMessage, success message
+- [X] T035 [US6] Create dashboard route group layout `src/app/(dashboard)/layout.tsx` if it doesn't exist; includes auth protection middleware redirect to /login for unauthenticated users
+- [X] T036 [US6] Create password settings page at `src/app/(dashboard)/settings/password/page.tsx` as Server Component that verifies authentication (redirect to /login if not), renders page with PasswordResetForm with requireCurrentPassword=true, success message display
+- [X] T037 [US6] Create `PasswordChangeForm` client component in `src/app/(dashboard)/settings/password/password-change-form.tsx` using `useFormState` with `passwordChangeAction`, renders current password field, new password with strength, confirm password, FormButton, ErrorMessage, success message
 
 **Checkpoint**: Authenticated password change flow complete
 
@@ -234,9 +234,9 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [x] T038 Update auth-actions tests in `tests/unit/actions/auth-actions.test.ts` to cover all 5 server actions with comprehensive scenarios
-- [x] T039 [P] Create index exports file `src/components/auth/index.ts` exporting all auth components for clean imports
-- [x] T040 Run test coverage report and ensure minimum 65% coverage for auth components and hooks
+- [X] T038 Update auth-actions tests in `tests/unit/actions/auth-actions.test.ts` to cover all 5 server actions with comprehensive scenarios
+- [X] T039 [P] Create index exports file `src/components/auth/index.ts` exporting all auth components for clean imports
+- [X] T040 Run test coverage report and ensure minimum 65% coverage for auth components and hooks
 - [ ] T041 Validate all pages work with JavaScript disabled (progressive enhancement)
 - [ ] T042 Run accessibility audit on all auth pages (WCAG 2.1 AA compliance)
 
@@ -273,14 +273,12 @@
 ### Parallel Opportunities
 
 **Phase 2 (All [P] marked tasks can run in parallel):**
-
 ```
 T005, T007, T009, T011, T013 - All atomic components
 T006, T008, T010, T012, T014 - All component tests
 ```
 
 **After Phase 2 (User stories can be parallelized):**
-
 ```
 Developer A: US1 (T015-T019) + US3 (T020-T022) = Signup + Verification MVP
 Developer B: US2 (T023-T026) = Login
@@ -324,34 +322,32 @@ With multiple developers:
 
 ## Summary
 
-| Metric                              | Value                 |
-| ----------------------------------- | --------------------- |
-| **Total Tasks**                     | 42                    |
-| **Phase 1 (Setup)**                 | 2 tasks               |
-| **Phase 2 (Foundational)**          | 12 tasks              |
-| **Phase 3 (US1 - Signup)**          | 5 tasks               |
-| **Phase 4 (US3 - Verification)**    | 3 tasks               |
-| **Phase 5 (US2 - Login)**           | 4 tasks               |
-| **Phase 6 (US4 - Forgot Password)** | 3 tasks               |
-| **Phase 7 (US5 - Reset Password)**  | 4 tasks               |
-| **Phase 8 (US6 - Password Change)** | 4 tasks               |
-| **Phase 9 (Polish)**                | 5 tasks               |
-| **Parallelizable Tasks**            | 15 tasks marked [P]   |
-| **MVP Scope**                       | Phases 1-5 (26 tasks) |
+| Metric | Value |
+|--------|-------|
+| **Total Tasks** | 42 |
+| **Phase 1 (Setup)** | 2 tasks |
+| **Phase 2 (Foundational)** | 12 tasks |
+| **Phase 3 (US1 - Signup)** | 5 tasks |
+| **Phase 4 (US3 - Verification)** | 3 tasks |
+| **Phase 5 (US2 - Login)** | 4 tasks |
+| **Phase 6 (US4 - Forgot Password)** | 3 tasks |
+| **Phase 7 (US5 - Reset Password)** | 4 tasks |
+| **Phase 8 (US6 - Password Change)** | 4 tasks |
+| **Phase 9 (Polish)** | 5 tasks |
+| **Parallelizable Tasks** | 15 tasks marked [P] |
+| **MVP Scope** | Phases 1-5 (26 tasks) |
 
 ---
 
 ## Files to Create/Modify
 
 ### Types & Hooks
-
 - `src/types/forms.ts` (new)
 - `src/hooks/use-form-state.ts` (new)
 - `tests/unit/types/forms.test.ts` (new)
 - `tests/unit/hooks/use-form-state.test.ts` (new)
 
 ### Atomic Components
-
 - `src/components/auth/form-input.tsx` (new)
 - `src/components/auth/password-input.tsx` (new)
 - `src/components/auth/form-button.tsx` (new)
@@ -370,12 +366,10 @@ With multiple developers:
 - `tests/component/auth/verify-email-page.test.tsx` (new)
 
 ### Server Actions
-
 - `src/actions/auth-actions.ts` (new)
 - `tests/unit/actions/auth-actions.test.ts` (new)
 
 ### Pages (Auth Route Group)
-
 - `src/app/(auth)/layout.tsx` (new)
 - `src/app/(auth)/signup/page.tsx` (new)
 - `src/app/(auth)/signup/signup-form.tsx` (new)
@@ -387,7 +381,6 @@ With multiple developers:
 - `src/app/(auth)/reset-password/page.tsx` (new)
 
 ### Pages (Dashboard Route Group)
-
 - `src/app/(dashboard)/layout.tsx` (new)
 - `src/app/(dashboard)/settings/password/page.tsx` (new)
 - `src/app/(dashboard)/settings/password/password-change-form.tsx` (new)

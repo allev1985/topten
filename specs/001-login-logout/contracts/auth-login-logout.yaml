@@ -16,7 +16,7 @@ paths:
         Authenticates a user with email and password credentials.
         On success, creates a session and sets secure HTTP-only cookies.
         Returns a validated redirect URL for client-side navigation.
-
+        
         **User Enumeration Protection**: Returns identical error response
         for both invalid email and wrong password scenarios.
       operationId: login
@@ -27,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginRequest"
+              $ref: '#/components/schemas/LoginRequest'
             examples:
               basic:
                 summary: Basic login
@@ -41,7 +41,7 @@ paths:
                   password: SecurePass123!
                   redirectTo: /lists/my-favorites
       responses:
-        "200":
+        '200':
           description: Login successful
           headers:
             Set-Cookie:
@@ -52,16 +52,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginSuccessResponse"
+                $ref: '#/components/schemas/LoginSuccessResponse'
               example:
                 success: true
                 redirectTo: /dashboard
-        "400":
+        '400':
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationErrorResponse"
+                $ref: '#/components/schemas/ValidationErrorResponse'
               example:
                 success: false
                 error:
@@ -70,12 +70,12 @@ paths:
                   details:
                     - field: email
                       message: Invalid email format
-        "401":
+        '401':
           description: Authentication failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthErrorResponse"
+                $ref: '#/components/schemas/AuthErrorResponse'
               examples:
                 invalidCredentials:
                   summary: Invalid email or password
@@ -91,12 +91,12 @@ paths:
                     error:
                       code: AUTH_ERROR
                       message: Please verify your email before logging in
-        "500":
+        '500':
           description: Server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServerErrorResponse"
+                $ref: '#/components/schemas/ServerErrorResponse'
               example:
                 success: false
                 error:
@@ -114,7 +114,7 @@ paths:
       tags:
         - Authentication
       responses:
-        "200":
+        '200':
           description: Logout successful
           headers:
             Set-Cookie:
@@ -125,16 +125,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LogoutSuccessResponse"
+                $ref: '#/components/schemas/LogoutSuccessResponse'
               example:
                 success: true
                 message: Logged out successfully
-        "500":
+        '500':
           description: Server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServerErrorResponse"
+                $ref: '#/components/schemas/ServerErrorResponse'
               example:
                 success: false
                 error:
@@ -219,7 +219,7 @@ components:
             details:
               type: array
               items:
-                $ref: "#/components/schemas/ErrorDetail"
+                $ref: '#/components/schemas/ErrorDetail'
 
     AuthErrorResponse:
       type: object

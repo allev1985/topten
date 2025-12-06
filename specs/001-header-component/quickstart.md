@@ -38,8 +38,8 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
     <header className="w-full px-4 py-4 md:px-8">
       <div className="flex items-center justify-between">
         {/* Logo Section */}
-        <Link
-          href="/"
+        <Link 
+          href="/" 
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
           aria-label="YourFavs home"
         >
@@ -67,7 +67,6 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
 ```
 
 **Key Implementation Notes**:
-
 - `"use client"` directive required for onClick handlers
 - Props interface for type safety and clarity
 - Link with `aria-label` for screen reader accessibility
@@ -98,7 +97,7 @@ export default function LandingPageClient() {
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
       <Header onLogin={handleLogin} onSignup={handleSignup} />
-
+      
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
@@ -115,7 +114,6 @@ export default function LandingPageClient() {
 ```
 
 **Key Changes**:
-
 - Import new Header component
 - Add `handleLogin` and `handleSignup` placeholder functions
 - Render Header at top of page
@@ -140,40 +138,38 @@ describe("Header - Brand Identity and Visual Elements (User Story 1)", () => {
 
   it("renders the YourFavs logo with MapPin icon and text", () => {
     render(<Header {...mockHandlers} />);
-
+    
     // Verify logo link is present
     const logoLink = screen.getByLabelText("YourFavs home");
     expect(logoLink).toBeInTheDocument();
-
+    
     // Verify brand text is present
     expect(screen.getByText("YourFavs")).toBeInTheDocument();
   });
 
   it("displays both action buttons with correct labels", () => {
     render(<Header {...mockHandlers} />);
-
+    
     expect(screen.getByRole("button", { name: "Log In" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start Curating" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Curating" })).toBeInTheDocument();
   });
 
   it("renders header as a landmark element", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const header = screen.getByRole("banner");
     expect(header).toBeInTheDocument();
   });
 
   it("applies correct styling to create visual hierarchy", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const loginButton = screen.getByRole("button", { name: "Log In" });
     const signupButton = screen.getByRole("button", { name: "Start Curating" });
-
+    
     // Login button should be more subtle (ghost variant)
     expect(loginButton).toHaveClass("hover:bg-accent");
-
+    
     // Signup button should be prominent (default/primary variant)
     expect(signupButton).toHaveClass("bg-primary");
   });
@@ -197,21 +193,21 @@ describe("Header - Logo Navigation (User Story 2)", () => {
 
   it("renders logo as a clickable link to homepage", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const logoLink = screen.getByLabelText("YourFavs home");
     expect(logoLink).toHaveAttribute("href", "/");
   });
 
   it("provides visual feedback when logo is hovered", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const logoLink = screen.getByLabelText("YourFavs home");
     expect(logoLink).toHaveClass("hover:opacity-80");
   });
 
   it("logo link is keyboard accessible", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const logoLink = screen.getByLabelText("YourFavs home");
     expect(logoLink.tagName).toBe("A");
   });
@@ -233,12 +229,12 @@ describe("Header - Authentication Actions (User Story 3)", () => {
     const onLogin = vi.fn();
     const onSignup = vi.fn();
     const user = userEvent.setup();
-
+    
     render(<Header onLogin={onLogin} onSignup={onSignup} />);
-
+    
     const loginButton = screen.getByRole("button", { name: "Log In" });
     await user.click(loginButton);
-
+    
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(onSignup).not.toHaveBeenCalled();
   });
@@ -247,12 +243,12 @@ describe("Header - Authentication Actions (User Story 3)", () => {
     const onLogin = vi.fn();
     const onSignup = vi.fn();
     const user = userEvent.setup();
-
+    
     render(<Header onLogin={onLogin} onSignup={onSignup} />);
-
+    
     const signupButton = screen.getByRole("button", { name: "Start Curating" });
     await user.click(signupButton);
-
+    
     expect(onSignup).toHaveBeenCalledTimes(1);
     expect(onLogin).not.toHaveBeenCalled();
   });
@@ -261,13 +257,13 @@ describe("Header - Authentication Actions (User Story 3)", () => {
     const onLogin = vi.fn();
     const onSignup = vi.fn();
     const user = userEvent.setup();
-
+    
     render(<Header onLogin={onLogin} onSignup={onSignup} />);
-
+    
     const loginButton = screen.getByRole("button", { name: "Log In" });
     loginButton.focus();
     await user.keyboard("{Enter}");
-
+    
     expect(onLogin).toHaveBeenCalledTimes(1);
   });
 
@@ -275,13 +271,13 @@ describe("Header - Authentication Actions (User Story 3)", () => {
     const onLogin = vi.fn();
     const onSignup = vi.fn();
     const user = userEvent.setup();
-
+    
     render(<Header onLogin={onLogin} onSignup={onSignup} />);
-
+    
     const signupButton = screen.getByRole("button", { name: "Start Curating" });
     signupButton.focus();
     await user.keyboard("{Enter}");
-
+    
     expect(onSignup).toHaveBeenCalledTimes(1);
   });
 });
@@ -306,39 +302,35 @@ describe("Header - Accessibility (User Story 4)", () => {
   it("all interactive elements are keyboard accessible in logical order", async () => {
     const user = userEvent.setup();
     render(<Header {...mockHandlers} />);
-
+    
     // Tab through elements
     await user.tab();
     expect(screen.getByLabelText("YourFavs home")).toHaveFocus();
-
+    
     await user.tab();
     expect(screen.getByRole("button", { name: "Log In" })).toHaveFocus();
-
+    
     await user.tab();
-    expect(
-      screen.getByRole("button", { name: "Start Curating" })
-    ).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Start Curating" })).toHaveFocus();
   });
 
   it("logo link has descriptive accessible label", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const logoLink = screen.getByLabelText("YourFavs home");
     expect(logoLink).toBeInTheDocument();
   });
 
   it("buttons have clear accessible labels", () => {
     render(<Header {...mockHandlers} />);
-
+    
     expect(screen.getByRole("button", { name: "Log In" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start Curating" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Curating" })).toBeInTheDocument();
   });
 
   it("header is identified as a banner landmark for screen readers", () => {
     render(<Header {...mockHandlers} />);
-
+    
     const header = screen.getByRole("banner");
     expect(header).toBeInTheDocument();
   });
@@ -347,13 +339,13 @@ describe("Header - Accessibility (User Story 4)", () => {
     const onLogin = vi.fn();
     const onSignup = vi.fn();
     const user = userEvent.setup();
-
+    
     render(<Header onLogin={onLogin} onSignup={onSignup} />);
-
+    
     const loginButton = screen.getByRole("button", { name: "Log In" });
     loginButton.focus();
     await user.keyboard(" "); // Space key
-
+    
     expect(onLogin).toHaveBeenCalledTimes(1);
   });
 });
@@ -373,7 +365,6 @@ pnpm test:watch tests/component/header
 ```
 
 **Expected Results**:
-
 - All tests should pass
 - Coverage should exceed 65% (target: 85%+)
 - No linting errors
@@ -422,7 +413,7 @@ Add assertion to verify Header is rendered:
 ```tsx
 it("renders with header for all users", () => {
   render(<LandingPageClient />);
-
+  
   expect(screen.getByRole("banner")).toBeInTheDocument(); // Header
   expect(screen.getByRole("heading", { name: "YourFavs" })).toBeInTheDocument();
 });
@@ -449,23 +440,18 @@ pnpm format
 ## Common Issues and Solutions
 
 ### Issue: Tests fail with "Cannot find module"
-
 **Solution**: Ensure path aliases are correct in `vitest.config.ts`. Check that `@/components/shared/Header` resolves correctly.
 
 ### Issue: Header doesn't appear on page
-
 **Solution**: Verify you imported and rendered `<Header>` in `LandingPageClient.tsx`. Check browser console for errors.
 
 ### Issue: Buttons don't have correct styling
-
 **Solution**: Verify Button component is imported from `@/components/ui/button`. Check that `variant` props are spelled correctly.
 
 ### Issue: Logo click doesn't navigate
-
 **Solution**: Verify Next.js Link is imported from `next/link`. Check that `href="/"` is set correctly.
 
 ### Issue: Accessibility tests fail
-
 **Solution**: Ensure `aria-label="YourFavs home"` is on the Link component. Verify header element is `<header>` tag.
 
 ## Success Criteria Verification

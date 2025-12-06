@@ -6,7 +6,6 @@
 **Goal:** Build a visual-first landing page that serves as the primary entry point for all users, with modal-based authentication flows.
 
 **Context:**
-
 - Platform: Next.js 14+ with App Router
 - Auth: Supabase Authentication
 - UI: shadcn/ui + Tailwind CSS (v4)
@@ -14,7 +13,6 @@
 - Target: MVP launch with modern UI using existing design system
 
 **Already Implemented:**
-
 - ✅ Supabase client and server utilities configured (`src/lib/supabase/`)
 - ✅ Auth actions for login/signup (`src/actions/auth-actions.ts`)
 - ✅ Login and signup forms with full validation (`src/app/(auth)/`)
@@ -25,7 +23,6 @@
 - ✅ Basic landing page at `/` (needs enhancement)
 
 **To Build:**
-
 - Dialog component for modals (add via shadcn CLI)
 - Landing page with static content
 - Modal wrappers for existing auth forms
@@ -33,14 +30,12 @@
 - Responsive header with CTAs
 
 **User Journey:**
-
 1. User visits / → sees landing page
 2. User clicks "Start Curating" → signup modal opens
 3. User signs up → receives email verification
 4. User verifies email and logs in → redirected to /dashboard
 
 **Technical Approach:**
-
 - Server Component renders static content
 - Client Component manages modal state and interactions
 - Auth forms handle Supabase integration directly
@@ -56,13 +51,10 @@
 **Story Points:** 1
 
 ### Description
-
 Add missing shadcn/ui Dialog component and configure Next.js for external images. Most dependencies are already installed.
 
 ### Context
-
 **Already Complete:**
-
 - ✅ shadcn/ui is configured in `components.json` with path aliases
 - ✅ Button, Input, Label, Card, Alert components already exist in `src/components/ui/`
 - ✅ Supabase is configured with client and server utilities in `src/lib/supabase/`
@@ -71,17 +63,14 @@ Add missing shadcn/ui Dialog component and configure Next.js for external images
 - ✅ Component directories exist: `src/components/ui/`, `src/components/auth/`, `src/components/shared/`
 
 **Still Needed:**
-
 - Dialog component from shadcn/ui (not yet installed)
 - Configure Next.js `next.config.ts` for placehold.co images
 
 ### Tasks
-
 1. Install Dialog component: `pnpm dlx shadcn@latest add dialog`
 2. Add placehold.co to Next.js image remote patterns in `next.config.ts`
 
 ### Acceptance Criteria
-
 - [x] Button, Input, Label, Card, Alert components exist in `src/components/ui/`
 - [x] Supabase utilities exist in `src/lib/supabase/`
 - [x] Path aliases configured in `components.json`
@@ -90,17 +79,14 @@ Add missing shadcn/ui Dialog component and configure Next.js for external images
 - [ ] Build passes: `pnpm build`
 
 ### Testing Requirements
-
 - [ ] Verify Dialog component can be imported: `import { Dialog } from "@/components/ui/dialog"`
 - [ ] Verify build completes without errors
 
 ### Files Modified/Created
-
 - `next.config.ts` (modified - add image remote patterns)
 - `src/components/ui/dialog.tsx` (created by shadcn CLI)
 
 ### Definition of Done
-
 - Dialog component installed
 - Image configuration complete
 - Build passes without warnings
@@ -116,13 +102,10 @@ Add missing shadcn/ui Dialog component and configure Next.js for external images
 **Dependencies:** Story 1
 
 ### Description
-
 Transform the current basic landing page into a proper shell with a Client Component wrapper. The current `src/app/page.tsx` has basic content that needs to be replaced with the landing page structure.
 
 ### Context
-
 **Current State:**
-
 - Basic landing page exists at `src/app/page.tsx` with simple HTML structure
 - No client/server component split
 
@@ -130,56 +113,47 @@ Transform the current basic landing page into a proper shell with a Client Compo
 The landing page should be a Server Component that renders the initial shell and passes control to a Client Component. This pattern ensures fast initial render while enabling client-side interactivity for modals.
 
 **Technical Details:**
-
 - `src/app/page.tsx`: Server Component
 - `src/components/shared/LandingPageClient.tsx`: Client Component shell
 
 ### Tasks
-
 1. Update `src/app/page.tsx` to Server Component
 2. Create `src/components/shared/LandingPageClient.tsx` shell
 3. Add placeholder content to verify routing
 4. Write tests for rendering
 
 ### Acceptance Criteria
-
 - [ ] Visiting `/` renders without errors
 - [ ] Page works for all users
 - [ ] No hydration errors in console
 
 ### Testing Requirements
-
 **Target Coverage:** 70%
 
 **Unit Tests:**
-
 - [ ] Verify page renders correctly
 
 **Integration Tests:**
-
 - [ ] Page renders without crashing
 - [ ] No console errors during render
 
 ### Files Created/Modified
-
 - `src/app/page.tsx` (~15 lines, modified)
 - `src/components/shared/LandingPageClient.tsx` (~20 lines, created)
 - `tests/unit/app/page.test.tsx` (~30 lines, created)
 
 ### Example Test Cases
-
 ```typescript
 // Test: Page renders
-describe("Landing Page", () => {
-  it("renders correctly", async () => {
+describe('Landing Page', () => {
+  it('renders correctly', async () => {
     // Render page
     // Assert LandingPageClient is rendered
-  });
-});
+  })
+})
 ```
 
 ### Definition of Done
-
 - Page accessible at `/` route
 - Tests passing at 70%+ coverage
 - No TypeScript errors
@@ -195,21 +169,17 @@ describe("Landing Page", () => {
 **Dependencies:** Story 2
 
 ### Description
-
 Build the navigation header with YourFavs logo and call-to-action buttons. Header displays CTAs and triggers auth modals (wired in later story).
 
 ### Context
-
 The header is the primary navigation element visible on every landing page load. It provides easy access to auth flows. The header is a Client Component because it needs to handle click events for opening modals.
 
 **Design:**
-
 - Logo: MapPin icon in orange circle + "YourFavs" text
 - Actions: "Log In" (ghost button) + "Start Curating" (primary button)
 - Header is static scroll (not fixed)
 
 ### Technical Details
-
 - Component: `src/components/shared/Header.tsx` (Client Component)
 - Props: `onLoginClick: () => void`, `onSignupClick: () => void`
 - Uses lucide-react for MapPin icon (already installed)
@@ -217,7 +187,6 @@ The header is the primary navigation element visible on every landing page load.
 - Logo links to `/` using Next.js Link
 
 ### Tasks
-
 1. Create Header component structure
 2. Implement logo with icon and text
 3. Add CTAs
@@ -227,7 +196,6 @@ The header is the primary navigation element visible on every landing page load.
 7. Write component tests
 
 ### Acceptance Criteria
-
 - [ ] Header renders at top of landing page
 - [ ] Logo displays MapPin icon in orange circle
 - [ ] Logo text reads "YourFavs"
@@ -239,11 +207,9 @@ The header is the primary navigation element visible on every landing page load.
 - [ ] All buttons are keyboard accessible (Tab key)
 
 ### Testing Requirements
-
 **Target Coverage:** 65%
 
 **Unit Tests:**
-
 - [ ] Header renders correctly
 - [ ] "Log In" button calls onLoginClick when clicked
 - [ ] "Start Curating" button calls onSignupClick when clicked
@@ -251,38 +217,34 @@ The header is the primary navigation element visible on every landing page load.
 - [ ] All buttons have correct variants
 
 **Accessibility Tests:**
-
 - [ ] All interactive elements are keyboard accessible
 - [ ] Buttons have proper ARIA labels
 - [ ] Logo link has accessible text
 
 ### Files Created
-
 - `src/components/shared/Header.tsx` (~50 lines)
 - `tests/unit/components/shared/Header.test.tsx` (~60 lines)
 
 ### Example Test Cases
-
 ```typescript
 // Test: Header shows correct CTAs
-describe("Header", () => {
-  it("shows login and signup buttons", () => {
+describe('Header', () => {
+  it('shows login and signup buttons', () => {
     // Render
     // Assert "Log In" button exists
     // Assert "Start Curating" button exists
-  });
-
-  it("calls onLoginClick when Log In clicked", () => {
+  })
+  
+  it('calls onLoginClick when Log In clicked', () => {
     // Create mock function
     // Render with onLoginClick={mockFn}
     // Click "Log In" button
     // Assert mockFn was called
-  });
-});
+  })
+})
 ```
 
 ### Design Reference
-
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  [○ MapPin] YourFavs          [Log In] [Start Curating] │
@@ -290,7 +252,6 @@ describe("Header", () => {
 ```
 
 ### Definition of Done
-
 - Header component rendering correctly
 - Click handlers working
 - Tests passing at 65%+ coverage
@@ -307,15 +268,12 @@ describe("Header", () => {
 **Dependencies:** Story 2
 
 ### Description
-
 Create the hero image grid component that displays 4 placeholder images in an asymmetric layout. This provides the visual appeal of the landing page and establishes the responsive grid pattern.
 
 ### Context
-
 The hero image grid is a key visual element that demonstrates the type of content users can curate. For MVP, we use placeholder images from placehold.co. The grid layout is asymmetric to create visual interest: one tall image (library), one wide image (gallery), and two standard images.
 
 **Grid Layout:**
-
 ```
 [Coffee] [Library - tall]
 [Market] [Library]
@@ -323,7 +281,6 @@ The hero image grid is a key visual element that demonstrates the type of conten
 ```
 
 ### Technical Details
-
 - Component: `src/components/shared/HeroImageGrid.tsx` (Server Component - no interactivity)
 - Uses Next.js Image component with `fill` prop
 - Images: placehold.co with different colors for visual distinction
@@ -331,7 +288,6 @@ The hero image grid is a key visual element that demonstrates the type of conten
 - Grid: Tailwind CSS Grid with explicit column/row spans
 
 ### Tasks
-
 1. Create HeroImageGrid component
 2. Implement Tailwind CSS Grid layout
 3. Add 4 Next.js Image components with placeholder URLs
@@ -342,7 +298,6 @@ The hero image grid is a key visual element that demonstrates the type of conten
 8. Write component tests
 
 ### Acceptance Criteria
-
 - [ ] Component renders 4 images
 - [ ] Grid layout matches design (asymmetric)
 - [ ] Images use Next.js Image component with optimization
@@ -356,11 +311,9 @@ The hero image grid is a key visual element that demonstrates the type of conten
 - [ ] Proper aspect ratios maintained
 
 ### Testing Requirements
-
 **Target Coverage:** 60%
 
 **Unit Tests:**
-
 - [ ] Component renders without crashing
 - [ ] Renders 4 Image components
 - [ ] Each Image has correct src URL
@@ -369,46 +322,41 @@ The hero image grid is a key visual element that demonstrates the type of conten
 - [ ] Priority images have priority prop
 
 **Visual Regression Tests (optional):**
-
 - [ ] Snapshot test for grid layout
 
 ### Files Created
-
 - `src/components/shared/HeroImageGrid.tsx` (~60 lines)
 - `tests/unit/components/shared/HeroImageGrid.test.tsx` (~70 lines)
 
 ### Image Specifications
-
 ```typescript
 // Coffee Shop: 800x600 (orange)
-src: "https://placehold.co/800x600/e67e22/ffffff?text=Coffee+Shop";
-alt: "Cozy coffee shop interior with latte art";
+src: "https://placehold.co/800x600/e67e22/ffffff?text=Coffee+Shop"
+alt: "Cozy coffee shop interior with latte art"
 
 // Library: 600x800 (blue, tall)
-src: "https://placehold.co/600x800/3498db/ffffff?text=Library";
-alt: "Beautiful library with natural light and bookshelves";
+src: "https://placehold.co/600x800/3498db/ffffff?text=Library"
+alt: "Beautiful library with natural light and bookshelves"
 
 // Market: 800x600 (green)
-src: "https://placehold.co/800x600/2ecc71/ffffff?text=Market";
-alt: "Bustling food market with vendors";
+src: "https://placehold.co/800x600/2ecc71/ffffff?text=Market"
+alt: "Bustling food market with vendors"
 
 // Gallery: 1000x500 (purple, wide)
-src: "https://placehold.co/1000x500/9b59b6/ffffff?text=Art+Gallery";
-alt: "Modern art gallery with white walls";
+src: "https://placehold.co/1000x500/9b59b6/ffffff?text=Art+Gallery"
+alt: "Modern art gallery with white walls"
 ```
 
 ### Grid Classes
-
 ```typescript
-Container: "grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-4";
-Coffee: "col-span-1 row-span-1";
-Library: "col-span-1 md:row-span-2";
-Market: "col-span-1 row-span-1";
-Gallery: "col-span-1 md:col-span-2 row-span-1";
+Container: "grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-4"
+Coffee: "col-span-1 row-span-1"
+Library: "col-span-1 md:row-span-2"
+Market: "col-span-1 row-span-1"
+Gallery: "col-span-1 md:col-span-2 row-span-1"
 ```
 
 ### Definition of Done
-
 - Image grid renders correctly
 - Responsive behavior working
 - Images optimized and loading properly
@@ -426,13 +374,10 @@ Gallery: "col-span-1 md:col-span-2 row-span-1";
 **Dependencies:** Story 1, Story 2
 
 ### Description
-
 Create a modal wrapper for the existing login form to enable login from the landing page. The login form already exists at `src/app/(auth)/login/login-form.tsx` with full Supabase integration and uses server actions.
 
 ### Context
-
 **Already Complete:**
-
 - ✅ LoginForm component exists with email/password inputs
 - ✅ Form uses `loginAction` from `@/actions/auth-actions`
 - ✅ Supabase integration via server action (not client-side)
@@ -442,13 +387,11 @@ Create a modal wrapper for the existing login form to enable login from the land
 - ✅ Redirect handling after successful login
 
 **Still Needed:**
-
 - Create a lightweight modal wrapper using Dialog component
 - Adapt the existing LoginForm for use in a modal context
 - Wire up the modal to Header "Log In" button
 
 **Auth Flow:**
-
 1. User clicks "Log In" → Dialog opens with LoginForm
 2. User enters email/password → Submits form
 3. Form calls server action `loginAction`
@@ -456,25 +399,20 @@ Create a modal wrapper for the existing login form to enable login from the land
 5. Error → Error message displayed inline in form
 
 ### Technical Details
-
 **Existing Components:**
-
 - `src/app/(auth)/login/login-form.tsx`: Complete form with server action integration
 - `src/actions/auth-actions.ts`: Contains `loginAction` server action
 
 **New Component:**
-
 - `src/components/auth/LoginModal.tsx`: Dialog wrapper that renders LoginForm
 
 **Key Differences from Original Plan:**
-
 - No need to create form logic - it already exists
 - Uses server actions instead of client-side Supabase calls
 - Form already handles redirects via `loginAction`
 - Just need Dialog wrapper and integration
 
 ### Tasks
-
 1. Refactor: Move `src/app/(auth)/login/login-form.tsx` to `src/components/auth/login-form.tsx`
 2. Update import in `src/app/(auth)/login/page.tsx`
 3. Create LoginModal component using Dialog from shadcn
@@ -489,7 +427,6 @@ Create a modal wrapper for the existing login form to enable login from the land
 ### Acceptance Criteria
 
 **LoginModal:**
-
 - [ ] Dialog opens when open={true}
 - [ ] Dialog closes when onOpenChange(false) called
 - [ ] Dialog contains existing LoginForm component
@@ -499,27 +436,23 @@ Create a modal wrapper for the existing login form to enable login from the land
 - [ ] Dialog scrolls if content overflows
 
 **Integration:**
-
 - [ ] "Log In" button in Header opens LoginModal
 - [ ] Modal state managed in LandingPageClient
 - [ ] Closing modal resets state
 - [ ] Successful login closes modal and refreshes page
 
 **LoginForm Behavior (already implemented):**
-
 - [x] Email input with validation
-- [x] Password input with validation
+- [x] Password input with validation  
 - [x] Submit button shows loading state
 - [x] Error messages display when auth fails
 - [x] Form uses server action for authentication
 - [x] Successful login triggers redirect
 
 ### Testing Requirements
-
 **Target Coverage:** 65%
 
 **LoginModal Unit Tests:**
-
 - [ ] Dialog renders when open=true
 - [ ] Dialog hidden when open=false
 - [ ] onOpenChange called when closed
@@ -527,33 +460,29 @@ Create a modal wrapper for the existing login form to enable login from the land
 - [ ] Passes redirectTo prop correctly
 
 **Integration Tests:**
-
 - [ ] "Log In" button opens modal
 - [ ] Modal closes after successful login
 - [ ] Modal can be manually closed
 - [ ] Form submission works within modal
 
 **Accessibility Tests:**
-
 - [ ] Focus trapped in modal when open
 - [ ] Focus returns to trigger button when closed
 - [ ] Escape key closes modal
 - [ ] Screen reader announcements correct
 
 ### Files Created
-
 - `src/components/auth/LoginModal.tsx` (~60 lines)
 - `tests/unit/components/auth/LoginModal.test.tsx` (~90 lines)
 
 ### Example Implementation
-
 ```typescript
 // LoginModal wraps existing form
-export function LoginModal({
-  open,
-  onOpenChange
-}: {
-  open: boolean;
+export function LoginModal({ 
+  open, 
+  onOpenChange 
+}: { 
+  open: boolean; 
   onOpenChange: (open: boolean) => void;
 }) {
   return (
@@ -570,7 +499,6 @@ export function LoginModal({
 ```
 
 ### Example Test Cases
-
 ```typescript
 describe('LoginModal', () => {
   it('renders LoginForm when open', () => {
@@ -578,7 +506,7 @@ describe('LoginModal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
-
+  
   it('calls onOpenChange when closed', () => {
     const mockOnChange = jest.fn();
     render(<LoginModal open={true} onOpenChange={mockOnChange} />);
@@ -589,7 +517,6 @@ describe('LoginModal', () => {
 ```
 
 ### Definition of Done
-
 - Login modal wrapper created
 - Existing LoginForm integrated into modal
 - Dialog behavior correct
@@ -607,13 +534,10 @@ describe('LoginModal', () => {
 **Dependencies:** Story 1, Story 2
 
 ### Description
-
 Create a modal wrapper for the existing signup form to enable registration from the landing page. The signup form already exists at `src/app/(auth)/signup/signup-form.tsx` with full Supabase integration and uses server actions.
 
 ### Context
-
 **Already Complete:**
-
 - ✅ SignupForm component exists with email/password/confirm-password inputs
 - ✅ Form uses `signupAction` from `@/actions/auth-actions`
 - ✅ Supabase integration via server action (not client-side)
@@ -624,14 +548,12 @@ Create a modal wrapper for the existing signup form to enable registration from 
 - ✅ Redirect handling after successful signup
 
 **Still Needed:**
-
 - Create a lightweight modal wrapper using Dialog component
 - Adapt the existing SignupForm for use in a modal context
 - Wire up the modal to "Start Curating" buttons
 - Handle success state in modal (show verification message)
 
 **Auth Flow:**
-
 1. User clicks "Start Curating" → Dialog opens with SignupForm
 2. User enters email, password, confirm password
 3. Client-side validation (passwords match, strength check)
@@ -641,26 +563,21 @@ Create a modal wrapper for the existing signup form to enable registration from 
 7. Error → Error message displayed inline
 
 ### Technical Details
-
 **Existing Components:**
-
 - `src/app/(auth)/signup/signup-form.tsx`: Complete form with server action integration
 - `src/actions/auth-actions.ts`: Contains `signupAction` server action
 - `src/lib/utils/validation/password.ts`: Password validation utility (already exists)
 
 **New Component:**
-
 - `src/components/auth/SignupModal.tsx`: Dialog wrapper that renders SignupForm
 
 **Key Differences from Original Plan:**
-
 - No need to create form logic - it already exists
 - Uses server actions instead of client-side Supabase calls
 - Form already has password strength indicator
 - Just need Dialog wrapper and success message handling
 
 ### Tasks
-
 1. Refactor: Move `src/app/(auth)/signup/signup-form.tsx` to `src/components/auth/signup-form.tsx`
 2. Update import in `src/app/(auth)/signup/page.tsx`
 3. Create SignupModal component using Dialog from shadcn
@@ -674,7 +591,6 @@ Create a modal wrapper for the existing signup form to enable registration from 
 ### Acceptance Criteria
 
 **SignupModal:**
-
 - [ ] Dialog opens when open={true}
 - [ ] Dialog closes when onOpenChange(false) called
 - [ ] Dialog shows "Create your account" title
@@ -687,14 +603,12 @@ Create a modal wrapper for the existing signup form to enable registration from 
 - [ ] Dialog has proper ARIA labels
 
 **Integration:**
-
 - [ ] "Start Curating" button in Header opens SignupModal
 - [ ] "Create Your First List" CTA opens SignupModal
 - [ ] Modal state managed in LandingPageClient
 - [ ] Closing modal resets form state
 
 **SignupForm Behavior (already implemented):**
-
 - [x] Email input with validation
 - [x] Password input with strength indicator
 - [x] Confirm password validation
@@ -704,11 +618,9 @@ Create a modal wrapper for the existing signup form to enable registration from 
 - [x] Success handling with redirect
 
 ### Testing Requirements
-
 **Target Coverage:** 65%
 
 **SignupModal Unit Tests:**
-
 - [ ] Dialog renders when open=true
 - [ ] Dialog hidden when open=false
 - [ ] onOpenChange called when closed
@@ -717,33 +629,29 @@ Create a modal wrapper for the existing signup form to enable registration from 
 - [ ] Displays success message when signup succeeds
 
 **Integration Tests:**
-
 - [ ] "Start Curating" buttons open modal
 - [ ] Modal displays success message after signup
 - [ ] Modal can be manually closed
 - [ ] Form submission works within modal
 
 **Accessibility Tests:**
-
 - [ ] Focus trapped in modal when open
 - [ ] Focus returns to trigger button when closed
 - [ ] Escape key closes modal
 - [ ] Success message announced to screen readers
 
 ### Files Created
-
 - `src/components/auth/SignupModal.tsx` (~80 lines)
 - `tests/unit/components/auth/SignupModal.test.tsx` (~90 lines)
 
 ### Example Implementation
-
 ```typescript
 // SignupModal wraps existing form
-export function SignupModal({
-  open,
-  onOpenChange
-}: {
-  open: boolean;
+export function SignupModal({ 
+  open, 
+  onOpenChange 
+}: { 
+  open: boolean; 
   onOpenChange: (open: boolean) => void;
 }) {
   return (
@@ -763,7 +671,6 @@ export function SignupModal({
 ```
 
 ### Example Test Cases
-
 ```typescript
 describe('SignupModal', () => {
   it('renders SignupForm when open', () => {
@@ -771,7 +678,7 @@ describe('SignupModal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
-
+  
   it('keeps dialog open after success', async () => {
     // Mock successful signup
     render(<SignupModal open={true} onOpenChange={jest.fn()} />);
@@ -783,14 +690,12 @@ describe('SignupModal', () => {
 ```
 
 ### Success Message Copy
-
 ```
 Title: "Check your email!"
 Message: "We've sent you a confirmation link. Click it to verify your account and get started."
 ```
 
 ### Definition of Done
-
 - Signup modal wrapper created
 - Existing SignupForm integrated into modal
 - Success message handling implemented
@@ -809,15 +714,12 @@ Message: "We've sent you a confirmation link. Click it to verify your account an
 **Dependencies:** Stories 2, 3, 4, 6
 
 ### Description
-
 Complete the LandingPageClient component by adding the hero text section and wiring up the primary CTA button. This brings together all components into the final landing page layout.
 
 ### Context
-
 The hero section is the main content area of the landing page, split into two columns: text content (left) with CTA button, and image grid (right).
 
 **Layout:**
-
 ```
 ┌─────────────────────────────────────┐
 │  Header (Story 3)                   │
@@ -830,34 +732,28 @@ The hero section is the main content area of the landing page, split into two co
 ```
 
 **CTA Behavior:**
-
 - Opens signup modal
 
 ### Technical Details
-
 **Hero Text Content:**
-
 - Tagline: "Your personal guide to the world" (with Sparkles icon)
 - Headline: "Curate and share your favourite places"
 - Subheading: "Build focused, meaningful collections that reflect your genuine preferences and local expertise. Share them like recommendations from a trusted friend."
 - CTA Button: "Create Your First List"
 
 **Layout:**
-
 - Container: CSS Grid, 5 columns on desktop
 - Left (text): 2 columns (40%)
 - Right (images): 3 columns (60%)
 - Responsive: Stack vertically on mobile
 
 **State Management:**
-
 - `loginOpen` state for LoginModal
 - `signupOpen` state for SignupModal
 - Wire Header click handlers
 - Wire CTA click handler
 
 ### Tasks
-
 1. Update LandingPageClient with hero text content
 2. Add Sparkles icon from lucide-react
 3. Implement grid layout (40/60 split)
@@ -871,7 +767,6 @@ The hero section is the main content area of the landing page, split into two co
 ### Acceptance Criteria
 
 **Hero Section:**
-
 - [ ] Tagline displays with Sparkles icon
 - [ ] Headline displays at correct size (text-5xl)
 - [ ] Subheading displays with proper color (text-gray-600)
@@ -882,14 +777,12 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Layout stacks vertically on mobile (<1024px)
 
 **CTA Button Behavior:**
-
 - [ ] Button is interactive (onClick handler)
 - [ ] Clicking opens signup modal
 - [ ] Button text reads "Create Your First List"
 - [ ] Button has proper size (size="lg")
 
 **State Management:**
-
 - [ ] loginOpen state controls LoginModal
 - [ ] signupOpen state controls SignupModal
 - [ ] Header "Log In" button sets loginOpen=true
@@ -898,7 +791,6 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Modals close when onOpenChange(false) called
 
 **Layout & Spacing:**
-
 - [ ] Proper padding around content (px-6, py-16)
 - [ ] Maximum content width (max-w-7xl)
 - [ ] Content centered (mx-auto)
@@ -906,11 +798,9 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Responsive padding on mobile
 
 ### Testing Requirements
-
 **Target Coverage:** 65%
 
 **Integration Tests:**
-
 - [ ] LandingPageClient renders all sections
 - [ ] Header renders with correct props
 - [ ] Hero text section renders
@@ -918,7 +808,6 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Both modals render (LoginModal and SignupModal)
 
 **State Management Tests:**
-
 - [ ] Clicking Header "Log In" opens LoginModal
 - [ ] Clicking Header "Start Curating" opens SignupModal
 - [ ] Clicking Hero CTA opens SignupModal
@@ -926,60 +815,54 @@ The hero section is the main content area of the landing page, split into two co
 - [ ] Closing modal sets state to false
 
 **Responsive Tests:**
-
 - [ ] Layout is 5-column grid on desktop
 - [ ] Layout is 1-column on mobile
 - [ ] All content visible on mobile
 - [ ] No horizontal scroll on any viewport
 
 ### Files Modified/Created
-
 - `src/components/shared/LandingPageClient.tsx` (major updates, ~120 lines)
 - `tests/integration/components/LandingPageClient.test.tsx` (~100 lines)
 
 ### Example Test Cases
-
 ```typescript
-describe("LandingPageClient Integration", () => {
-  it("renders all sections correctly", () => {
+describe('LandingPageClient Integration', () => {
+  it('renders all sections correctly', () => {
     // Render component
     // Assert Header exists
     // Assert hero text exists
     // Assert image grid exists
     // Assert CTA button exists
-  });
-
-  it("opens signup modal when CTA clicked", () => {
+  })
+  
+  it('opens signup modal when CTA clicked', () => {
     // Render component
     // Click "Create Your First List" button
     // Assert SignupModal open={true}
-  });
-
-  it("header buttons control modal state", () => {
+  })
+  
+  it('header buttons control modal state', () => {
     // Render component
     // Click "Log In"
     // Assert LoginModal opens
     // Close modal
     // Click "Start Curating"
     // Assert SignupModal opens
-  });
-});
+  })
+})
 ```
 
 ### Copy Reference
-
 ```typescript
 const content = {
   tagline: "Your personal guide to the world",
   headline: "Curate and share your favourite places",
-  subheading:
-    "Build focused, meaningful collections that reflect your genuine preferences and local expertise. Share them like recommendations from a trusted friend.",
-  cta: "Create Your First List",
-};
+  subheading: "Build focused, meaningful collections that reflect your genuine preferences and local expertise. Share them like recommendations from a trusted friend.",
+  cta: "Create Your First List"
+}
 ```
 
 ### Definition of Done
-
 - Complete landing page layout implemented
 - All components integrated and rendering
 - CTA button opens signup modal
@@ -999,15 +882,12 @@ const content = {
 **Dependencies:** All previous stories
 
 ### Description
-
 Polish the responsive design across all breakpoints, add final styling touches, and implement end-to-end testing for complete user flows. Ensure the landing page works flawlessly on mobile, tablet, and desktop.
 
 ### Context
-
 While basic responsive design is implemented in component stories, this story focuses on cross-component responsive behavior, edge cases, and the complete user experience. End-to-end tests validate the entire authentication flow from landing page to dashboard.
 
 **Devices to Test:**
-
 - Mobile: 375px (iPhone SE)
 - Mobile: 414px (iPhone 12)
 - Tablet: 768px (iPad)
@@ -1015,9 +895,7 @@ While basic responsive design is implemented in component stories, this story fo
 - Desktop: 1440px (desktop)
 
 ### Technical Details
-
 **Responsive Improvements:**
-
 - Header: Stack logo and buttons on very small screens if needed
 - Hero: Adjust text sizes for mobile readability
 - Image Grid: Optimize heights for mobile
@@ -1025,13 +903,11 @@ While basic responsive design is implemented in component stories, this story fo
 - Buttons: Touch-friendly sizes (min 44x44px)
 
 **Performance:**
-
 - Ensure images lazy load below fold
 - Verify no layout shift (CLS)
 - Check Lighthouse scores
 
 **E2E Flow:**
-
 1. Visit landing page at `/`
 2. Click "Start Curating" to open modal
 3. Fill signup form in modal
@@ -1043,7 +919,6 @@ While basic responsive design is implemented in component stories, this story fo
 9. Redirect to /dashboard
 
 ### Tasks
-
 1. Review all components at each breakpoint
 2. Adjust spacing, sizing for mobile
 3. Test touch interactions on mobile
@@ -1058,7 +933,6 @@ While basic responsive design is implemented in component stories, this story fo
 ### Acceptance Criteria
 
 **Responsive Design:**
-
 - [ ] Landing page looks good on 375px width
 - [ ] Landing page looks good on 768px width
 - [ ] Landing page looks good on 1440px width
@@ -1070,26 +944,22 @@ While basic responsive design is implemented in component stories, this story fo
 - [ ] Form inputs are easy to tap on mobile
 
 **Typography:**
-
 - [ ] Headline readable on mobile (reduce size if needed)
 - [ ] Subheading has proper line height
 - [ ] No text overflow or truncation
 
 **Spacing:**
-
 - [ ] Consistent padding across components
 - [ ] Proper vertical rhythm
 - [ ] No elements too close together on mobile
 
 **Performance:**
-
 - [ ] Lighthouse Performance score ≥90
 - [ ] Lighthouse Accessibility score ≥95
 - [ ] CLS (Cumulative Layout Shift) ≤0.1
 - [ ] LCP (Largest Contentful Paint) ≤2.5s
 
 **Keyboard Navigation:**
-
 - [ ] Tab order logical
 - [ ] All interactive elements reachable
 - [ ] Focus visible on all elements
@@ -1097,65 +967,61 @@ While basic responsive design is implemented in component stories, this story fo
 - [ ] Escape closes dialogs
 
 ### Testing Requirements
-
 **Target Coverage:** 60% (E2E tests)
 
 **E2E Test Scenarios:**
 
 **Happy Path - Signup:**
-
 ```typescript
-test("completes signup flow", async ({ page }) => {
+test('completes signup flow', async ({ page }) => {
   // Visit landing page
-  await page.goto("/");
+  await page.goto('/');
   // Click "Start Curating" to open modal
-  await page.click("text=Start Curating");
+  await page.click('text=Start Curating');
   // Fill email and password in modal
-  await page.fill('input[name="email"]', "test@example.com");
-  await page.fill('input[name="password"]', "password123");
+  await page.fill('input[name="email"]', 'test@example.com');
+  await page.fill('input[name="password"]', 'password123');
   // Submit form
   await page.click('button[type="submit"]');
   // See success message
-  await expect(page.locator("text=Check your email")).toBeVisible();
+  await expect(page.locator('text=Check your email')).toBeVisible();
 });
 ```
 
 **Happy Path - Login:**
-
 ```typescript
-test("completes login flow", async ({ page }) => {
+test('completes login flow', async ({ page }) => {
   // Visit landing page
-  await page.goto("/");
+  await page.goto('/');
   // Click "Log In" to open modal
-  await page.click("text=Log In");
+  await page.click('text=Log In');
   // Fill credentials in modal
-  await page.fill('input[name="email"]', "user@example.com");
-  await page.fill('input[name="password"]', "password123");
+  await page.fill('input[name="email"]', 'user@example.com');
+  await page.fill('input[name="password"]', 'password123');
   // Submit form
   await page.click('button[type="submit"]');
   // Redirect to dashboard
-  await expect(page).toHaveURL("/dashboard");
+  await expect(page).toHaveURL('/dashboard');
 });
 ```
 
 **Error Scenarios:**
-
 ```typescript
-test("shows error on invalid credentials", async ({ page }) => {
-  await page.goto("/");
-  await page.click("text=Log In");
-  await page.fill('input[name="email"]', "wrong@example.com");
-  await page.fill('input[name="password"]', "wrongpass");
+test('shows error on invalid credentials', async ({ page }) => {
+  await page.goto('/');
+  await page.click('text=Log In');
+  await page.fill('input[name="email"]', 'wrong@example.com');
+  await page.fill('input[name="password"]', 'wrongpass');
   await page.click('button[type="submit"]');
   // Error message appears in modal
   await expect(page.locator('[role="alert"]')).toBeVisible();
 });
 
-test("shows error on existing email signup", async ({ page }) => {
-  await page.goto("/");
-  await page.click("text=Start Curating");
-  await page.fill('input[name="email"]', "existing@example.com");
-  await page.fill('input[name="password"]', "password123");
+test('shows error on existing email signup', async ({ page }) => {
+  await page.goto('/');
+  await page.click('text=Start Curating');
+  await page.fill('input[name="email"]', 'existing@example.com');
+  await page.fill('input[name="password"]', 'password123');
   await page.click('button[type="submit"]');
   // Error message appears
   await expect(page.locator('[role="alert"]')).toBeVisible();
@@ -1163,45 +1029,41 @@ test("shows error on existing email signup", async ({ page }) => {
 ```
 
 **Responsive Tests:**
-
 ```typescript
-test("works on mobile viewport", async ({ page }) => {
+test('works on mobile viewport', async ({ page }) => {
   // Set viewport to 375x667 (iPhone SE)
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto("/");
+  await page.goto('/');
   // Verify layout stacked
   // Click buttons
-  await page.click("text=Start Curating");
+  await page.click('text=Start Curating');
   // Verify modal works
   await expect(page.locator('[role="dialog"]')).toBeVisible();
 });
 ```
 
 **Accessibility Tests:**
-
 ```typescript
-test("supports keyboard navigation", async ({ page }) => {
-  await page.goto("/");
+test('supports keyboard navigation', async ({ page }) => {
+  await page.goto('/');
   // Tab through all elements
-  await page.keyboard.press("Tab");
+  await page.keyboard.press('Tab');
   // Verify focus order
   // Open modal with Enter
-  await page.keyboard.press("Enter");
+  await page.keyboard.press('Enter');
   // Close with Escape
-  await page.keyboard.press("Escape");
+  await page.keyboard.press('Escape');
   await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 });
 ```
 
 ### Files Created/Modified
-
 - `src/components/shared/LandingPageClient.tsx` (styling updates)
 - `src/components/shared/Header.tsx` (mobile improvements)
 - `src/components/shared/HeroImageGrid.tsx` (mobile heights)
 - `tests/e2e/landing-page.spec.ts` (~150 lines)
 
 ### Lighthouse Targets
-
 ```json
 {
   "performance": 90,
@@ -1217,7 +1079,6 @@ test("supports keyboard navigation", async ({ page }) => {
 ```
 
 ### Responsive Breakpoint Reference
-
 ```css
 /* Mobile: default styles */
 /* Tablet: md: breakpoint (768px+) */
@@ -1226,7 +1087,6 @@ test("supports keyboard navigation", async ({ page }) => {
 ```
 
 ### Definition of Done
-
 - Landing page works on all screen sizes
 - All E2E tests passing
 - Lighthouse scores meet targets
@@ -1243,7 +1103,6 @@ test("supports keyboard navigation", async ({ page }) => {
 After all stories are complete:
 
 ### Functionality
-
 - [ ] Landing page renders correctly
 - [ ] Authentication detection working
 - [ ] Login flow complete
@@ -1253,7 +1112,6 @@ After all stories are complete:
 - [ ] Loading states on all async actions
 
 ### Code Quality
-
 - [ ] All tests passing
 - [ ] Test coverage ≥65%
 - [ ] No TypeScript errors
@@ -1261,28 +1119,24 @@ After all stories are complete:
 - [ ] Code reviewed and approved
 
 ### Performance
-
 - [ ] Lighthouse scores meet targets
 - [ ] Images optimized
 - [ ] No layout shift
 - [ ] Fast initial load
 
 ### Accessibility
-
 - [ ] WCAG AA compliant
 - [ ] Keyboard navigation works
 - [ ] Screen reader tested
 - [ ] Color contrast sufficient
 
 ### Documentation
-
 - [ ] README updated
 - [ ] Component documentation written
 - [ ] Deployment guide created
 - [ ] Known issues documented
 
 ### Deployment
-
 - [ ] Environment variables configured
 - [ ] Production build succeeds
 - [ ] Tested on staging
@@ -1292,17 +1146,17 @@ After all stories are complete:
 
 ## Story Metrics Summary
 
-| Story           | Lines      | Points | Coverage    | Priority |
-| --------------- | ---------- | ------ | ----------- | -------- |
-| 1. Setup        | ~20        | 1      | N/A         | P0       |
-| 2. Page Shell   | ~120       | 3      | 70%         | P0       |
-| 3. Header       | ~150       | 5      | 65%         | P0       |
-| 4. Image Grid   | ~130       | 3      | 60%         | P1       |
-| 5. Login Modal  | ~150       | 5      | 65%         | P1       |
-| 6. Signup Modal | ~150       | 5      | 65%         | P1       |
-| 7. Integration  | ~220       | 5      | 65%         | P0       |
-| 8. Polish & E2E | ~150       | 5      | 60%         | P2       |
-| **Total**       | **~1,090** | **32** | **66% avg** | -        |
+| Story | Lines | Points | Coverage | Priority |
+|-------|-------|--------|----------|----------|
+| 1. Setup | ~20 | 1 | N/A | P0 |
+| 2. Page Shell | ~120 | 3 | 70% | P0 |
+| 3. Header | ~150 | 5 | 65% | P0 |
+| 4. Image Grid | ~130 | 3 | 60% | P1 |
+| 5. Login Modal | ~150 | 5 | 65% | P1 |
+| 6. Signup Modal | ~150 | 5 | 65% | P1 |
+| 7. Integration | ~220 | 5 | 65% | P0 |
+| 8. Polish & E2E | ~150 | 5 | 60% | P2 |
+| **Total** | **~1,090** | **32** | **66% avg** | - |
 
 **Note:** Line counts include test files. Many foundational pieces (auth forms, Supabase setup, shadcn components) already exist, reducing implementation from original estimates.
 
@@ -1311,7 +1165,6 @@ After all stories are complete:
 ## Development Workflow
 
 **For Each Story:**
-
 1. Read story description and context
 2. Review acceptance criteria
 3. Set up test file first (TDD approach)
@@ -1324,7 +1177,6 @@ After all stories are complete:
 10. Merge after approval
 
 **PR Guidelines:**
-
 - Title: `[Story X] Brief description`
 - Description: Link to story, list acceptance criteria
 - Size: Aim for <400 lines changed (excluding test boilerplate)
@@ -1332,7 +1184,6 @@ After all stories are complete:
 - Screenshots: For UI changes
 
 **Testing Commands:**
-
 ```bash
 pnpm test                    # Run all tests (Vitest)
 pnpm test:coverage           # With coverage report
@@ -1346,16 +1197,13 @@ pnpm test:e2e:ui             # E2E tests with UI
 ## Dependencies & Order
 
 **Must Do First:**
-
 - Story 1 (Setup)
 
 **Can Do in Parallel:**
-
 - Stories 3, 4 (after Story 2)
 - Stories 5, 6 (after Story 1, 2)
 
 **Must Do Last:**
-
 - Story 7 (requires 2, 3, 4, 6)
 - Story 8 (requires all stories)
 
@@ -1363,8 +1211,7 @@ pnpm test:e2e:ui             # E2E tests with UI
 Story 1 → Story 2 → Stories 3,4,5,6 (parallel) → Story 7 → Story 8
 
 **Estimated Timeline:**
-
-- 1 story per day = ~6 working days
+- 1 story per day = ~6 working days  
 - With parallel work = ~4 working days
 - With polish time = ~5 working days total
 

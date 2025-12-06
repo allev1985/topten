@@ -18,11 +18,10 @@ Before starting implementation, ensure you have:
    - Supabase CLI (for local development)
 
 2. **Running Services**
-
    ```bash
    # Start Supabase locally
    pnpm supabase:start
-
+   
    # Start Next.js dev server
    pnpm dev
    ```
@@ -41,13 +40,11 @@ Before starting implementation, ensure you have:
 Follow this order to minimize dependencies:
 
 ### Phase 1: Foundation
-
 1. `src/types/forms.ts` - Form state types
 2. `src/hooks/use-form-state.ts` - Form state hook
 3. `src/actions/auth-actions.ts` - Server actions
 
 ### Phase 2: Atomic Components
-
 4. `src/components/auth/form-input.tsx`
 5. `src/components/auth/password-input.tsx`
 6. `src/components/auth/form-button.tsx`
@@ -55,12 +52,10 @@ Follow this order to minimize dependencies:
 8. `src/components/auth/auth-card.tsx`
 
 ### Phase 3: Composed Components
-
 9. `src/components/auth/login-form.tsx`
 10. `src/components/auth/password-reset-form.tsx`
 
 ### Phase 4: Pages
-
 11. `src/app/(auth)/signup/page.tsx`
 12. `src/app/(auth)/verify-email/page.tsx`
 13. `src/app/(auth)/auth/verify/page.tsx`
@@ -85,7 +80,7 @@ export interface FormState<T = unknown> {
   isSuccess: boolean;
 }
 
-export type ActionState<T = unknown> = Omit<FormState<T>, "isPending">;
+export type ActionState<T = unknown> = Omit<FormState<T>, 'isPending'>;
 
 export function initialFormState<T = unknown>(): FormState<T> {
   return {
@@ -102,16 +97,13 @@ export function initialFormState<T = unknown>(): FormState<T> {
 
 ```typescript
 // src/hooks/use-form-state.ts
-"use client";
+'use client';
 
-import { useActionState } from "react";
-import type { ActionState, FormState } from "@/types/forms";
+import { useActionState } from 'react';
+import type { ActionState, FormState } from '@/types/forms';
 
 export function useFormState<T>(
-  action: (
-    prevState: ActionState<T>,
-    formData: FormData
-  ) => Promise<ActionState<T>>,
+  action: (prevState: ActionState<T>, formData: FormData) => Promise<ActionState<T>>,
   initialState?: Partial<ActionState<T>>
 ) {
   const [state, formAction, isPending] = useActionState(action, {
@@ -229,11 +221,11 @@ export function PasswordInput({
 
 ```typescript
 // src/actions/auth-actions.ts
-"use server";
+'use server';
 
-import { signupSchema } from "@/schemas/auth";
-import { createClient } from "@/lib/supabase/server";
-import type { ActionState } from "@/types/forms";
+import { signupSchema } from '@/schemas/auth';
+import { createClient } from '@/lib/supabase/server';
+import type { ActionState } from '@/types/forms';
 
 interface SignupSuccessData {
   message: string;
@@ -244,15 +236,15 @@ export async function signupAction(
   prevState: ActionState<SignupSuccessData>,
   formData: FormData
 ): Promise<ActionState<SignupSuccessData>> {
-  const email = formData.get("email");
-  const password = formData.get("password");
+  const email = formData.get('email');
+  const password = formData.get('password');
 
   const result = signupSchema.safeParse({ email, password });
 
   if (!result.success) {
     const fieldErrors: Record<string, string[]> = {};
     result.error.issues.forEach((issue) => {
-      const field = issue.path.join(".");
+      const field = issue.path.join('.');
       if (!fieldErrors[field]) fieldErrors[field] = [];
       fieldErrors[field].push(issue.message);
     });
@@ -274,8 +266,8 @@ export async function signupAction(
 
   return {
     data: {
-      message: "Please check your email to verify your account",
-      redirectTo: "/verify-email",
+      message: 'Please check your email to verify your account',
+      redirectTo: '/verify-email',
     },
     error: null,
     fieldErrors: {},
@@ -375,15 +367,15 @@ pnpm test:watch
 
 ### Test File Locations
 
-| Component         | Test Location                                       |
-| ----------------- | --------------------------------------------------- |
-| useFormState      | `tests/unit/hooks/use-form-state.test.ts`           |
-| FormInput         | `tests/component/auth/form-input.test.tsx`          |
-| PasswordInput     | `tests/component/auth/password-input.test.tsx`      |
-| FormButton        | `tests/component/auth/form-button.test.tsx`         |
-| ErrorMessage      | `tests/component/auth/error-message.test.tsx`       |
-| AuthCard          | `tests/component/auth/auth-card.test.tsx`           |
-| LoginForm         | `tests/component/auth/login-form.test.tsx`          |
+| Component | Test Location |
+|-----------|---------------|
+| useFormState | `tests/unit/hooks/use-form-state.test.ts` |
+| FormInput | `tests/component/auth/form-input.test.tsx` |
+| PasswordInput | `tests/component/auth/password-input.test.tsx` |
+| FormButton | `tests/component/auth/form-button.test.tsx` |
+| ErrorMessage | `tests/component/auth/error-message.test.tsx` |
+| AuthCard | `tests/component/auth/auth-card.test.tsx` |
+| LoginForm | `tests/component/auth/login-form.test.tsx` |
 | PasswordResetForm | `tests/component/auth/password-reset-form.test.tsx` |
 
 ### Test Example
@@ -507,11 +499,11 @@ export function MyForm() {
 
 ```typescript
 // Log form state for debugging
-console.log("Form state:", state);
+console.log('Form state:', state);
 
 // Log form data in server action
 export async function myAction(prevState, formData) {
-  console.log("Received:", Object.fromEntries(formData));
+  console.log('Received:', Object.fromEntries(formData));
   // ...
 }
 ```

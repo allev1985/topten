@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: Task 2.2: Login & Logout Endpoints - Create login and logout API routes with redirectTo validation, redirect URL validation, and session cookie management for YourFavs authentication system.
 
-## User Scenarios & Testing _(mandatory)_
+## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - User Login with Redirect (Priority: P1)
 
@@ -98,7 +98,7 @@ As a security-conscious platform, the system must validate redirect URLs to prev
 - What happens when the login request body is malformed or missing required fields?
   - The system should return a validation error with details about the missing/invalid fields.
 
-## Requirements _(mandatory)_
+## Requirements *(mandatory)*
 
 ### Functional Requirements
 
@@ -141,7 +141,7 @@ As a security-conscious platform, the system must validate redirect URLs to prev
 - **User Credentials**: The email and password combination used for authentication, with email being case-insensitive.
 - **Redirect URL**: An optional destination URL that users should be sent to after successful login, subject to security validation.
 
-## Success Criteria _(mandatory)_
+## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 

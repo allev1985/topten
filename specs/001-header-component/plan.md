@@ -12,8 +12,7 @@ Build a reusable Header component for the YourFavs landing page that displays br
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x with React 19.2.0 and Next.js 16.0.5 (App Router)  
-**Primary Dependencies**:
-
+**Primary Dependencies**: 
 - React 19.2.0 for component rendering
 - Next.js 16.0.5 with App Router for routing and Link component
 - lucide-react 0.555.0 for MapPin icon
@@ -22,8 +21,7 @@ Build a reusable Header component for the YourFavs landing page that displays br
 - class-variance-authority for variant management (already used in Button)
 
 **Storage**: N/A (presentational component only)  
-**Testing**:
-
+**Testing**: 
 - Vitest 4.0.14 for unit and component tests
 - @testing-library/react 16.3.0 for component testing
 - @testing-library/jest-dom 6.9.1 for DOM assertions
@@ -31,22 +29,19 @@ Build a reusable Header component for the YourFavs landing page that displays br
 
 **Target Platform**: Web browsers (modern browsers supporting ES2020+)  
 **Project Type**: Web application (Next.js App Router)  
-**Performance Goals**:
-
+**Performance Goals**: 
 - Initial render < 50ms (lightweight component)
 - Interactive within 100ms of page load
 - No layout shift during render
 
-**Constraints**:
-
+**Constraints**: 
 - Must be a Client Component (uses onClick handlers)
 - Must work with Next.js Server Components parent (page.tsx)
 - Must integrate into existing LandingPageClient component
 - Must use existing Button component variants (no new variants needed)
 - Must follow existing test patterns in tests/component/landing-page/
 
-**Scale/Scope**:
-
+**Scale/Scope**: 
 - Single component (~100-150 lines)
 - 3 test files (~300-400 lines total)
 - Integration into 1 existing component (LandingPageClient)
@@ -54,14 +49,13 @@ Build a reusable Header component for the YourFavs landing page that displays br
 
 ## Constitution Check
 
-_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 ### I. Code Quality & Maintainability ✅ PASS
 
 **Single Responsibility**: Header component has clear, single purpose - display brand identity and authentication buttons. No unnecessary abstraction.
 
-**DRY Compliance**:
-
+**DRY Compliance**: 
 - Reuses existing Button component (src/components/ui/button.tsx) - no duplication
 - Reuses existing Next.js Link component - no custom routing logic
 - Reuses lucide-react MapPin icon - no custom icon implementation
@@ -72,7 +66,6 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 ### II. Testing Discipline & Safety Nets ✅ PASS
 
 **Test Coverage Plan**:
-
 - Component tests for rendering, visual elements, and accessibility (User Stories 1, 4)
 - Interaction tests for button clicks and logo navigation (User Stories 2, 3)
 - Integration tests for parent component integration
@@ -81,26 +74,22 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 **Test-First Approach**: Tests will be written alongside implementation following existing patterns in tests/component/landing-page/
 
 **Critical Paths**:
-
 - Button click handlers triggering login/signup actions
 - Logo link navigation to homepage
 - Keyboard accessibility for all interactive elements
 
 ### III. User Experience Consistency ✅ PASS
 
-**Terminology Consistency**:
-
+**Terminology Consistency**: 
 - "Log In" and "Start Curating" match auth flow terminology
 - "YourFavs" brand name consistent with existing usage
 
 **Interaction Patterns**:
-
 - Buttons use existing shadcn/ui Button component patterns
 - Logo-as-home-link follows standard web conventions
 - Keyboard navigation (Tab, Enter) follows standard accessibility patterns
 
 **Visual Consistency**:
-
 - Uses existing Button variants (ghost for subtle, default for prominent)
 - Follows Tailwind CSS conventions already established in codebase
 - Orange brand color for logo circle matches existing design system
@@ -108,13 +97,11 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 ### IV. Performance & Resource Efficiency ✅ PASS
 
 **Performance Targets** (from Technical Context):
-
 - Initial render < 50ms ✓ (lightweight component, no heavy computations)
 - Interactive within 100ms ✓ (simple onClick handlers, no async operations)
 - No layout shift ✓ (fixed header dimensions, no dynamic content loading)
 
 **Resource Efficiency**:
-
 - No new dependencies required
 - Component size < 200 lines
 - Minimal bundle impact (uses tree-shakeable lucide-react icons)
@@ -122,13 +109,11 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 ### V. Observability & Debuggability ✅ PASS
 
 **Development Experience**:
-
 - Clear prop types with TypeScript for type safety
 - Accessible labels provide clear semantic meaning
 - Simple component structure easy to debug in React DevTools
 
 **Error Handling**:
-
 - onClick handlers will be provided by parent component
 - Type safety prevents incorrect prop usage
 - Accessibility attributes ensure screen reader compatibility
@@ -184,11 +169,11 @@ tests/
         └── navigation.test.tsx           # EXISTING: Integration tests
 ```
 
-**Structure Decision**:
+**Structure Decision**: 
 
 This feature follows the **Web application** structure already established in the TopTen/YourFavs codebase:
 
-1. **Component Placement**:
+1. **Component Placement**: 
    - New `Header.tsx` goes in `src/components/shared/` alongside `LandingPageClient.tsx` because it's a shared UI component used across the landing page
    - Follows existing pattern where shared components live in `shared/` and reusable UI primitives live in `ui/`
 
@@ -210,12 +195,11 @@ This feature follows the **Web application** structure already established in th
 
 ## Post-Phase 1 Constitution Re-evaluation
 
-_Re-checked after completing Phase 1 (Design & Contracts)_
+*Re-checked after completing Phase 1 (Design & Contracts)*
 
 ### Changes Since Initial Check
 
 Phase 1 deliverables completed:
-
 - ✅ research.md - All technical decisions documented
 - ✅ contracts/header-component-api.md - Component API contract defined
 - ✅ quickstart.md - Implementation guide created
@@ -227,14 +211,12 @@ Phase 1 deliverables completed:
 #### I. Code Quality & Maintainability ✅ STILL PASSING
 
 **Design Review**:
-
 - Component API contract clearly defines single responsibility
 - Props interface is minimal (2 callbacks only)
 - No hidden complexity introduced in design
 - Reuses all existing components as planned
 
 **DRY Verification**:
-
 - Quickstart guide confirms no code duplication
 - All shared components leveraged as planned
 - No new abstractions created during design phase
@@ -244,14 +226,12 @@ Phase 1 deliverables completed:
 #### II. Testing Discipline & Safety Nets ✅ STILL PASSING
 
 **Test Strategy Validation**:
-
 - 4 test files designed covering all user stories
 - Each test file maps to specific acceptance criteria
 - Test examples in quickstart demonstrate proper coverage
 - Integration tests account for parent component changes
 
 **Coverage Projection**:
-
 - Rendering tests: ~25% (visual elements, structure)
 - Navigation tests: ~20% (logo link behavior)
 - Action tests: ~30% (button click handlers)
@@ -263,7 +243,6 @@ Phase 1 deliverables completed:
 #### III. User Experience Consistency ✅ STILL PASSING
 
 **Design Consistency Validation**:
-
 - Component API contract documents standard interaction patterns
 - Button variants chosen match existing UI patterns
 - Logo-as-home-link follows universal web conventions
@@ -276,14 +255,12 @@ Phase 1 deliverables completed:
 #### IV. Performance & Resource Efficiency ✅ STILL PASSING
 
 **Performance Analysis**:
-
 - Component API contract documents performance characteristics
 - Rendering: < 16ms (single frame)
 - Bundle size: ~2KB (minimal impact)
 - No async operations or heavy computations
 
 **Resource Verification**:
-
 - 0 new dependencies confirmed (all packages already installed)
 - Component size estimate: ~150 lines (within 200 line target)
 - Tree-shakeable icon import (only MapPin included)
@@ -293,14 +270,12 @@ Phase 1 deliverables completed:
 #### V. Observability & Debuggability ✅ STILL PASSING
 
 **Debug Support**:
-
 - TypeScript provides full type safety
 - Component API contract documents all behavior guarantees
 - Error handling strategy documented (errors propagate to parent)
 - Clear separation of concerns (parent handles auth logic)
 
 **Developer Experience**:
-
 - Quickstart guide provides step-by-step implementation
 - Test examples demonstrate proper mocking strategy
 - Common issues section helps troubleshooting
@@ -314,7 +289,6 @@ Phase 1 deliverables completed:
 **Summary**: Phase 1 design phase has been completed without introducing any Constitution violations. The implementation plan, component contract, and testing strategy all align with TopTen's core principles. The feature is ready to proceed to Phase 2 (Task Breakdown).
 
 **Key Achievements**:
-
 - Clear component API with minimal surface area
 - Comprehensive test coverage strategy (>85% projected)
 - No new dependencies or unnecessary abstractions

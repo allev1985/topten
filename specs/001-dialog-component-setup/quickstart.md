@@ -93,7 +93,7 @@ import { SimpleDialog } from "@/components/examples/simple-dialog";
 export default function TestPage() {
   return (
     <main className="container mx-auto py-8">
-      <h1 className="mb-4 text-2xl font-bold">Dialog Test</h1>
+      <h1 className="text-2xl font-bold mb-4">Dialog Test</h1>
       <SimpleDialog />
     </main>
   );
@@ -109,7 +109,6 @@ pnpm dev
 Navigate to `http://localhost:3000/test-dialog`
 
 **Expected behavior**:
-
 - ✅ "Open Dialog" button visible
 - ✅ Click button → dialog appears with overlay
 - ✅ ESC key → dialog closes
@@ -125,9 +124,9 @@ Navigate to `http://localhost:3000/test-dialog`
 Perfect for destructive actions like delete, archive, or cancel.
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogClose,
@@ -142,14 +141,14 @@ import { Button } from "@/components/ui/button";
 
 export function DeleteListDialog({ listName }: { listName: string }) {
   const [open, setOpen] = useState(false);
-
+  
   async function handleDelete() {
     // TODO: Call API to delete list
-    console.log("Deleting list:", listName);
+    console.log('Deleting list:', listName);
     setOpen(false);
     // Redirect or show success message
   }
-
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -178,7 +177,6 @@ export function DeleteListDialog({ listName }: { listName: string }) {
 ```
 
 **Usage**:
-
 ```tsx
 <DeleteListDialog listName="My Coffee Shops" />
 ```
@@ -190,9 +188,9 @@ export function DeleteListDialog({ listName }: { listName: string }) {
 For creating or editing entities without full-page navigation.
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogClose,
@@ -209,21 +207,21 @@ import { Label } from "@/components/ui/label";
 
 export function CreateListDialog() {
   const [open, setOpen] = useState(false);
-  const [listName, setListName] = useState("");
-  const [description, setDescription] = useState("");
-
+  const [listName, setListName] = useState('');
+  const [description, setDescription] = useState('');
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
+    
     // TODO: Call API to create list
-    console.log("Creating list:", { listName, description });
-
+    console.log('Creating list:', { listName, description });
+    
     // Close dialog and reset form
     setOpen(false);
-    setListName("");
-    setDescription("");
+    setListName('');
+    setDescription('');
   }
-
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -237,7 +235,7 @@ export function CreateListDialog() {
               Start curating your favorite places in a new collection.
             </DialogDescription>
           </DialogHeader>
-
+          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="listName">List Name</Label>
@@ -249,7 +247,7 @@ export function CreateListDialog() {
                 required
               />
             </div>
-
+            
             <div className="grid gap-2">
               <Label htmlFor="description">Description (optional)</Label>
               <Input
@@ -260,12 +258,10 @@ export function CreateListDialog() {
               />
             </div>
           </div>
-
+          
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
+              <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit">Create List</Button>
           </DialogFooter>
@@ -277,7 +273,6 @@ export function CreateListDialog() {
 ```
 
 **Usage**:
-
 ```tsx
 <CreateListDialog />
 ```
@@ -320,7 +315,7 @@ export function PlaceDetailsDialog({ place }: { place: Place }) {
           <DialogTitle>{place.name}</DialogTitle>
           <DialogDescription>{place.address}</DialogDescription>
         </DialogHeader>
-
+        
         <div className="grid gap-4 py-4">
           {place.imageUrl && (
             <Image
@@ -328,16 +323,18 @@ export function PlaceDetailsDialog({ place }: { place: Place }) {
               alt={place.name}
               width={600}
               height={400}
-              className="h-auto w-full rounded-lg"
+              className="rounded-lg w-full h-auto"
             />
           )}
-
+          
           <div>
-            <h3 className="mb-2 font-semibold">About</h3>
-            <p className="text-muted-foreground text-sm">{place.description}</p>
+            <h3 className="font-semibold mb-2">About</h3>
+            <p className="text-sm text-muted-foreground">
+              {place.description}
+            </p>
           </div>
         </div>
-
+        
         <DialogFooter>
           <DialogClose asChild>
             <Button>Close</Button>
@@ -350,14 +347,13 @@ export function PlaceDetailsDialog({ place }: { place: Place }) {
 ```
 
 **Usage**:
-
 ```tsx
-<PlaceDetailsDialog
+<PlaceDetailsDialog 
   place={{
     name: "Blue Bottle Coffee",
     address: "1103 E Pike St, Seattle, WA",
     description: "Specialty coffee roaster with minimalist aesthetic.",
-    imageUrl: "https://placehold.co/600x400?text=Blue+Bottle",
+    imageUrl: "https://placehold.co/600x400?text=Blue+Bottle"
   }}
 />
 ```
@@ -369,7 +365,7 @@ export function PlaceDetailsDialog({ place }: { place: Place }) {
 ### Basic Placeholder Image
 
 ```tsx
-import Image from "next/image";
+import Image from 'next/image';
 
 export function PlaceholderExample() {
   return (
@@ -394,7 +390,7 @@ export function PlaceholderExample() {
   alt="List hero"
   width={1200}
   height={600}
-  className="h-auto w-full rounded-lg"
+  className="w-full h-auto rounded-lg"
 />
 ```
 
@@ -430,19 +426,19 @@ export function PlaceholderExample() {
   alt="Category banner"
   width={1920}
   height={400}
-  className="h-auto w-full"
+  className="w-full h-auto"
 />
 ```
 
 ### Responsive Placeholder Images
 
 ```tsx
-<div className="relative aspect-video w-full">
+<div className="relative w-full aspect-video">
   <Image
     src="https://placehold.co/1200x675?text=Hero+Image"
     alt="Hero"
     fill
-    className="rounded-lg object-cover"
+    className="object-cover rounded-lg"
     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
   />
 </div>
@@ -522,14 +518,14 @@ import { SimpleDialog } from '@/components/examples/simple-dialog';
 test('dialog opens and closes', async () => {
   const user = userEvent.setup();
   render(<SimpleDialog />);
-
+  
   // Dialog closed initially
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-
+  
   // Open dialog
   await user.click(screen.getByRole('button', { name: /open/i }));
   expect(screen.getByRole('dialog')).toBeInTheDocument();
-
+  
   // Close with ESC
   await user.keyboard('{Escape}');
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -545,7 +541,6 @@ test('dialog opens and closes', async () => {
 **Cause**: Event handler preventing default behavior
 
 **Solution**: Remove or conditionally apply `onEscapeKeyDown` handler
-
 ```tsx
 // BAD
 <DialogContent onEscapeKeyDown={(e) => e.preventDefault()}>
@@ -564,7 +559,6 @@ test('dialog opens and closes', async () => {
 **Cause**: Domain not configured in `next.config.ts`
 
 **Solution**: Verify `remotePatterns` includes correct domain
-
 ```bash
 grep -A 10 "images:" next.config.ts
 ```
@@ -574,7 +568,6 @@ grep -A 10 "images:" next.config.ts
 **Cause**: Not using `asChild` on DialogTrigger
 
 **Solution**:
-
 ```tsx
 // BAD
 <DialogTrigger>

@@ -39,7 +39,6 @@
 **Findings**:
 
 Supabase provides `signOut()` method:
-
 ```typescript
 const { error } = await supabase.auth.signOut();
 ```
@@ -61,7 +60,6 @@ This invalidates the current session. Per spec FR-006, sign-out must occur after
 **Findings**:
 
 Current schema only validates `password` field. Need to add:
-
 - `code` (optional string): PKCE authorization code
 - `token_hash` (optional string): OTP token hash
 - `type` (optional literal 'email'): Token type for OTP verification
@@ -81,7 +79,6 @@ Current schema only validates `password` field. Need to add:
 Per FR-007: "System MUST return a generic authentication error for invalid or expired codes/tokens (not revealing which)."
 
 Error types to handle:
-
 - Invalid code → Generic auth error
 - Expired code → Generic auth error (or "expired_token" per verify pattern)
 - Invalid token → Generic auth error
@@ -89,7 +86,6 @@ Error types to handle:
 - No valid auth → Auth error "Authentication required"
 
 **Decision**: Follow existing pattern from `verify/route.ts` with clear rule:
-
 - If Supabase error message contains "expired" → return error with "Authentication link has expired. Please request a new one."
 - Otherwise → return generic "Authentication failed" message
 
@@ -109,12 +105,8 @@ Per SC-006: "Zero sensitive data (passwords, tokens, codes) is logged in system 
 Per FR-010: "System MUST log password reset operations for security auditing (without logging sensitive data)."
 
 Current logging pattern (from `password/route.ts`):
-
 ```typescript
-console.info(
-  "[PasswordUpdate]",
-  `Password update requested for: ${maskEmail(user.email ?? "unknown")}`
-);
+console.info("[PasswordUpdate]", `Password update requested for: ${maskEmail(user.email ?? "unknown")}`);
 ```
 
 **Decision**: Log authentication method used (PKCE/OTP/session) and masked email. Never log password, code, or token values.
@@ -163,11 +155,11 @@ console.info(
 
 All NEEDS CLARIFICATION items have been resolved:
 
-| Item              | Decision                                                                        |
-| ----------------- | ------------------------------------------------------------------------------- |
-| PKCE Code Auth    | Use `exchangeCodeForSession(code)`                                              |
-| OTP Token Auth    | Use `verifyOtp({ type: 'email', token_hash })`                                  |
+| Item | Decision |
+|------|----------|
+| PKCE Code Auth | Use `exchangeCodeForSession(code)` |
+| OTP Token Auth | Use `verifyOtp({ type: 'email', token_hash })` |
 | Sign-out behavior | Call `signOut()` after successful update, log failures but don't fail operation |
-| Schema extension  | Add optional `code`, `token_hash`, `type` fields                                |
-| Error handling    | Generic auth errors, detect "expired" for expired_token type                    |
-| Logging           | Log auth method and masked email, never log sensitive data                      |
+| Schema extension | Add optional `code`, `token_hash`, `type` fields |
+| Error handling | Generic auth errors, detect "expired" for expired_token type |
+| Logging | Log auth method and masked email, never log sensitive data |

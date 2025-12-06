@@ -14,14 +14,13 @@ This feature does not introduce new database entities. It operates on existing S
 
 **Description**: Input payload for the login endpoint.
 
-| Field      | Type   | Required | Validation                              | Notes                              |
-| ---------- | ------ | -------- | --------------------------------------- | ---------------------------------- |
-| email      | string | Yes      | Valid email format, trimmed, lowercased | Used for authentication lookup     |
-| password   | string | Yes      | Non-empty                               | Verified against stored hash       |
-| redirectTo | string | No       | Valid relative path starting with `/`   | Destination after successful login |
+| Field | Type | Required | Validation | Notes |
+|-------|------|----------|------------|-------|
+| email | string | Yes | Valid email format, trimmed, lowercased | Used for authentication lookup |
+| password | string | Yes | Non-empty | Verified against stored hash |
+| redirectTo | string | No | Valid relative path starting with `/` | Destination after successful login |
 
 **Validation Rules**:
-
 - Email: Preprocessed to trim whitespace and convert to lowercase
 - Password: Must be present (no strength validation for login)
 - redirectTo: Optional, validated by `isValidRedirect()` function
@@ -30,13 +29,12 @@ This feature does not introduce new database entities. It operates on existing S
 
 **Description**: Response payload for successful login.
 
-| Field      | Type    | Notes                                             |
-| ---------- | ------- | ------------------------------------------------- |
-| success    | boolean | Always `true` for success                         |
-| redirectTo | string  | Validated redirect URL (defaults to `/dashboard`) |
+| Field | Type | Notes |
+|-------|------|-------|
+| success | boolean | Always `true` for success |
+| redirectTo | string | Validated redirect URL (defaults to `/dashboard`) |
 
 **Example**:
-
 ```json
 {
   "success": true,
@@ -48,15 +46,14 @@ This feature does not introduce new database entities. It operates on existing S
 
 **Description**: Response payload for failed login.
 
-| Field         | Type              | Notes                                                     |
-| ------------- | ----------------- | --------------------------------------------------------- |
-| success       | boolean           | Always `false`                                            |
-| error.code    | AuthErrorCode     | `"VALIDATION_ERROR"`, `"AUTH_ERROR"`, or `"SERVER_ERROR"` |
-| error.message | string            | User-facing error message                                 |
-| error.details | AuthErrorDetail[] | Field-specific errors (validation only)                   |
+| Field | Type | Notes |
+|-------|------|-------|
+| success | boolean | Always `false` |
+| error.code | AuthErrorCode | `"VALIDATION_ERROR"`, `"AUTH_ERROR"`, or `"SERVER_ERROR"` |
+| error.message | string | User-facing error message |
+| error.details | AuthErrorDetail[] | Field-specific errors (validation only) |
 
 **Example (Auth Error)**:
-
 ```json
 {
   "success": false,
@@ -71,13 +68,12 @@ This feature does not introduce new database entities. It operates on existing S
 
 **Description**: Response payload for logout (always success).
 
-| Field   | Type    | Notes                |
-| ------- | ------- | -------------------- |
-| success | boolean | Always `true`        |
-| message | string  | Confirmation message |
+| Field | Type | Notes |
+|-------|------|-------|
+| success | boolean | Always `true` |
+| message | string | Confirmation message |
 
 **Example**:
-
 ```json
 {
   "success": true,
@@ -91,25 +87,25 @@ This feature does not introduce new database entities. It operates on existing S
 
 ```typescript
 export type AuthErrorCode =
-  | "VALIDATION_ERROR" // Input validation failed
-  | "INVALID_TOKEN" // Existing - invalid verification token
-  | "EXPIRED_TOKEN" // Existing - expired verification token
-  | "AUTH_ERROR" // NEW - authentication failed (login)
-  | "SERVER_ERROR"; // Internal server error
+  | "VALIDATION_ERROR"  // Input validation failed
+  | "INVALID_TOKEN"     // Existing - invalid verification token
+  | "EXPIRED_TOKEN"     // Existing - expired verification token
+  | "AUTH_ERROR"        // NEW - authentication failed (login)
+  | "SERVER_ERROR";     // Internal server error
 ```
 
 ### Error Response Matrix
 
-| Scenario             | HTTP Status | Error Code       | Message                                      |
-| -------------------- | ----------- | ---------------- | -------------------------------------------- |
-| Missing email        | 400         | VALIDATION_ERROR | Field-specific details                       |
-| Invalid email format | 400         | VALIDATION_ERROR | Field-specific details                       |
-| Missing password     | 400         | VALIDATION_ERROR | Field-specific details                       |
-| Wrong password       | 401         | AUTH_ERROR       | "Invalid email or password"                  |
-| Unknown email        | 401         | AUTH_ERROR       | "Invalid email or password"                  |
-| Unverified email     | 401         | AUTH_ERROR       | "Please verify your email before logging in" |
-| Invalid JSON body    | 400         | VALIDATION_ERROR | Generic validation error                     |
-| Server error         | 500         | SERVER_ERROR     | "An unexpected error occurred"               |
+| Scenario | HTTP Status | Error Code | Message |
+|----------|-------------|------------|---------|
+| Missing email | 400 | VALIDATION_ERROR | Field-specific details |
+| Invalid email format | 400 | VALIDATION_ERROR | Field-specific details |
+| Missing password | 400 | VALIDATION_ERROR | Field-specific details |
+| Wrong password | 401 | AUTH_ERROR | "Invalid email or password" |
+| Unknown email | 401 | AUTH_ERROR | "Invalid email or password" |
+| Unverified email | 401 | AUTH_ERROR | "Please verify your email before logging in" |
+| Invalid JSON body | 400 | VALIDATION_ERROR | Generic validation error |
+| Server error | 500 | SERVER_ERROR | "An unexpected error occurred" |
 
 ## Validation Schemas
 
@@ -119,13 +115,11 @@ export type AuthErrorCode =
 export const loginSchema = z.object({
   email: z.preprocess(
     (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
-    z
-      .string({ message: "Email is required" })
+    z.string({ message: "Email is required" })
       .min(1, "Email is required")
       .email("Invalid email format")
   ),
-  password: z
-    .string({ message: "Password is required" })
+  password: z.string({ message: "Password is required" })
     .min(1, "Password is required"),
   redirectTo: z.string().optional(),
 });
@@ -140,7 +134,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 **Purpose**: Prevents open redirect attacks by validating redirect URLs.
 
 **Rules**:
-
 1. Must be a non-empty string
 2. Must start with `/` (relative path)
 3. Must NOT start with `//` (protocol-relative URL)
@@ -148,14 +141,12 @@ export type LoginInput = z.infer<typeof loginSchema>;
 5. URL-decoded version must also pass validation
 
 **Valid Examples**:
-
 - `/dashboard`
 - `/lists/123`
 - `/@username/coffee-cafes/my-list`
 - `/search?q=test`
 
 **Invalid Examples** (default to `/dashboard`):
-
 - `https://evil.com`
 - `//evil.com`
 - `javascript:alert(1)`
@@ -199,12 +190,11 @@ Note: Logout is idempotent - calling it without a session still returns success.
 
 ### Session Cookies (Managed by Supabase SSR)
 
-| Cookie                    | Description  | Attributes                     |
-| ------------------------- | ------------ | ------------------------------ |
+| Cookie | Description | Attributes |
+|--------|-------------|------------|
 | `sb-<project>-auth-token` | Access token | HttpOnly, Secure, SameSite=Lax |
 
 **Notes**:
-
 - Supabase SSR client handles all cookie operations
 - No manual cookie manipulation required
 - Cookies are automatically cleared on signOut()

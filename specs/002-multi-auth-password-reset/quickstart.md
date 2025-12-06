@@ -6,7 +6,6 @@
 ## Overview
 
 This feature implements multiple authentication methods for the password reset endpoint, supporting:
-
 1. **PKCE Code** - Primary "forgot password" flow via email link
 2. **OTP Token** - Alternative email verification flow
 3. **Session Auth** - Authenticated user password change
@@ -16,7 +15,6 @@ This feature implements multiple authentication methods for the password reset e
 ### 1. API Endpoint (`src/app/api/auth/password/route.ts`)
 
 **New Authentication Flow**:
-
 ```typescript
 // Priority: PKCE code → OTP token → existing session
 
@@ -27,20 +25,14 @@ if (code) {
 }
 
 // 2. Try OTP token if provided
-else if (token_hash && type === "email") {
-  const { error } = await supabase.auth.verifyOtp({
-    type: "email",
-    token_hash,
-  });
+else if (token_hash && type === 'email') {
+  const { error } = await supabase.auth.verifyOtp({ type: 'email', token_hash });
   // Handle error...
 }
 
 // 3. Fall back to existing session
 else {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
   // Handle error...
 }
 
@@ -51,10 +43,9 @@ await supabase.auth.signOut();
 ### 2. Schema Extension (`src/schemas/auth.ts`)
 
 Add optional fields to `passwordUpdateSchema`:
-
 ```typescript
 export const passwordUpdateSchema = z.object({
-  password: z.string() /* existing validation */,
+  password: z.string()/* existing validation */,
   code: z.string().min(1).optional(),
   token_hash: z.string().min(1).optional(),
   type: z.literal(VERIFICATION_TYPE_EMAIL).optional(),
@@ -64,7 +55,6 @@ export const passwordUpdateSchema = z.object({
 ### 3. Server Action (`src/actions/auth-actions.ts`)
 
 Update `passwordUpdateAction` to pass code:
-
 ```typescript
 export async function passwordUpdateAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -72,7 +62,7 @@ export async function passwordUpdateAction(
 ): Promise<ActionState<PasswordUpdateSuccessData>> {
   const code = formData.get("code");
   // ... existing password validation ...
-
+  
   body: JSON.stringify({
     password: result.data.password,
     code: typeof code === "string" && code ? code : undefined,
@@ -83,7 +73,6 @@ export async function passwordUpdateAction(
 ### 4. Form Component (`src/app/(auth)/reset-password/password-reset-form.tsx`)
 
 Accept and pass code prop:
-
 ```typescript
 interface PasswordResetFormProps {
   code?: string;
@@ -98,7 +87,6 @@ export function PasswordResetForm({ code }: PasswordResetFormProps) {
 ### 5. Page Component (`src/app/(auth)/reset-password/page.tsx`)
 
 Pass code to form:
-
 ```typescript
 <PasswordResetForm code={code} />
 ```
@@ -175,26 +163,24 @@ User → Click reset link → /api/auth/password (direct API call)
 
 ## Error Handling
 
-| Scenario          | Error Code       | Message                                                      |
-| ----------------- | ---------------- | ------------------------------------------------------------ |
-| Invalid PKCE code | AUTH_ERROR       | "Authentication failed"                                      |
-| Expired PKCE code | AUTH_ERROR       | "Authentication link has expired. Please request a new one." |
-| Invalid OTP token | AUTH_ERROR       | "Authentication failed"                                      |
-| Expired OTP token | AUTH_ERROR       | "Authentication link has expired. Please request a new one." |
-| No authentication | AUTH_ERROR       | "Authentication required"                                    |
-| Invalid password  | VALIDATION_ERROR | Specific requirement not met                                 |
-| Server error      | SERVER_ERROR     | "An unexpected error occurred"                               |
+| Scenario | Error Code | Message |
+|----------|------------|---------|
+| Invalid PKCE code | AUTH_ERROR | "Authentication failed" |
+| Expired PKCE code | AUTH_ERROR | "Authentication link has expired. Please request a new one." |
+| Invalid OTP token | AUTH_ERROR | "Authentication failed" |
+| Expired OTP token | AUTH_ERROR | "Authentication link has expired. Please request a new one." |
+| No authentication | AUTH_ERROR | "Authentication required" |
+| Invalid password | VALIDATION_ERROR | Specific requirement not met |
+| Server error | SERVER_ERROR | "An unexpected error occurred" |
 
 ## Configuration
 
 No new configuration required. Uses existing:
-
 - `VERIFICATION_TYPE_EMAIL` from `@/lib/config`
 - `PASSWORD_REQUIREMENTS` from `@/lib/config`
 
 ## Dependencies
 
 No new dependencies. Uses existing:
-
 - `@supabase/ssr` (Supabase Auth client)
 - `zod` (validation)
