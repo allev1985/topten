@@ -1,33 +1,39 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "@/app/api/auth/verify/route";
 import { NextRequest } from "next/server";
 
-// Mock the Supabase server client
-const mockVerifyOtp = vi.fn();
-const mockExchangeCodeForSession = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(() =>
-    Promise.resolve({
-      auth: {
-        verifyOtp: mockVerifyOtp,
-        exchangeCodeForSession: mockExchangeCodeForSession,
-      },
-    })
-  ),
-}));
+// Mock the Auth Service
+vi.mock("@/lib/auth/service");
+
+// Mock the Supabase server client (still needed for PKCE flow)
+vi.mock("@/lib/supabase/server");
+
+// Import after mocking
+import { GET } from "@/app/api/auth/verify/route";
+import { verifyEmail } from "@/lib/auth/service";
+import { createClient } from "@/lib/supabase/server";
+import { AuthServiceError } from "@/lib/auth/service/errors";
+import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 describe("GET /api/auth/verify", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mock implementations
-    mockVerifyOtp.mockResolvedValue({
-      data: { user: { id: "123" }, session: { access_token: "token" } },
-      error: null,
+
+    // Setup verifyEmail mock
+    vi.mocked(verifyEmail).mockResolvedValue({
+      user: { id: "123", email: "test@example.com" } as User,
+      session: { access_token: "token", refresh_token: "refresh" },
     });
-    mockExchangeCodeForSession.mockResolvedValue({
-      data: { user: { id: "123" }, session: { access_token: "token" } },
-      error: null,
-    });
+
+    // Setup createClient mock
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        exchangeCodeForSession: vi.fn().mockResolvedValue({
+          data: { user: { id: "123" }, session: { access_token: "token" } },
+          error: null,
+        }),
+      },
+    } as unknown as SupabaseClient);
   });
 
   const createRequest = (params: Record<string, string>): NextRequest => {
@@ -55,7 +61,7 @@ describe("GET /api/auth/verify", () => {
       );
     });
 
-    it("calls verifyOtp with correct parameters", async () => {
+    it("calls verifyEmail with correct parameters", async () => {
       const request = createRequest({
         token_hash: "valid_token_hash",
         type: "email",
@@ -63,10 +69,7 @@ describe("GET /api/auth/verify", () => {
 
       await GET(request);
 
-      expect(mockVerifyOtp).toHaveBeenCalledWith({
-        type: "email",
-        token_hash: "valid_token_hash",
-      });
+      expect(verifyEmail).toHaveBeenCalledWith("valid_token_hash", "email");
     });
   });
 
@@ -91,7 +94,8 @@ describe("GET /api/auth/verify", () => {
 
       await GET(request);
 
-      expect(mockExchangeCodeForSession).toHaveBeenCalledWith(
+      const client = await createClient();
+      expect(client.auth.exchangeCodeForSession).toHaveBeenCalledWith(
         "valid_authorization_code"
       );
     });
@@ -105,17 +109,21 @@ describe("GET /api/auth/verify", () => {
 
       await GET(request);
 
-      expect(mockVerifyOtp).toHaveBeenCalled();
-      expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
+      expect(verifyEmail).toHaveBeenCalled();
+
+      const client = await createClient();
+      expect(client.auth.exchangeCodeForSession).not.toHaveBeenCalled();
     });
   });
 
   describe("expired token", () => {
     it("redirects to /auth/error?error=expired_token for expired OTP", async () => {
-      mockVerifyOtp.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Token has expired" },
-      });
+      vi.mocked(verifyEmail).mockRejectedValue(
+        new AuthServiceError(
+          "SERVICE_ERROR",
+          "Verification link has expired. Please request a new one."
+        )
+      );
 
       const request = createRequest({
         token_hash: "expired_token",
@@ -131,10 +139,14 @@ describe("GET /api/auth/verify", () => {
     });
 
     it("redirects to /auth/error?error=expired_token for expired code", async () => {
-      mockExchangeCodeForSession.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Token has expired" },
-      });
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          exchangeCodeForSession: vi.fn().mockResolvedValue({
+            data: { user: null, session: null },
+            error: { message: "Token has expired" },
+          }),
+        },
+      } as unknown as SupabaseClient);
 
       const request = createRequest({
         code: "expired_code",
@@ -151,10 +163,9 @@ describe("GET /api/auth/verify", () => {
 
   describe("invalid token", () => {
     it("redirects to /auth/error?error=invalid_token for invalid OTP", async () => {
-      mockVerifyOtp.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Invalid token" },
-      });
+      vi.mocked(verifyEmail).mockRejectedValue(
+        new AuthServiceError("SERVICE_ERROR", "Invalid verification link")
+      );
 
       const request = createRequest({
         token_hash: "invalid_token",
@@ -170,10 +181,14 @@ describe("GET /api/auth/verify", () => {
     });
 
     it("redirects to /auth/error?error=invalid_token for invalid code", async () => {
-      mockExchangeCodeForSession.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Invalid authorization code" },
-      });
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          exchangeCodeForSession: vi.fn().mockResolvedValue({
+            data: { user: null, session: null },
+            error: { message: "Invalid authorization code" },
+          }),
+        },
+      } as unknown as SupabaseClient);
 
       const request = createRequest({
         code: "invalid_code",
@@ -229,7 +244,7 @@ describe("GET /api/auth/verify", () => {
 
   describe("error handling", () => {
     it("redirects to /auth/error?error=server_error on Supabase exception", async () => {
-      mockVerifyOtp.mockRejectedValue(new Error("Connection failed"));
+      vi.mocked(verifyEmail).mockRejectedValue(new Error("Connection failed"));
 
       const request = createRequest({
         token_hash: "valid_token",
@@ -286,10 +301,9 @@ describe("GET /api/auth/verify", () => {
       const consoleErrorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      mockVerifyOtp.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Invalid token" },
-      });
+      vi.mocked(verifyEmail).mockRejectedValue(
+        new AuthServiceError("SERVICE_ERROR", "Invalid verification link")
+      );
 
       const request = createRequest({
         token_hash: "invalid_token",

@@ -30,6 +30,7 @@ import type {
   UpdatePasswordResult,
   SessionResult,
   RefreshSessionResult,
+  VerifyEmailResult,
 } from "./service/types";
 
 /**
@@ -693,6 +694,100 @@ export async function refreshSession(): Promise<RefreshSessionResult> {
     );
     throw serviceError(
       "An unexpected error occurred during session refresh",
+      error
+    );
+  }
+}
+
+/**
+ * Verify a user's email address using an OTP token
+ *
+ * Verifies email using a token from the verification email and creates an authenticated session.
+ * This function is used in the email verification flow after a user clicks the verification link.
+ *
+ * @param token_hash - The hashed OTP token from the verification email URL
+ * @param type - The verification type (must be "email" for email verification)
+ * @returns VerifyEmailResult with user and session information
+ * @throws {AuthServiceError} If verification fails (expired token, invalid token, or server error)
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const result = await verifyEmail(token_hash, "email");
+ *   console.log("Email verified for user:", result.user.id);
+ *   // Session cookies are automatically set by Supabase
+ * } catch (error) {
+ *   if (error instanceof AuthServiceError) {
+ *     // Handle verification errors (expired, invalid, etc.)
+ *     console.error("Verification failed:", error.message);
+ *   }
+ * }
+ * ```
+ */
+export async function verifyEmail(
+  token_hash: string,
+  type: "email"
+): Promise<VerifyEmailResult> {
+  try {
+    console.info("[AuthService:verifyEmail]", "Email verification attempt");
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    });
+
+    if (error) {
+      console.error(
+        "[AuthService:verifyEmail]",
+        `Verification failed: ${error.message}`
+      );
+
+      // Check for expired token
+      if (isExpiredTokenError(error)) {
+        throw serviceError(
+          "Verification link has expired. Please request a new one.",
+          error
+        );
+      }
+
+      throw serviceError("Invalid verification link", error);
+    }
+
+    if (!data.user || !data.session) {
+      console.error(
+        "[AuthService:verifyEmail]",
+        "No user or session returned from verification"
+      );
+      throw serviceError("Verification failed - no user or session created");
+    }
+
+    console.info(
+      "[AuthService:verifyEmail]",
+      `Email verified successfully for user: ${data.user.id}`
+    );
+
+    return {
+      user: data.user,
+      session: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      },
+    };
+  } catch (error) {
+    // Re-throw AuthServiceError as-is
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    // Wrap unexpected errors
+    console.error(
+      "[AuthService:verifyEmail]",
+      "Unexpected error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    throw serviceError(
+      "An unexpected error occurred during email verification",
       error
     );
   }

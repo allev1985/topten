@@ -7,6 +7,7 @@ import {
   updatePassword,
   getSession,
   refreshSession,
+  verifyEmail,
 } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import type {
@@ -17,6 +18,7 @@ import type {
   UpdatePasswordResult,
   SessionResult,
   RefreshSessionResult,
+  VerifyEmailResult,
 } from "@/lib/auth/service/types";
 import * as supabaseServer from "@/lib/supabase/server";
 import * as emailUtils from "@/lib/utils/formatting/email";
@@ -775,6 +777,181 @@ describe("AuthService", () => {
       await expect(refreshSession()).rejects.toMatchObject({
         code: "SERVICE_ERROR",
         message: "An unexpected error occurred during session refresh",
+      });
+    });
+  });
+
+  describe("verifyEmail", () => {
+    const testTokenHash = "test-token-hash-123";
+    const testType = "email" as const;
+
+    it("should successfully verify email and return user and session", async () => {
+      const mockUser = {
+        id: "user-123",
+        email: "test@example.com",
+        created_at: new Date().toISOString(),
+      };
+
+      const mockSession = {
+        access_token: "access-token-123",
+        refresh_token: "refresh-token-123",
+      };
+
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: {
+          user: mockUser,
+          session: mockSession,
+        },
+        error: null,
+      });
+
+      const result: VerifyEmailResult = await verifyEmail(
+        testTokenHash,
+        testType
+      );
+
+      expect(result).toEqual({
+        user: mockUser,
+        session: {
+          access_token: mockSession.access_token,
+          refresh_token: mockSession.refresh_token,
+        },
+      });
+
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
+        type: testType,
+        token_hash: testTokenHash,
+      });
+    });
+
+    it("should call Supabase verifyOtp with correct parameters", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: {
+          user: mockUser,
+          session: createMockSession(3600),
+        },
+        error: null,
+      });
+
+      await verifyEmail(testTokenHash, testType);
+
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
+        type: "email",
+        token_hash: testTokenHash,
+      });
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw AuthServiceError with expired token error", async () => {
+      const expiredError = {
+        message: "Token has expired",
+        code: "otp_expired",
+      };
+
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: { user: null, session: null },
+        error: expiredError,
+      });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(true);
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Verification link has expired. Please request a new one.",
+      });
+    });
+
+    it("should throw AuthServiceError with invalid token error", async () => {
+      const invalidError = {
+        message: "Invalid token",
+        code: "invalid_token",
+      };
+
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: { user: null, session: null },
+        error: invalidError,
+      });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(false);
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Invalid verification link",
+      });
+    });
+
+    it("should throw AuthServiceError on Supabase errors", async () => {
+      const serverError = {
+        message: "Database connection failed",
+        code: "db_error",
+      };
+
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: { user: null, session: null },
+        error: serverError,
+      });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(false);
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+      });
+    });
+
+    it("should throw error when no user is returned", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: {
+          user: null,
+          session: createMockSession(3600),
+        },
+        error: null,
+      });
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Verification failed - no user or session created",
+      });
+    });
+
+    it("should throw error when no session is returned", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: {
+          user: mockUser,
+          session: null,
+        },
+        error: null,
+      });
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Verification failed - no user or session created",
+      });
+    });
+
+    it("should wrap unexpected errors in AuthServiceError", async () => {
+      mockSupabase.auth.verifyOtp.mockRejectedValue(new Error("Network error"));
+
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(verifyEmail(testTokenHash, testType)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "An unexpected error occurred during email verification",
       });
     });
   });

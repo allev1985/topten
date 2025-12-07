@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { verifyEmail } from "@/lib/auth/service";
+import { AuthServiceError } from "@/lib/auth/service/errors";
 import { REDIRECT_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
 import { redirectResponse } from "@/lib/utils/api/response";
 
@@ -41,26 +43,26 @@ export async function GET(request: NextRequest) {
   try {
     // Handle OTP-based verification (token_hash + type=email)
     if (token_hash && type === VERIFICATION_TYPE_EMAIL) {
-      const { error } = await supabase.auth.verifyOtp({
-        type: VERIFICATION_TYPE_EMAIL,
-        token_hash,
-      });
+      try {
+        const result = await verifyEmail(token_hash, type);
 
-      if (error) {
-        console.error("[Verify]", `OTP verification error: ${error.message}`);
-        const errorType = error.message.toLowerCase().includes("expired")
-          ? "expired_token"
-          : "invalid_token";
-        return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
-          error: errorType,
-        });
+        console.info(
+          "[Verify]",
+          `OTP verification successful for user: ${result.user.id}, redirecting to dashboard`
+        );
+        return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
+      } catch (error) {
+        if (error instanceof AuthServiceError) {
+          console.error("[Verify]", `OTP verification error: ${error.message}`);
+          const errorType = error.message.toLowerCase().includes("expired")
+            ? "expired_token"
+            : "invalid_token";
+          return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+            error: errorType,
+          });
+        }
+        throw error;
       }
-
-      console.info(
-        "[Verify]",
-        "OTP verification successful, redirecting to dashboard"
-      );
-      return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
     }
 
     // Handle PKCE code exchange
