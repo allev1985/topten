@@ -14,6 +14,16 @@ interface SupabaseAuthError {
 }
 
 /**
+ * Known Supabase session error codes
+ * Used to detect session-related errors
+ */
+export const SESSION_ERROR_CODES = [
+  "session_expired",
+  "invalid_session",
+  "no_session",
+] as const;
+
+/**
  * Service-specific error codes
  * These are internal codes used within the service layer
  */
@@ -102,5 +112,41 @@ export function isEmailNotVerifiedError(
     error.code === "email_not_confirmed" ||
     (error.status === 400 &&
       error.message.toLowerCase().includes("not confirmed"))
+  );
+}
+
+/**
+ * Check if a Supabase error indicates an expired token
+ *
+ * @param error - The error object from Supabase auth
+ * @returns true if the error indicates an expired token
+ */
+export function isExpiredTokenError(
+  error: SupabaseAuthError | null | undefined
+): boolean {
+  if (!error) return false;
+
+  return (
+    error.code === "token_expired" ||
+    error.code === "otp_expired" ||
+    error.message.toLowerCase().includes("expired")
+  );
+}
+
+/**
+ * Check if a Supabase error indicates a session-related error
+ *
+ * @param error - The error object from Supabase auth
+ * @returns true if the error indicates a session error
+ */
+export function isSessionError(
+  error: SupabaseAuthError | null | undefined
+): boolean {
+  if (!error) return false;
+
+  return (
+    SESSION_ERROR_CODES.includes(
+      error.code as (typeof SESSION_ERROR_CODES)[number]
+    ) || error.message?.toLowerCase().includes("session")
   );
 }

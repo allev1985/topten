@@ -18,6 +18,8 @@ import {
   emailNotConfirmedError,
   serviceError,
   isEmailNotVerifiedError,
+  isExpiredTokenError,
+  isSessionError,
 } from "./service/errors";
 import { getSessionInfo } from "./helpers/session";
 import type {
@@ -430,7 +432,7 @@ export async function updatePassword(
         );
 
         // Check for expired token
-        if (otpError.message.toLowerCase().includes("expired")) {
+        if (isExpiredTokenError(otpError)) {
           throw serviceError(
             "Authentication link has expired. Please request a new one.",
             otpError
@@ -483,16 +485,7 @@ export async function updatePassword(
       );
 
       // Check for session-related errors
-      const sessionErrorCodes = [
-        "session_expired",
-        "invalid_session",
-        "no_session",
-      ];
-      const isSessionError =
-        sessionErrorCodes.includes(updateError.code ?? "") ||
-        updateError.message?.toLowerCase().includes("session");
-
-      if (isSessionError) {
+      if (isSessionError(updateError)) {
         throw serviceError(
           "Session has expired. Please log in again.",
           updateError

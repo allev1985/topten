@@ -37,11 +37,29 @@ vi.mock("@/lib/auth/service/errors", async () => {
   return {
     ...actual,
     isEmailNotVerifiedError: vi.fn(),
+    isExpiredTokenError: vi.fn(),
+    isSessionError: vi.fn(),
   };
 });
 
 // Mock the session helpers
 vi.mock("@/lib/auth/helpers/session");
+
+// Helper to create mock user
+const mockUser = {
+  id: "user-123",
+  email: "test@example.com",
+};
+
+// Helper to create mock session
+const createMockSession = (expiresInSeconds: number) => ({
+  access_token: "mock-access-token",
+  refresh_token: "mock-refresh-token",
+  expires_in: expiresInSeconds,
+  expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
+  token_type: "bearer",
+  user: mockUser,
+});
 
 describe("AuthService", () => {
   let mockSupabase: {
@@ -548,6 +566,8 @@ describe("AuthService", () => {
         error: { message: "Invalid token" },
       });
 
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(false);
+
       await expect(
         updatePassword(testPassword, {
           token_hash: "invalid-token",
@@ -570,6 +590,8 @@ describe("AuthService", () => {
         data: { user: null },
         error: { message: "Token has expired" },
       });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(true);
 
       await expect(
         updatePassword(testPassword, {
@@ -639,20 +661,6 @@ describe("AuthService", () => {
   });
 
   describe("getSession", () => {
-    const mockUser = {
-      id: "user-123",
-      email: "test@example.com",
-    };
-
-    const createMockSession = (expiresInSeconds: number) => ({
-      access_token: "mock-access-token",
-      refresh_token: "mock-refresh-token",
-      expires_in: expiresInSeconds,
-      expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
-      token_type: "bearer",
-      user: mockUser,
-    });
-
     it("should return authenticated session info", async () => {
       const mockSession = createMockSession(3600);
       mockSupabase.auth.getSession.mockResolvedValue({
@@ -712,22 +720,12 @@ describe("AuthService", () => {
   });
 
   describe("refreshSession", () => {
-    const mockUser = {
-      id: "user-123",
-      email: "test@example.com",
-    };
-
-    const createMockSession = (expiresInSeconds: number) => ({
-      access_token: "new-access-token",
-      refresh_token: "new-refresh-token",
-      expires_in: expiresInSeconds,
-      expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
-      token_type: "bearer",
-      user: mockUser,
-    });
-
     it("should successfully refresh session", async () => {
-      const mockSession = createMockSession(3600);
+      const mockSession = {
+        ...createMockSession(3600),
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+      };
       mockSupabase.auth.refreshSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
