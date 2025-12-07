@@ -28,6 +28,10 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "src/db/migrations/**",
     "supabase/**",
+    // Exclude shadcn/ui components (generated, should not be edited):
+    "src/components/ui/**",
+    // Exclude Next.js config:
+    "next.config.ts",
   ]),
 ]);
 
