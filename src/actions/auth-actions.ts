@@ -13,7 +13,7 @@ import type { AuthErrorResponse } from "@/lib/auth/errors";
 import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
-import { isEmailNotVerifiedError } from "@/lib/auth/helpers/supabase-errors";
+import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
 
 /**
  * Helper to get cookies as a string for forwarding to API routes
