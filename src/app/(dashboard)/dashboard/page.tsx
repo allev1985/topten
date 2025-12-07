@@ -1,10 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Menu } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,26 +10,10 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Dashboard page with authentication protection and responsive layout
- * Server-side auth is handled by parent layout.tsx
- * This component monitors session state client-side
+ * Authentication is handled by middleware.ts and parent layout.tsx
  */
 export default function DashboardPage(): JSX.Element {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
-
-  // Monitor auth state changes (T015, T016, T017)
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
-        router.push("/login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, router]);
 
   return (
     <div className="flex min-h-screen">
