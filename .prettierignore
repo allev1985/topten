@@ -22,6 +22,12 @@ src/db/migrations/
 # Supabase
 supabase/
 
+# shadcn/ui components (generated, should not be edited)
+src/components/ui/
+
+# Next.js config
+next.config.ts
+
 # Misc
 .git/
 .vercel/
