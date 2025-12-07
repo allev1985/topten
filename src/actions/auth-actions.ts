@@ -601,3 +601,40 @@ export async function passwordChangeAction(
     };
   }
 }
+
+/**
+ * Sign out server action
+ * Terminates the user's authenticated session and redirects to home page
+ * Calls /api/auth/logout endpoint
+ */
+export async function signOutAction(): Promise<void> {
+  const baseUrl = getAppUrl();
+
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/logout`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error("Logout failed");
+    }
+
+    redirect("/");
+  } catch (err) {
+    // Check if this is a redirect (Next.js throws for redirect)
+    const isRedirect =
+      (typeof err === "object" &&
+        err !== null &&
+        "digest" in err &&
+        typeof (err as { digest: string }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
+      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+
+    if (isRedirect) {
+      throw err;
+    }
+
+    console.error("[SignOut] Error:", err);
+    // Don't redirect on error - let component handle it
+  }
+}
