@@ -1,8 +1,5 @@
-import type { JSX, ReactNode } from "react";
-
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
+import type { JSX } from "react";
+import type { DashboardLayoutProps } from "@/types/components";
 
 /**
  * Dashboard layout for protected pages
