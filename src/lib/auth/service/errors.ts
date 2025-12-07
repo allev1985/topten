@@ -5,6 +5,7 @@
 
 /**
  * Supabase authentication error shape
+ * Represents the structure of error objects returned by Supabase Auth API
  */
 interface SupabaseAuthError {
   message: string;
