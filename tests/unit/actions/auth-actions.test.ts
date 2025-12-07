@@ -620,6 +620,5 @@ describe("Auth Actions", () => {
       expect(result.isSuccess).toBe(false);
       expect(result.error).toBe("Update failed");
     });
-    });
   });
 });
