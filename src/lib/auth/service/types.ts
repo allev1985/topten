@@ -112,3 +112,28 @@ export interface RefreshSessionResult {
     expiresAt: string | null;
   };
 }
+
+/**
+ * Result of a successful email verification operation
+ */
+export interface VerifyEmailResult {
+  /**
+   * Authenticated user object from Supabase
+   */
+  user: User;
+  /**
+   * Session tokens created during verification
+   */
+  session: {
+    access_token: string;
+    refresh_token: string;
+  };
+}
+
+/**
+ * Email verification function signature
+ */
+export type VerifyEmailFunction = (
+  token_hash: string,
+  type: "email"
+) => Promise<VerifyEmailResult>;
