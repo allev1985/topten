@@ -41,13 +41,26 @@ vi.mock("@/lib/config", async (importOriginal) => {
 
 // Mock auth service
 vi.mock("@/lib/auth/service");
+vi.mock("@/lib/auth/service/errors", () => ({
+  AuthServiceError: class AuthServiceError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AuthServiceError";
+    }
+  },
+  isEmailNotVerifiedError: vi.fn(),
+}));
 
 // Import after mocking
-import { signup, logout } from "@/lib/auth/service";
+import { signup, logout, resetPassword, updatePassword, getSession } from "@/lib/auth/service";
+import { AuthServiceError } from "@/lib/auth/service/errors";
 
 // Get typed mock references
 const mockSignup = vi.mocked(signup);
 const mockLogout = vi.mocked(logout);
+const mockResetPassword = vi.mocked(resetPassword);
+const mockUpdatePassword = vi.mocked(updatePassword);
+const mockGetSession = vi.mocked(getSession);
 
 // Mock fetch globally (still used by other actions)
 const mockFetch = vi.fn();
@@ -329,14 +342,8 @@ describe("Auth Actions", () => {
     });
 
     it("returns success message regardless of email existence", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            message:
-              "If an account exists, a password reset email has been sent",
-          }),
+      mockResetPassword.mockResolvedValue({
+        success: true,
       });
 
       const formData = createFormData({
@@ -350,27 +357,17 @@ describe("Auth Actions", () => {
         "If an account exists, a password reset email has been sent"
       );
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/api/auth/password/reset",
+      expect(mockResetPassword).toHaveBeenCalledWith(
+        "test@example.com",
         expect.objectContaining({
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: "test@example.com",
-          }),
+          redirectTo: expect.stringContaining("/auth/password/update"),
         })
       );
     });
 
     it("returns same success message even if email does not exist", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            message:
-              "If an account exists, a password reset email has been sent",
-          }),
+      mockResetPassword.mockResolvedValue({
+        success: true,
       });
 
       const formData = createFormData({
@@ -415,17 +412,9 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when session has expired", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "AUTH_ERROR",
-              message: "Authentication required",
-            },
-          }),
-      });
+      mockUpdatePassword.mockRejectedValue(
+        new AuthServiceError("Authentication link has expired. Please request a new one.")
+      );
 
       const formData = createFormData({
         password: "ValidPass123!@#",
@@ -441,13 +430,8 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to login on successful password update", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            message: "Password updated successfully",
-          }),
+      mockUpdatePassword.mockResolvedValue({
+        success: true,
       });
 
       const formData = createFormData({
@@ -459,33 +443,16 @@ describe("Auth Actions", () => {
         passwordUpdateAction(initialState, formData)
       ).rejects.toThrow("REDIRECT:/login");
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/api/auth/password",
-        expect.objectContaining({
-          method: "PUT",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-            Cookie: "session=mock-session-value",
-          }),
-          body: JSON.stringify({
-            password: "ValidPass123!@#",
-          }),
-        })
+      expect(mockUpdatePassword).toHaveBeenCalledWith(
+        "ValidPass123!@#",
+        expect.objectContaining({})
       );
     });
 
     it("returns error when update fails", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "SERVER_ERROR",
-              message: "Update failed",
-            },
-          }),
-      });
+      mockUpdatePassword.mockRejectedValue(
+        new AuthServiceError("Update failed")
+      );
 
       const formData = createFormData({
         password: "ValidPass123!@#",
@@ -495,7 +462,7 @@ describe("Auth Actions", () => {
       const result = await passwordUpdateAction(initialState, formData);
 
       expect(result.isSuccess).toBe(false);
-      expect(result.error).toBe("Failed to update password. Please try again.");
+      expect(result.error).toBe("Update failed");
     });
   });
 
@@ -542,14 +509,10 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when not authenticated", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            authenticated: false,
-            user: null,
-          }),
+      mockGetSession.mockResolvedValue({
+        authenticated: false,
+        user: null,
+        session: null,
       });
 
       const formData = createFormData({
@@ -565,28 +528,17 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when current password is incorrect", async () => {
-      // First call for session - returns authenticated user
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            authenticated: true,
-            user: { id: "123", email: "test@example.com" },
-          }),
+      // Mock authenticated session
+      mockGetSession.mockResolvedValue({
+        authenticated: true,
+        user: { id: "123", email: "test@example.com" },
+        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
       });
 
-      // Second call for login/verify - returns error
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "AUTH_ERROR",
-              message: "Invalid credentials",
-            },
-          }),
+      // Mock incorrect password verification
+      mockSignInWithPassword.mockResolvedValue({
+        data: { user: null, session: null },
+        error: { message: "Invalid credentials" },
       });
 
       const formData = createFormData({
@@ -602,35 +554,25 @@ describe("Auth Actions", () => {
     });
 
     it("returns success on successful password change", async () => {
-      // First call for session
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            authenticated: true,
-            user: { id: "123", email: "test@example.com" },
-          }),
+      // Mock authenticated session
+      mockGetSession.mockResolvedValue({
+        authenticated: true,
+        user: { id: "123", email: "test@example.com" },
+        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
       });
 
-      // Second call for login/verify
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            redirectTo: "/dashboard",
-          }),
+      // Mock correct password verification
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: "123", email: "test@example.com" },
+          session: { access_token: "token" },
+        },
+        error: null,
       });
 
-      // Third call for password update
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            message: "Password updated successfully",
-          }),
+      // Mock successful password update
+      mockUpdatePassword.mockResolvedValue({
+        success: true,
       });
 
       const formData = createFormData({
@@ -646,39 +588,26 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when password update fails", async () => {
-      // First call for session
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            authenticated: true,
-            user: { id: "123", email: "test@example.com" },
-          }),
+      // Mock authenticated session
+      mockGetSession.mockResolvedValue({
+        authenticated: true,
+        user: { id: "123", email: "test@example.com" },
+        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
       });
 
-      // Second call for login/verify
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            redirectTo: "/dashboard",
-          }),
+      // Mock correct password verification
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: "123", email: "test@example.com" },
+          session: { access_token: "token" },
+        },
+        error: null,
       });
 
-      // Third call for password update - fails
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "SERVER_ERROR",
-              message: "Update failed",
-            },
-          }),
-      });
+      // Mock password update failure
+      mockUpdatePassword.mockRejectedValue(
+        new AuthServiceError("Update failed")
+      );
 
       const formData = createFormData({
         currentPassword: "OldPass123!@#",
@@ -689,7 +618,7 @@ describe("Auth Actions", () => {
       const result = await passwordChangeAction(initialState, formData);
 
       expect(result.isSuccess).toBe(false);
-      expect(result.error).toBe("Failed to update password. Please try again.");
+      expect(result.error).toBe("Update failed");
     });
   });
 });

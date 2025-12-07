@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import {
   signupSchema,
   loginSchema,
@@ -9,23 +8,13 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
-import type { AuthErrorResponse } from "@/lib/auth/errors";
 import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
 import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
-import { signup, logout } from "@/lib/auth/service";
-
-/**
- * Helper to get cookies as a string for forwarding to API routes
- */
-async function getCookieHeader(): Promise<string> {
-  const cookieStore = await cookies();
-  return cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-}
+import { signup, logout, resetPassword, updatePassword, getSession } from "@/lib/auth/service";
+import { AuthServiceError } from "@/lib/auth/service/errors";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Signup action success data
@@ -68,23 +57,6 @@ function mapZodErrors(
       const field = issue.path.map(String).join(".");
       if (!acc[field]) acc[field] = [];
       acc[field].push(issue.message);
-      return acc;
-    },
-    {} as Record<string, string[]>
-  );
-}
-
-/**
- * Helper to map API validation error details to field errors
- */
-function mapApiDetailsToFieldErrors(
-  details?: Array<{ field: string; message: string }>
-): Record<string, string[]> {
-  if (!details) return {};
-  return details.reduce(
-    (acc, detail) => {
-      if (!acc[detail.field]) acc[detail.field] = [];
-      acc[detail.field]!.push(detail.message);
       return acc;
     },
     {} as Record<string, string[]>
@@ -231,7 +203,7 @@ export async function loginAction(
 /**
  * Password reset request server action
  * Sends password reset email
- * Calls /api/auth/password/reset endpoint
+ * Uses Auth Service resetPassword() directly
  */
 export async function passwordResetRequestAction(
   _prevState: ActionState<PasswordResetRequestSuccessData>,
@@ -239,7 +211,7 @@ export async function passwordResetRequestAction(
 ): Promise<ActionState<PasswordResetRequestSuccessData>> {
   const email = formData.get("email");
 
-  // Validate input (for immediate feedback - API will re-validate)
+  // Validate input
   const result = passwordResetSchema.safeParse({ email });
 
   if (!result.success) {
@@ -251,40 +223,16 @@ export async function passwordResetRequestAction(
     };
   }
 
-  const baseUrl = getAppUrl();
-
   try {
-    const response = await fetch(`${baseUrl}/api/auth/password/reset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: result.data.email,
-      }),
+    // Call Auth Service directly
+    await resetPassword(result.data.email, {
+      redirectTo: `${getAppUrl()}/auth/password/update`,
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorData = data as AuthErrorResponse;
-      // For validation errors, return field errors
-      if (errorData.error.code === "VALIDATION_ERROR") {
-        return {
-          data: null,
-          error: null,
-          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
-          isSuccess: false,
-        };
-      }
-      // For other errors (shouldn't happen due to enumeration protection)
-      // but fall through to success response anyway
-    }
 
     // Always return success for user enumeration protection
     return {
       data: {
-        message:
-          data.message ||
-          "If an account exists, a password reset email has been sent",
+        message: "If an account exists, a password reset email has been sent",
       },
       error: null,
       fieldErrors: {},
@@ -292,7 +240,7 @@ export async function passwordResetRequestAction(
     };
   } catch (err) {
     console.error(
-      "[PasswordResetRequest] Network error:",
+      "[PasswordResetRequest] Error:",
       err instanceof Error ? err.message : "Unknown error"
     );
 
@@ -311,7 +259,7 @@ export async function passwordResetRequestAction(
 /**
  * Password update server action
  * Updates password using reset token (unauthenticated flow)
- * Calls /api/auth/password PUT endpoint
+ * Uses Auth Service updatePassword() directly
  *
  * Supports OTP token authentication from password reset email links
  */
@@ -334,7 +282,7 @@ export async function passwordUpdateAction(
     };
   }
 
-  // Validate password requirements (for immediate feedback - API will re-validate)
+  // Validate password requirements
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -346,67 +294,22 @@ export async function passwordUpdateAction(
     };
   }
 
-  const baseUrl = getAppUrl();
-  const cookieHeader = await getCookieHeader();
-
   // Extract token_hash and type if provided (OTP authentication from reset email)
   const token_hash =
     typeof tokenHashValue === "string" && tokenHashValue
       ? tokenHashValue
       : undefined;
   const type =
-    typeof typeValue === "string" && typeValue ? typeValue : undefined;
+    typeof typeValue === "string" && typeValue
+      ? (typeValue as "recovery" | "email")
+      : undefined;
 
   try {
-    const response = await fetch(`${baseUrl}/api/auth/password`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieHeader,
-      },
-      body: JSON.stringify({
-        password: result.data.password,
-        ...(token_hash && { token_hash }),
-        ...(type && { type }),
-      }),
+    // Call Auth Service directly
+    await updatePassword(result.data.password, {
+      ...(token_hash && { token_hash }),
+      ...(type && { type }),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorData = data as AuthErrorResponse;
-
-      // Check for authentication/session errors
-      if (
-        errorData.error.code === "AUTH_ERROR" ||
-        errorData.error.message.toLowerCase().includes("session") ||
-        errorData.error.message.toLowerCase().includes("authentication")
-      ) {
-        return {
-          data: null,
-          error: "Session has expired. Please request a new reset link.",
-          fieldErrors: {},
-          isSuccess: false,
-        };
-      }
-
-      // Handle validation errors
-      if (errorData.error.code === "VALIDATION_ERROR") {
-        return {
-          data: null,
-          error: null,
-          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
-          isSuccess: false,
-        };
-      }
-
-      return {
-        data: null,
-        error: "Failed to update password. Please try again.",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
 
     // Success - redirect to login
     redirect("/login");
@@ -425,8 +328,31 @@ export async function passwordUpdateAction(
       throw err;
     }
 
+    // Handle AuthServiceError
+    if (err instanceof AuthServiceError) {
+      // Check for expired token or authentication errors
+      if (
+        err.message.includes("expired") ||
+        err.message.includes("Authentication failed")
+      ) {
+        return {
+          data: null,
+          error: "Session has expired. Please request a new reset link.",
+          fieldErrors: {},
+          isSuccess: false,
+        };
+      }
+
+      return {
+        data: null,
+        error: err.message || "Failed to update password. Please try again.",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
     console.error(
-      "[PasswordUpdate] Network error:",
+      "[PasswordUpdate] Error:",
       err instanceof Error ? err.message : "Unknown error"
     );
 
@@ -442,7 +368,7 @@ export async function passwordUpdateAction(
 /**
  * Password change server action
  * Changes password for authenticated user (requires current password)
- * Calls /api/auth/password PUT endpoint after verifying current password via /api/auth/login
+ * Uses Auth Service getSession() and updatePassword() directly
  */
 export async function passwordChangeAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -472,7 +398,7 @@ export async function passwordChangeAction(
     };
   }
 
-  // Validate password requirements (for immediate feedback - API will re-validate)
+  // Validate password requirements
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -484,19 +410,11 @@ export async function passwordChangeAction(
     };
   }
 
-  const baseUrl = getAppUrl();
-  const cookieHeader = await getCookieHeader();
-
   try {
     // First, get the current user's session to retrieve their email
-    const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
-      method: "GET",
-      headers: {
-        Cookie: cookieHeader,
-      },
-    });
+    const sessionResult = await getSession();
 
-    if (!sessionResponse.ok) {
+    if (!sessionResult.authenticated || !sessionResult.user?.email) {
       return {
         data: null,
         error: "Authentication required",
@@ -505,31 +423,14 @@ export async function passwordChangeAction(
       };
     }
 
-    const sessionData = await sessionResponse.json();
-
-    if (!sessionData.user?.email) {
-      return {
-        data: null,
-        error: "Authentication required",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
-
-    // Verify current password by attempting to log in
-    const verifyResponse = await fetch(`${baseUrl}/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieHeader,
-      },
-      body: JSON.stringify({
-        email: sessionData.user.email,
-        password: currentPassword,
-      }),
+    // Verify current password by attempting to sign in with Supabase client
+    const supabase = await createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: sessionResult.user.email,
+      password: currentPassword,
     });
 
-    if (!verifyResponse.ok) {
+    if (signInError) {
       return {
         data: null,
         error: "Current password is incorrect",
@@ -538,40 +439,8 @@ export async function passwordChangeAction(
       };
     }
 
-    // Update password
-    const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieHeader,
-      },
-      body: JSON.stringify({
-        password: result.data.password,
-      }),
-    });
-
-    const updateData = await updateResponse.json();
-
-    if (!updateResponse.ok) {
-      const errorData = updateData as AuthErrorResponse;
-
-      // Handle validation errors
-      if (errorData.error.code === "VALIDATION_ERROR") {
-        return {
-          data: null,
-          error: null,
-          fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
-          isSuccess: false,
-        };
-      }
-
-      return {
-        data: null,
-        error: "Failed to update password. Please try again.",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
+    // Update password using Auth Service
+    await updatePassword(result.data.password);
 
     return {
       data: {
@@ -582,8 +451,18 @@ export async function passwordChangeAction(
       isSuccess: true,
     };
   } catch (err) {
+    // Handle AuthServiceError
+    if (err instanceof AuthServiceError) {
+      return {
+        data: null,
+        error: err.message || "Failed to update password. Please try again.",
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
     console.error(
-      "[PasswordChange] Network error:",
+      "[PasswordChange] Error:",
       err instanceof Error ? err.message : "Unknown error"
     );
 
