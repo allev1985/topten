@@ -1,18 +1,27 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, Suspense, useMemo } from "react";
+import { useState, Suspense, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { ListCardSkeleton } from "@/components/dashboard/ListCardSkeleton";
+import { ErrorState } from "@/components/dashboard/ErrorState";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ListGrid } from "@/components/dashboard/ListGrid";
 import { mockLists } from "@/lib/mocks/lists";
+import type { List } from "@/types/list";
 
 type FilterType = "all" | "published" | "drafts";
+
+type DashboardState =
+  | { type: "loading" }
+  | { type: "error"; error: Error }
+  | { type: "success"; lists: List[] };
 
 /**
  * Get filter tab button className based on active state
@@ -28,41 +37,38 @@ function getFilterTabClassName(isActive: boolean): string {
 }
 
 /**
- * Get empty state message based on current filter
- */
-function getEmptyStateMessage(filter: FilterType): {
-  title: string;
-  subtitle: string;
-} {
-  switch (filter) {
-    case "published":
-      return {
-        title: "No published lists yet",
-        subtitle: "Publish a list to see it here",
-      };
-    case "drafts":
-      return {
-        title: "No draft lists yet",
-        subtitle: "Create a draft to see it here",
-      };
-    default:
-      return {
-        title: "No lists yet",
-        subtitle: "Create your first list to get started",
-      };
-  }
-}
-
-/**
  * Dashboard page with authentication protection and responsive layout
  * Authentication is handled by middleware.ts and parent layout.tsx
  */
 function DashboardPageContent(): JSX.Element {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [state, setState] = useState<DashboardState>({ type: "loading" });
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isMountedRef = useRef(true);
 
   const filter = (searchParams.get("filter") as FilterType) || "all";
+
+  // Track mounted state for cleanup
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Simulate data loading
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: simulating async data fetch
+    setState({ type: "loading" });
+
+    const timer = setTimeout(() => {
+      // Simulate successful data fetch
+      setState({ type: "success", lists: mockLists });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleListClick = (listId: string) => {
     console.log("List clicked:", listId);
@@ -78,16 +84,32 @@ function DashboardPageContent(): JSX.Element {
     router.push(`/dashboard?${params.toString()}`);
   };
 
-  const filteredLists = useMemo(() => {
-    if (filter === "published") {
-      return mockLists.filter((list) => list.isPublished);
-    } else if (filter === "drafts") {
-      return mockLists.filter((list) => !list.isPublished);
-    }
-    return mockLists;
-  }, [filter]);
+  const handleCreateClick = () => {
+    console.log("Create new list clicked");
+    // TODO: Navigate to list creation flow (future implementation)
+  };
 
-  const emptyState = getEmptyStateMessage(filter);
+  const handleRetry = () => {
+    setState({ type: "loading" });
+
+    setTimeout(() => {
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setState({ type: "success", lists: mockLists });
+      }
+    }, 500);
+  };
+
+  const filteredLists = useMemo(() => {
+    if (state.type !== "success") return [];
+
+    if (filter === "published") {
+      return state.lists.filter((list) => list.isPublished);
+    } else if (filter === "drafts") {
+      return state.lists.filter((list) => !list.isPublished);
+    }
+    return state.lists;
+  }, [state, filter]);
 
   return (
     <div className="flex min-h-screen">
@@ -147,14 +169,21 @@ function DashboardPageContent(): JSX.Element {
             </button>
           </div>
 
-          {/* List Grid or Empty State */}
-          {filteredLists.length > 0 ? (
-            <ListGrid lists={filteredLists} onListClick={handleListClick} />
-          ) : (
-            <div className="text-muted-foreground flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg">{emptyState.title}</p>
-              <p className="mt-2 text-sm">{emptyState.subtitle}</p>
+          {/* List Grid, Loading, Error, or Empty State */}
+          {state.type === "loading" ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array(6)
+                .fill(null)
+                .map((_, index) => (
+                  <ListCardSkeleton key={`skeleton-${index}`} />
+                ))}
             </div>
+          ) : state.type === "error" ? (
+            <ErrorState error={state.error} onRetry={handleRetry} />
+          ) : filteredLists.length === 0 ? (
+            <EmptyState filter={filter} onCreateClick={handleCreateClick} />
+          ) : (
+            <ListGrid lists={filteredLists} onListClick={handleListClick} />
           )}
         </div>
       </DashboardContent>
