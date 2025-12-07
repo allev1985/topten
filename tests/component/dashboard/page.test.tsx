@@ -1,6 +1,23 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DashboardPage from "@/app/(dashboard)/dashboard/page";
+
+// Mock Next.js navigation
+vi.mock("next/navigation", () => ({
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
+  })),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+  })),
+}));
+
+// Mock signOutAction
+vi.mock("@/actions/auth-actions", () => ({
+  signOutAction: vi.fn(() => Promise.resolve()),
+}));
 
 /**
  * Component tests for DashboardPage
@@ -13,10 +30,9 @@ import DashboardPage from "@/app/(dashboard)/dashboard/page";
  * These tests focus on component rendering and UI structure.
  */
 describe("DashboardPage - Component Rendering", () => {
-  it("renders dashboard content", () => {
+  it("renders dashboard header", () => {
     render(<DashboardPage />);
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText(/Welcome to your dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText("My Lists")).toBeInTheDocument();
   });
 
   it("renders desktop sidebar", () => {

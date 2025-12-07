@@ -1,9 +1,10 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,9 @@ export default function DashboardPage(): JSX.Element {
     <div className="flex min-h-screen">
       {/* Desktop Sidebar - Fixed on left */}
       <aside className="bg-background fixed top-0 left-0 hidden h-screen w-64 border-r lg:block">
-        <DashboardSidebar />
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <DashboardSidebar />
+        </Suspense>
       </aside>
 
       {/* Mobile Navigation Header */}
@@ -36,7 +39,9 @@ export default function DashboardPage(): JSX.Element {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
-              <DashboardSidebar />
+              <Suspense fallback={<div className="p-6">Loading...</div>}>
+                <DashboardSidebar />
+              </Suspense>
             </SheetContent>
           </Sheet>
         </div>
@@ -45,10 +50,8 @@ export default function DashboardPage(): JSX.Element {
       {/* Main Content Area */}
       <DashboardContent>
         <div className="mt-16 lg:mt-0">
-          <h2 className="mb-4 text-2xl font-semibold">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Welcome to your dashboard. Features coming soon.
-          </p>
+          <DashboardHeader />
+          {/* Future: List content goes here */}
         </div>
       </DashboardContent>
     </div>

@@ -5,6 +5,14 @@ import DashboardPage from "@/app/(dashboard)/dashboard/page";
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => ({
+    get: vi.fn(() => null),
+  }),
+}));
+
+// Mock signOutAction
+vi.mock("@/actions/auth-actions", () => ({
+  signOutAction: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
