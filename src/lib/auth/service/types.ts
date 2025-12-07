@@ -53,3 +53,62 @@ export interface LogoutResult {
    */
   success: true;
 }
+
+/**
+ * Result of a password reset request
+ */
+export interface ResetPasswordResult {
+  /**
+   * Always true if reset email request was processed
+   * Note: Does not indicate whether email exists (enumeration protection)
+   */
+  success: true;
+}
+
+/**
+ * Result of a successful password update
+ */
+export interface UpdatePasswordResult {
+  /**
+   * Always true if password was updated successfully
+   */
+  success: true;
+}
+
+/**
+ * Session information with expiry details
+ */
+export interface SessionResult {
+  /**
+   * Whether a valid session exists
+   */
+  authenticated: boolean;
+  /**
+   * User information if authenticated
+   */
+  user: {
+    id: string;
+    email: string | undefined;
+  } | null;
+  /**
+   * Session expiry information if authenticated
+   */
+  session: {
+    expiresAt: string | null;
+    isExpiringSoon: boolean;
+  } | null;
+}
+
+/**
+ * Result of a session refresh operation
+ */
+export interface RefreshSessionResult {
+  /**
+   * Session expiry information
+   */
+  session: {
+    access_token: string;
+    refresh_token: string;
+    expiresAt: string | null;
+  };
+}

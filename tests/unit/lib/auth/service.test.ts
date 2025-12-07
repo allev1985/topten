@@ -1,14 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { signup, login, logout } from "@/lib/auth/service";
+import {
+  signup,
+  login,
+  logout,
+  resetPassword,
+  updatePassword,
+  getSession,
+  refreshSession,
+} from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import type {
   SignupResult,
   LoginResult,
   LogoutResult,
+  ResetPasswordResult,
+  UpdatePasswordResult,
+  SessionResult,
+  RefreshSessionResult,
 } from "@/lib/auth/service/types";
 import * as supabaseServer from "@/lib/supabase/server";
 import * as emailUtils from "@/lib/utils/formatting/email";
 import * as serviceErrors from "@/lib/auth/service/errors";
+import * as sessionHelpers from "@/lib/auth/helpers/session";
 
 // Mock the Supabase server client
 vi.mock("@/lib/supabase/server");
@@ -24,7 +37,28 @@ vi.mock("@/lib/auth/service/errors", async () => {
   return {
     ...actual,
     isEmailNotVerifiedError: vi.fn(),
+    isExpiredTokenError: vi.fn(),
+    isSessionError: vi.fn(),
   };
+});
+
+// Mock the session helpers
+vi.mock("@/lib/auth/helpers/session");
+
+// Helper to create mock user
+const mockUser = {
+  id: "user-123",
+  email: "test@example.com",
+};
+
+// Helper to create mock session
+const createMockSession = (expiresInSeconds: number) => ({
+  access_token: "mock-access-token",
+  refresh_token: "mock-refresh-token",
+  expires_in: expiresInSeconds,
+  expires_at: Math.floor(Date.now() / 1000) + expiresInSeconds,
+  token_type: "bearer",
+  user: mockUser,
 });
 
 describe("AuthService", () => {
@@ -34,6 +68,11 @@ describe("AuthService", () => {
       signInWithPassword: ReturnType<typeof vi.fn>;
       signOut: ReturnType<typeof vi.fn>;
       getUser: ReturnType<typeof vi.fn>;
+      resetPasswordForEmail: ReturnType<typeof vi.fn>;
+      updateUser: ReturnType<typeof vi.fn>;
+      verifyOtp: ReturnType<typeof vi.fn>;
+      getSession: ReturnType<typeof vi.fn>;
+      refreshSession: ReturnType<typeof vi.fn>;
     };
   };
 
@@ -48,6 +87,11 @@ describe("AuthService", () => {
         signInWithPassword: vi.fn(),
         signOut: vi.fn(),
         getUser: vi.fn(),
+        resetPasswordForEmail: vi.fn(),
+        updateUser: vi.fn(),
+        verifyOtp: vi.fn(),
+        getSession: vi.fn(),
+        refreshSession: vi.fn(),
       },
     };
 
@@ -380,6 +424,357 @@ describe("AuthService", () => {
       await expect(logout()).rejects.toMatchObject({
         code: "SERVICE_ERROR",
         message: "An unexpected error occurred during logout",
+      });
+    });
+  });
+
+  describe("resetPassword", () => {
+    const testEmail = "test@example.com";
+
+    it("should successfully request password reset", async () => {
+      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+        error: null,
+      });
+
+      const result: ResetPasswordResult = await resetPassword(testEmail);
+
+      expect(result).toEqual({
+        success: true,
+      });
+
+      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+        testEmail,
+        {
+          redirectTo: undefined,
+        }
+      );
+    });
+
+    it("should include redirectTo in options when provided", async () => {
+      const redirectUrl = "https://example.com/reset";
+
+      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+        error: null,
+      });
+
+      await resetPassword(testEmail, { redirectTo: redirectUrl });
+
+      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+        testEmail,
+        {
+          redirectTo: redirectUrl,
+        }
+      );
+    });
+
+    it("should return success even when Supabase returns an error (enumeration protection)", async () => {
+      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+        error: { message: "User not found" },
+      });
+
+      const result: ResetPasswordResult = await resetPassword(testEmail);
+
+      expect(result).toEqual({
+        success: true,
+      });
+    });
+
+    it("should wrap unexpected errors in AuthServiceError", async () => {
+      mockSupabase.auth.resetPasswordForEmail.mockRejectedValue(
+        new Error("Network error")
+      );
+
+      await expect(resetPassword(testEmail)).rejects.toThrow(AuthServiceError);
+      await expect(resetPassword(testEmail)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "An unexpected error occurred during password reset",
+      });
+    });
+  });
+
+  describe("updatePassword", () => {
+    const testPassword = "NewSecurePass123!";
+    const testEmail = "test@example.com";
+
+    it("should successfully update password with OTP token", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: testEmail },
+        },
+        error: null,
+      });
+
+      mockSupabase.auth.updateUser.mockResolvedValue({
+        data: { user: { id: "user-123", email: testEmail } },
+        error: null,
+      });
+
+      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+
+      const result: UpdatePasswordResult = await updatePassword(testPassword, {
+        token_hash: "valid-token",
+        type: "recovery",
+      });
+
+      expect(result).toEqual({
+        success: true,
+      });
+
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
+        type: "recovery",
+        token_hash: "valid-token",
+      });
+
+      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+        password: testPassword,
+      });
+
+      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+    });
+
+    it("should successfully update password with session", async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: testEmail },
+        },
+        error: null,
+      });
+
+      mockSupabase.auth.updateUser.mockResolvedValue({
+        data: { user: { id: "user-123", email: testEmail } },
+        error: null,
+      });
+
+      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+
+      const result: UpdatePasswordResult = await updatePassword(testPassword);
+
+      expect(result).toEqual({
+        success: true,
+      });
+
+      expect(mockSupabase.auth.getUser).toHaveBeenCalled();
+      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+        password: testPassword,
+      });
+      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+    });
+
+    it("should throw error for invalid OTP token", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Invalid token" },
+      });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(false);
+
+      await expect(
+        updatePassword(testPassword, {
+          token_hash: "invalid-token",
+          type: "recovery",
+        })
+      ).rejects.toThrow(AuthServiceError);
+      await expect(
+        updatePassword(testPassword, {
+          token_hash: "invalid-token",
+          type: "recovery",
+        })
+      ).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Authentication failed",
+      });
+    });
+
+    it("should throw error for expired OTP token", async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Token has expired" },
+      });
+
+      vi.mocked(serviceErrors.isExpiredTokenError).mockReturnValue(true);
+
+      await expect(
+        updatePassword(testPassword, {
+          token_hash: "expired-token",
+          type: "recovery",
+        })
+      ).rejects.toThrow(AuthServiceError);
+      await expect(
+        updatePassword(testPassword, {
+          token_hash: "expired-token",
+          type: "recovery",
+        })
+      ).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Authentication link has expired. Please request a new one.",
+      });
+    });
+
+    it("should throw error for unauthenticated session", async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Not authenticated" },
+      });
+
+      await expect(updatePassword(testPassword)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(updatePassword(testPassword)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Authentication required",
+      });
+    });
+
+    it("should succeed even if signOut fails after password update", async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: testEmail },
+        },
+        error: null,
+      });
+
+      mockSupabase.auth.updateUser.mockResolvedValue({
+        data: { user: { id: "user-123", email: testEmail } },
+        error: null,
+      });
+
+      mockSupabase.auth.signOut.mockRejectedValue(new Error("Sign out failed"));
+
+      const result: UpdatePasswordResult = await updatePassword(testPassword);
+
+      expect(result).toEqual({
+        success: true,
+      });
+    });
+
+    it("should wrap unexpected errors in AuthServiceError", async () => {
+      mockSupabase.auth.getUser.mockRejectedValue(new Error("Network error"));
+
+      await expect(updatePassword(testPassword)).rejects.toThrow(
+        AuthServiceError
+      );
+      await expect(updatePassword(testPassword)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "An unexpected error occurred during password update",
+      });
+    });
+  });
+
+  describe("getSession", () => {
+    it("should return authenticated session info", async () => {
+      const mockSession = createMockSession(3600);
+      mockSupabase.auth.getSession.mockResolvedValue({
+        data: { session: mockSession },
+        error: null,
+      });
+
+      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
+        isValid: true,
+        user: { id: mockUser.id, email: mockUser.email },
+        expiresAt: new Date(mockSession.expires_at * 1000),
+        isExpiringSoon: false,
+      });
+
+      const result: SessionResult = await getSession();
+
+      expect(result.authenticated).toBe(true);
+      expect(result.user).toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+      });
+      expect(result.session).toBeDefined();
+      expect(result.session?.isExpiringSoon).toBe(false);
+    });
+
+    it("should return unauthenticated when no session exists", async () => {
+      mockSupabase.auth.getSession.mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
+        isValid: false,
+        user: null,
+        expiresAt: null,
+        isExpiringSoon: false,
+      });
+
+      const result: SessionResult = await getSession();
+
+      expect(result.authenticated).toBe(false);
+      expect(result.user).toBeNull();
+      expect(result.session).toBeNull();
+    });
+
+    it("should wrap unexpected errors in AuthServiceError", async () => {
+      mockSupabase.auth.getSession.mockRejectedValue(
+        new Error("Network error")
+      );
+
+      await expect(getSession()).rejects.toThrow(AuthServiceError);
+      await expect(getSession()).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "An unexpected error occurred while getting session",
+      });
+    });
+  });
+
+  describe("refreshSession", () => {
+    it("should successfully refresh session", async () => {
+      const mockSession = {
+        ...createMockSession(3600),
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+      };
+      mockSupabase.auth.refreshSession.mockResolvedValue({
+        data: { session: mockSession },
+        error: null,
+      });
+
+      const result: RefreshSessionResult = await refreshSession();
+
+      expect(result.session.access_token).toBe("new-access-token");
+      expect(result.session.refresh_token).toBe("new-refresh-token");
+      expect(result.session.expiresAt).toBeDefined();
+
+      expect(mockSupabase.auth.refreshSession).toHaveBeenCalled();
+    });
+
+    it("should throw error when refresh fails", async () => {
+      mockSupabase.auth.refreshSession.mockResolvedValue({
+        data: { session: null },
+        error: { message: "Refresh token expired" },
+      });
+
+      await expect(refreshSession()).rejects.toThrow(AuthServiceError);
+      await expect(refreshSession()).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Session has expired. Please log in again.",
+      });
+    });
+
+    it("should throw error when no session is returned", async () => {
+      mockSupabase.auth.refreshSession.mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      await expect(refreshSession()).rejects.toThrow(AuthServiceError);
+      await expect(refreshSession()).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "Session has expired. Please log in again.",
+      });
+    });
+
+    it("should wrap unexpected errors in AuthServiceError", async () => {
+      mockSupabase.auth.refreshSession.mockRejectedValue(
+        new Error("Network error")
+      );
+
+      await expect(refreshSession()).rejects.toThrow(AuthServiceError);
+      await expect(refreshSession()).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+        message: "An unexpected error occurred during session refresh",
       });
     });
   });
