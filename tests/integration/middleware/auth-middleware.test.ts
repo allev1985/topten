@@ -52,7 +52,7 @@ describe("Auth Middleware Integration", () => {
       // Setup: No authenticated user
       mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard/my-lists");
 
       const response = await middleware(request);
@@ -66,7 +66,7 @@ describe("Auth Middleware Integration", () => {
       // Setup: No authenticated user
       mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard/my-lists");
 
       const response = await middleware(request);
@@ -88,7 +88,7 @@ describe("Auth Middleware Integration", () => {
         error: null,
       });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard");
 
       const response = await middleware(request);
@@ -100,7 +100,7 @@ describe("Auth Middleware Integration", () => {
 
   describe("Public Route Accessibility (US2)", () => {
     it("allows unauthenticated users to access public routes", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/login");
 
       const response = await middleware(request);
@@ -112,7 +112,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to homepage without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/");
 
       const response = await middleware(request);
@@ -122,7 +122,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to signup page without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/signup");
 
       const response = await middleware(request);
@@ -132,7 +132,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to verify-email page without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/verify-email");
 
       const response = await middleware(request);
@@ -142,7 +142,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to forgot-password page without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/forgot-password");
 
       const response = await middleware(request);
@@ -152,7 +152,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to reset-password page without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/reset-password");
 
       const response = await middleware(request);
@@ -162,7 +162,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows access to auth callback routes without authentication", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/auth/callback");
 
       const response = await middleware(request);
@@ -177,7 +177,7 @@ describe("Auth Middleware Integration", () => {
         return NextResponse.next({ request });
       });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/login");
 
       const response = await middleware(request);
@@ -191,7 +191,7 @@ describe("Auth Middleware Integration", () => {
     it("rejects malicious redirectTo URLs (protocol-relative)", async () => {
       mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       // Even if someone tries to manipulate the redirect, our createLoginRedirect
       // uses getValidatedRedirect which sanitizes the URL
       const request = new NextRequest("http://localhost/dashboard");
@@ -207,7 +207,7 @@ describe("Auth Middleware Integration", () => {
     it("preserves valid redirectTo URLs", async () => {
       mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest(
         "http://localhost/dashboard/settings/profile"
       );
@@ -224,7 +224,7 @@ describe("Auth Middleware Integration", () => {
 
   describe("Session Refresh (US4)", () => {
     it("calls updateSession for public routes to allow session refresh", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/login");
 
       await middleware(request);
@@ -238,7 +238,7 @@ describe("Auth Middleware Integration", () => {
         error: null,
       });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard");
 
       await middleware(request);
@@ -255,7 +255,7 @@ describe("Auth Middleware Integration", () => {
         error: null,
       });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard");
 
       const response = await middleware(request);
@@ -271,7 +271,7 @@ describe("Auth Middleware Integration", () => {
       // Setup: Auth service error
       mockGetUser.mockRejectedValue(new Error("Network error"));
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard");
 
       const response = await middleware(request);
@@ -288,7 +288,7 @@ describe("Auth Middleware Integration", () => {
         error: { message: "Session expired" },
       });
 
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       const request = new NextRequest("http://localhost/dashboard");
 
       const response = await middleware(request);
@@ -299,7 +299,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows through routes not explicitly protected or public", async () => {
-      const { middleware } = await import("@root/middleware");
+      const { middleware } = await import("@/middleware");
       // A route that's neither in PROTECTED_ROUTES nor PUBLIC_ROUTES
       const request = new NextRequest("http://localhost/some-other-page");
 
@@ -312,7 +312,7 @@ describe("Auth Middleware Integration", () => {
 
   describe("Middleware Matcher Configuration", () => {
     it("should have config with matcher array", async () => {
-      const { config } = await import("@root/middleware");
+      const { config } = await import("@/middleware");
 
       expect(config).toBeDefined();
       expect(config.matcher).toBeDefined();
@@ -320,7 +320,7 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("matcher should exclude static files", async () => {
-      const { config } = await import("@root/middleware");
+      const { config } = await import("@/middleware");
 
       // The matcher pattern should exclude _next/static, _next/image, etc.
       const matcherPattern = config.matcher[0];

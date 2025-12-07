@@ -10,7 +10,7 @@
  * - Redirect URL preservation via redirectTo parameter
  * - Fail-closed security (redirect to login on auth errors)
  *
- * @see /specs/001-auth-middleware/spec.md for full requirements
+ * @see /specs/001-fix-middleware-location/spec.md for full requirements
  */
 
 import { type NextRequest, NextResponse } from "next/server";
