@@ -16,6 +16,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - N/A (UI-only change) (003-fix-modal-headers)
 - TypeScript 5.x with Next.js 16 (App Router) (001-dashboard-foundation)
 - Supabase (PostgreSQL) with Drizzle ORM - already configured (001-dashboard-foundation)
+- TypeScript 5.x with Next.js 16.0.5 (App Router) + React 19.2.0, shadcn/ui components (Card, Badge, Button), Tailwind CSS 4, lucide-react 0.555.0 (001-dashboard-lists-grid)
+- PostgreSQL via Supabase with Drizzle ORM (existing `lists` and `list_places` schema) (001-dashboard-lists-grid)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -52,9 +54,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 001-dashboard-lists-grid: Added TypeScript 5.x with Next.js 16.0.5 (App Router) + React 19.2.0, shadcn/ui components (Card, Badge, Button), Tailwind CSS 4, lucide-react 0.555.0
 - 001-dashboard-foundation: Added TypeScript 5.x with Next.js 16 (App Router)
 - 003-fix-modal-headers: Added TypeScript (Next.js 15 with App Router) + React 19, Next.js 15, Tailwind CSS, shadcn/ui
-- 001-landing-page-polish: Added TypeScript 5.x with Next.js 16.0.5 (App Router)
 
 
 <!-- MANUAL ADDITIONS START -->
