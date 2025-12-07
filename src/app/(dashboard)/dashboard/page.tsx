@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, Suspense, useMemo, useEffect } from "react";
+import { useState, Suspense, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -45,8 +45,17 @@ function DashboardPageContent(): JSX.Element {
   const [state, setState] = useState<DashboardState>({ type: "loading" });
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isMountedRef = useRef(true);
 
   const filter = (searchParams.get("filter") as FilterType) || "all";
+
+  // Track mounted state for cleanup
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Simulate data loading
   useEffect(() => {
@@ -84,7 +93,10 @@ function DashboardPageContent(): JSX.Element {
     setState({ type: "loading" });
 
     setTimeout(() => {
-      setState({ type: "success", lists: mockLists });
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setState({ type: "success", lists: mockLists });
+      }
     }, 500);
   };
 
