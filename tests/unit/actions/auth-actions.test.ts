@@ -39,7 +39,17 @@ vi.mock("@/lib/config", async (importOriginal) => {
   };
 });
 
-// Mock fetch globally
+// Mock auth service
+vi.mock("@/lib/auth/service");
+
+// Import after mocking
+import { signup, logout } from "@/lib/auth/service";
+
+// Get typed mock references
+const mockSignup = vi.mocked(signup);
+const mockLogout = vi.mocked(logout);
+
+// Mock fetch globally (still used by other actions)
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -83,11 +93,6 @@ const initialState = {
 describe("Auth Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockReset();
-    mockSignInWithPassword.mockReset();
-    mockGetUser.mockReset();
-    mockSignOut.mockReset();
-    mockUpdateUser.mockReset();
   });
 
   describe("signupAction", () => {
@@ -142,13 +147,10 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to verify-email on successful signup", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            message: "Please check your email to verify your account",
-          }),
+      mockSignup.mockResolvedValue({
+        requiresEmailConfirmation: true,
+        user: { id: "123", email: "test@example.com" },
+        session: null,
       });
 
       const formData = createFormData({
@@ -160,31 +162,14 @@ describe("Auth Actions", () => {
         "REDIRECT:/verify-email"
       );
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/api/auth/signup",
-        expect.objectContaining({
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: "test@example.com",
-            password: "ValidPass123!@#",
-          }),
-        })
+      expect(mockSignup).toHaveBeenCalledWith(
+        "test@example.com",
+        "ValidPass123!@#"
       );
     });
 
     it("redirects even when email already exists (user enumeration protection)", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "AUTH_ERROR",
-              message: "User already exists",
-            },
-          }),
-      });
+      mockSignup.mockRejectedValue(new Error("User already exists"));
 
       const formData = createFormData({
         email: "existing@example.com",

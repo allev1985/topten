@@ -14,6 +14,7 @@ import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
 import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
+import { signup, logout } from "@/lib/auth/service";
 
 /**
  * Helper to get cookies as a string for forwarding to API routes
@@ -93,7 +94,7 @@ function mapApiDetailsToFieldErrors(
 /**
  * Signup server action
  * Creates a new user account with email/password
- * Calls /api/auth/signup endpoint
+ * Calls auth service signup() method directly
  */
 export async function signupAction(
   _prevState: ActionState<SignupSuccessData>,
@@ -102,7 +103,7 @@ export async function signupAction(
   const email = formData.get("email");
   const password = formData.get("password");
 
-  // Validate input (for immediate feedback - API will re-validate)
+  // Validate input (for immediate feedback - service will re-validate)
   const result = signupSchema.safeParse({ email, password });
 
   if (!result.success) {
@@ -114,29 +115,12 @@ export async function signupAction(
     };
   }
 
-  const baseUrl = getAppUrl();
-
   try {
-    const response = await fetch(`${baseUrl}/api/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: result.data.email,
-        password: result.data.password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorData = data as AuthErrorResponse;
-      // Log error but don't expose to user for enumeration protection
-      console.error("[Signup] Error:", errorData.error.message);
-    }
+    await signup(result.data.email, result.data.password);
   } catch (err) {
-    // Log network errors but still redirect for enumeration protection
+    // Log errors but still redirect for enumeration protection
     console.error(
-      "[Signup] Network error:",
+      "[Signup] Error:",
       err instanceof Error ? err.message : "Unknown error"
     );
   }
@@ -615,20 +599,11 @@ export async function passwordChangeAction(
 /**
  * Sign out server action
  * Terminates the user's authenticated session and redirects to home page
- * Calls /api/auth/logout endpoint
+ * Calls auth service logout() method directly
  */
 export async function signOutAction(): Promise<void> {
-  const baseUrl = getAppUrl();
-
   try {
-    const response = await fetch(`${baseUrl}/api/auth/logout`, {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      throw new Error("Logout failed");
-    }
-
+    await logout();
     redirect("/");
   } catch (err) {
     // Check if this is a redirect (Next.js throws for redirect)
