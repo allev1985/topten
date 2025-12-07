@@ -10,10 +10,10 @@ interface SupabaseAuthError {
 
 /**
  * Check if a Supabase error indicates an unverified email
- * 
+ *
  * Supabase returns status 400 with code 'email_not_confirmed' for unverified emails.
  * This function provides a consistent way to detect this error condition.
- * 
+ *
  * @param error - The error object from Supabase auth
  * @returns true if the error indicates an unverified email
  */

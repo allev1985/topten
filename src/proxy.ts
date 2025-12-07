@@ -28,7 +28,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 /**
  * Main proxy function
  * Handles authentication checks and session refresh
- * 
+ *
  * Note: This is the new Next.js 16 convention. Previously this was called "middleware".
  */
 export async function proxy(request: NextRequest) {

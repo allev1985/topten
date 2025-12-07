@@ -178,7 +178,10 @@ export async function loginAction(
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
 
-    console.info("[Login]", `Login attempt for email: ${maskEmail(result.data.email)}`);
+    console.info(
+      "[Login]",
+      `Login attempt for email: ${maskEmail(result.data.email)}`
+    );
 
     const { error } = await supabase.auth.signInWithPassword({
       email: result.data.email,
@@ -201,7 +204,10 @@ export async function loginAction(
       };
     }
 
-    console.info("[Login]", `Login successful for ${maskEmail(result.data.email)}`);
+    console.info(
+      "[Login]",
+      `Login successful for ${maskEmail(result.data.email)}`
+    );
 
     // Get validated redirect URL
     const targetUrl =

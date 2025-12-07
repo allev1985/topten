@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DashboardPage from "@/app/(dashboard)/dashboard/page";
 
@@ -152,27 +152,35 @@ describe("DashboardPage - Filter Functionality", () => {
   });
 
   describe("list filtering", () => {
-    it("shows all 5 lists when filter is 'all'", () => {
+    it("shows all 5 lists when filter is 'all'", async () => {
       render(<DashboardPage />);
 
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(
+          screen.getByText("Best Coffee Shops in San Francisco")
+        ).toBeInTheDocument();
+      });
+
       // Check for some of the mock lists
-      expect(
-        screen.getByText("Best Coffee Shops in San Francisco")
-      ).toBeInTheDocument();
       expect(screen.getByText(/Hidden Gem Restaurants/)).toBeInTheDocument();
       expect(screen.getByText("Weekend Brunch Spots")).toBeInTheDocument();
       expect(screen.getByText("Craft Beer Bars Downtown")).toBeInTheDocument();
       expect(screen.getByText("New Places to Explore")).toBeInTheDocument();
     });
 
-    it("shows only published lists when filter is 'published'", () => {
+    it("shows only published lists when filter is 'published'", async () => {
       mockGet.mockReturnValue("published");
       render(<DashboardPage />);
 
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(
+          screen.getByText("Best Coffee Shops in San Francisco")
+        ).toBeInTheDocument();
+      });
+
       // Should show published lists
-      expect(
-        screen.getByText("Best Coffee Shops in San Francisco")
-      ).toBeInTheDocument();
       expect(screen.getByText("Weekend Brunch Spots")).toBeInTheDocument();
       expect(screen.getByText("Craft Beer Bars Downtown")).toBeInTheDocument();
 
@@ -185,12 +193,16 @@ describe("DashboardPage - Filter Functionality", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("shows only draft lists when filter is 'drafts'", () => {
+    it("shows only draft lists when filter is 'drafts'", async () => {
       mockGet.mockReturnValue("drafts");
       render(<DashboardPage />);
 
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.getByText(/Hidden Gem Restaurants/)).toBeInTheDocument();
+      });
+
       // Should show draft lists
-      expect(screen.getByText(/Hidden Gem Restaurants/)).toBeInTheDocument();
       expect(screen.getByText("New Places to Explore")).toBeInTheDocument();
 
       // Should not show published lists
