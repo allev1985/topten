@@ -8,6 +8,8 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ListGrid } from "@/components/dashboard/ListGrid";
+import { mockLists } from "@/lib/mocks/lists";
 
 /**
  * Dashboard page with authentication protection and responsive layout
@@ -15,6 +17,10 @@ import { Button } from "@/components/ui/button";
  */
 export default function DashboardPage(): JSX.Element {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleListClick = (listId: string) => {
+    console.log("List clicked:", listId);
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -51,7 +57,7 @@ export default function DashboardPage(): JSX.Element {
       <DashboardContent>
         <div className="mt-16 lg:mt-0">
           <DashboardHeader />
-          {/* Future: List content goes here */}
+          <ListGrid lists={mockLists} onListClick={handleListClick} />
         </div>
       </DashboardContent>
     </div>
