@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import {
   MoreVertical,
@@ -24,7 +23,6 @@ import {
 import type { ListCardProps } from "@/types/list";
 
 export function ListCard({ list, onClick }: ListCardProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const placeText = list.placeCount === 1 ? "place" : "places";
   const statusVariant = list.isPublished ? "default" : "secondary";
   const statusText = list.isPublished ? "Published" : "Draft";
@@ -47,13 +45,11 @@ export function ListCard({ list, onClick }: ListCardProps) {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("Edit list:", list.id);
-    setIsDropdownOpen(false);
   };
 
   const handleDuplicate = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("Duplicate list:", list.id);
-    setIsDropdownOpen(false);
   };
 
   const handlePublishToggle = (e: React.MouseEvent) => {
@@ -62,12 +58,10 @@ export function ListCard({ list, onClick }: ListCardProps) {
       list.isPublished ? "Unpublish list:" : "Publish list:",
       list.id
     );
-    setIsDropdownOpen(false);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsDropdownOpen(false);
     const confirmed = window.confirm(
       `Are you sure you want to delete "${list.title}"?`
     );
@@ -79,7 +73,6 @@ export function ListCard({ list, onClick }: ListCardProps) {
   const handleViewPublic = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("View public page:", list.id);
-    setIsDropdownOpen(false);
   };
 
   return (
@@ -105,10 +98,7 @@ export function ListCard({ list, onClick }: ListCardProps) {
 
           {/* Menu Button - Positioned absolutely in top-right */}
           <div className="absolute top-2 right-2">
-            <DropdownMenu
-              open={isDropdownOpen}
-              onOpenChange={setIsDropdownOpen}
-            >
+            <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={handleMenuClick}>
                 <Button
                   variant="ghost"

@@ -15,6 +15,45 @@ import { mockLists } from "@/lib/mocks/lists";
 type FilterType = "all" | "published" | "drafts";
 
 /**
+ * Get filter tab button className based on active state
+ */
+function getFilterTabClassName(isActive: boolean): string {
+  const baseClasses =
+    "border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors";
+  const activeClasses = "border-b-2";
+  const inactiveClasses =
+    "text-muted-foreground hover:text-foreground border-b-2 border-transparent";
+
+  return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
+}
+
+/**
+ * Get empty state message based on current filter
+ */
+function getEmptyStateMessage(filter: FilterType): {
+  title: string;
+  subtitle: string;
+} {
+  switch (filter) {
+    case "published":
+      return {
+        title: "No published lists yet",
+        subtitle: "Publish a list to see it here",
+      };
+    case "drafts":
+      return {
+        title: "No draft lists yet",
+        subtitle: "Create a draft to see it here",
+      };
+    default:
+      return {
+        title: "No lists yet",
+        subtitle: "Create your first list to get started",
+      };
+  }
+}
+
+/**
  * Dashboard page with authentication protection and responsive layout
  * Authentication is handled by middleware.ts and parent layout.tsx
  */
@@ -47,6 +86,8 @@ function DashboardPageContent(): JSX.Element {
     }
     return mockLists;
   }, [filter]);
+
+  const emptyState = getEmptyStateMessage(filter);
 
   return (
     <div className="flex min-h-screen">
@@ -88,31 +129,19 @@ function DashboardPageContent(): JSX.Element {
           <div className="mb-6 flex gap-2 border-b">
             <button
               onClick={() => handleFilterChange("all")}
-              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
-                filter === "all"
-                  ? "border-b-2"
-                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-              }`}
+              className={getFilterTabClassName(filter === "all")}
             >
               All Lists
             </button>
             <button
               onClick={() => handleFilterChange("published")}
-              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
-                filter === "published"
-                  ? "border-b-2"
-                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-              }`}
+              className={getFilterTabClassName(filter === "published")}
             >
               Published
             </button>
             <button
               onClick={() => handleFilterChange("drafts")}
-              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
-                filter === "drafts"
-                  ? "border-b-2"
-                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-              }`}
+              className={getFilterTabClassName(filter === "drafts")}
             >
               Drafts
             </button>
@@ -123,20 +152,8 @@ function DashboardPageContent(): JSX.Element {
             <ListGrid lists={filteredLists} onListClick={handleListClick} />
           ) : (
             <div className="text-muted-foreground flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg">
-                {filter === "published"
-                  ? "No published lists yet"
-                  : filter === "drafts"
-                    ? "No draft lists yet"
-                    : "No lists yet"}
-              </p>
-              <p className="mt-2 text-sm">
-                {filter === "published"
-                  ? "Publish a list to see it here"
-                  : filter === "drafts"
-                    ? "Create a draft to see it here"
-                    : "Create your first list to get started"}
-              </p>
+              <p className="text-lg">{emptyState.title}</p>
+              <p className="mt-2 text-sm">{emptyState.subtitle}</p>
             </div>
           )}
         </div>
