@@ -12,12 +12,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { maskEmail } from "@/lib/utils/formatting/email";
-import { isEmailNotVerifiedError } from "@/lib/auth/helpers/supabase-errors";
 import {
   AuthServiceError,
   invalidCredentialsError,
   emailNotConfirmedError,
   serviceError,
+  isEmailNotVerifiedError,
 } from "./service/errors";
 import type { SignupResult, LoginResult, LogoutResult } from "./service/types";
 

@@ -8,7 +8,7 @@ import type {
 } from "@/lib/auth/service/types";
 import * as supabaseServer from "@/lib/supabase/server";
 import * as emailUtils from "@/lib/utils/formatting/email";
-import * as supabaseErrors from "@/lib/auth/helpers/supabase-errors";
+import * as serviceErrors from "@/lib/auth/service/errors";
 
 // Mock the Supabase server client
 vi.mock("@/lib/supabase/server");
@@ -16,8 +16,16 @@ vi.mock("@/lib/supabase/server");
 // Mock the email masking utility
 vi.mock("@/lib/utils/formatting/email");
 
-// Mock the supabase error helper
-vi.mock("@/lib/auth/helpers/supabase-errors");
+// Mock the service errors module
+vi.mock("@/lib/auth/service/errors", async () => {
+  const actual = await vi.importActual<typeof serviceErrors>(
+    "@/lib/auth/service/errors"
+  );
+  return {
+    ...actual,
+    isEmailNotVerifiedError: vi.fn(),
+  };
+});
 
 describe("AuthService", () => {
   let mockSupabase: {
@@ -234,7 +242,7 @@ describe("AuthService", () => {
         error: supabaseError,
       });
 
-      vi.mocked(supabaseErrors.isEmailNotVerifiedError).mockReturnValue(true);
+      vi.mocked(serviceErrors.isEmailNotVerifiedError).mockReturnValue(true);
 
       await expect(login(testEmail, testPassword)).rejects.toThrow(
         AuthServiceError
@@ -256,7 +264,7 @@ describe("AuthService", () => {
         error: supabaseError,
       });
 
-      vi.mocked(supabaseErrors.isEmailNotVerifiedError).mockReturnValue(false);
+      vi.mocked(serviceErrors.isEmailNotVerifiedError).mockReturnValue(false);
 
       await expect(login(testEmail, testPassword)).rejects.toThrow(
         AuthServiceError
