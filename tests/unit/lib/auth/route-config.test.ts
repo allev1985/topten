@@ -8,10 +8,14 @@ describe("route-config", () => {
       expect(PROTECTED_ROUTES).toContain("/dashboard");
     });
 
+    it("includes /settings", () => {
+      expect(PROTECTED_ROUTES).toContain("/settings");
+    });
+
     it("is a tuple type (const assertion)", () => {
       // The `as const` assertion creates a readonly tuple type
       // We verify it has a fixed length and expected values
-      expect(PROTECTED_ROUTES.length).toBe(1);
+      expect(PROTECTED_ROUTES.length).toBe(2);
     });
   });
 
@@ -58,6 +62,14 @@ describe("route-config", () => {
 
     it("returns true for /dashboard/my-lists", () => {
       expect(isProtectedRoute("/dashboard/my-lists")).toBe(true);
+    });
+
+    it("returns true for /settings", () => {
+      expect(isProtectedRoute("/settings")).toBe(true);
+    });
+
+    it("returns true for /settings/password", () => {
+      expect(isProtectedRoute("/settings/password")).toBe(true);
     });
 
     it("returns true for /dashboard/settings/password", () => {

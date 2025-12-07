@@ -43,3 +43,11 @@ export interface ImageConfig {
   /** Tailwind CSS classes for grid positioning */
   gridClasses: string;
 }
+
+/**
+ * Props for DashboardLayout component
+ */
+export interface DashboardLayoutProps {
+  /** Child components to render within the layout */
+  children: React.ReactNode;
+}

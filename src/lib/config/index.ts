@@ -48,7 +48,7 @@ export const VERIFICATION_TYPE_EMAIL = "email" as const;
  */
 
 /** Routes that require authentication */
-export const PROTECTED_ROUTES = ["/dashboard"] as const;
+export const PROTECTED_ROUTES = ["/dashboard", "/settings"] as const;
 
 /** Routes that are always publicly accessible */
 export const PUBLIC_ROUTES = [
