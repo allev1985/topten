@@ -96,6 +96,16 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | Linting    | ESLint + Prettier                           |
 | Local Dev  | Node.js + pnpm + Supabase CLI + Docker      |
 
+## Authentication Architecture
+
+This application uses **Supabase Auth** with a service-based architecture:
+
+- **Auth Service** (`src/lib/auth/service.ts`) - Centralized auth logic
+- **Server Actions** (`src/actions/auth-actions.ts`) - Call service directly (no HTTP overhead)
+- **Middleware** (`src/middleware.ts`) - Protects routes, manages sessions
+
+See [Authentication Documentation](docs/decisions/authentication.md) for details.
+
 ## Project Structure
 
 ```

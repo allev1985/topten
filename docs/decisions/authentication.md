@@ -1,6 +1,11 @@
 # Authentication 
 This document outlines the authentication mechanisms used in the YourFaves application to ensure secure access to its features and data.
 
+> **📝 Note on Document Structure:**  
+> - **Sections 1-10** (Overview through Authentication Flows) describe the **original implementation** (pre-2025-12-07) using a three-layer architecture with API routes. These sections are preserved for historical reference.
+> - **Section 11 (Architecture)** describes the **current implementation** (as of 2025-12-07) using the Auth Service pattern.
+> - **Section 12 (Flow Details)** has been updated to reflect the current service-based architecture.
+
 ## Overview
 YourFaces will utilise Superbase Authentication for handling its authentication requirements. This includes managing user sign up, login, password resets and session management. 
 
@@ -35,20 +40,22 @@ The application uses the `@supabase/ssr` package to seamlessly integrate Supabas
 
 ## API Routes
 
-The following RESTful API routes handle authentication operations:
+> **⚠️ HISTORICAL SECTION**: These API routes were removed on 2025-12-07 in favor of the Auth Service pattern. Only `/api/auth/verify` remains active. See the [Architecture](#architecture) section for current implementation.
+
+The following RESTful API routes handled authentication operations (legacy implementation):
 
 ### Authentication Endpoints
 
-| Method | Endpoint | Description | Request Body | Response |
-|--------|----------|-------------|--------------|----------|
-| `POST` | `/api/auth/signup` | Register a new user account | `{ email, password }` | `{ success, message }` |
-| `GET` | `/api/auth/verify` | Verify email address via token | Query: `?token=xxx` | Redirect to dashboard with session |
-| `POST` | `/api/auth/login` | Authenticate existing user | `{ email, password, redirectTo? }` | `{ session }` or error |
-| `POST` | `/api/auth/logout` | End user session | - | `{ success: true }` |
-| `POST` | `/api/auth/refresh` | Refresh an expiring session | - | `{ session }` or error |
-| `POST` | `/api/auth/password/reset` | Request password reset email | `{ email }` | `{ success: true }` |
-| `PUT` | `/api/auth/password` | Update user password | `{ password, token? }` | `{ success: true }` or error |
-| `GET` | `/api/auth/session` | Get current session status | - | `{ session, user }` or `null` |
+| Method | Endpoint | Description | Request Body | Response | Status |
+|--------|----------|-------------|--------------|----------|--------|
+| `POST` | `/api/auth/signup` | Register a new user account | `{ email, password }` | `{ success, message }` | **REMOVED** |
+| `GET` | `/api/auth/verify` | Verify email address via token | Query: `?token=xxx` | Redirect to dashboard with session | **ACTIVE** |
+| `POST` | `/api/auth/login` | Authenticate existing user | `{ email, password, redirectTo? }` | `{ session }` or error | **REMOVED** |
+| `POST` | `/api/auth/logout` | End user session | - | `{ success: true }` | **REMOVED** |
+| `POST` | `/api/auth/refresh` | Refresh an expiring session | - | `{ session }` or error | **REMOVED** |
+| `POST` | `/api/auth/password/reset` | Request password reset email | `{ email }` | `{ success: true }` | **REMOVED** |
+| `PUT` | `/api/auth/password` | Update user password | `{ password, token? }` | `{ success: true }` or error | **REMOVED** |
+| `GET` | `/api/auth/session` | Get current session status | - | `{ session, user }` or `null` | **REMOVED** |
 
 ### Route Details
 
@@ -1029,9 +1036,70 @@ sequenceDiagram
     end
 ```
 
-## API Architecture
+## Architecture
 
-The Web Application implements a **RESTful API layer** that acts as an intermediary between the frontend pages and Supabase Auth.
+### Current Architecture (As of 2025-12-07)
+
+The application uses a **two-layer authentication architecture**:
+
+```
+UI Components (Client)
+    ↓
+Server Actions (Server)
+    ↓
+Auth Service (Server)
+    ↓
+Supabase SDK
+```
+
+**Auth Service** (`/src/lib/auth/service.ts`):
+- Centralized authentication logic
+- Called directly by Server Actions
+- Handles all Supabase auth operations
+- Provides consistent error handling
+- No HTTP overhead
+
+**Server Actions** (`/src/actions/auth-actions.ts`):
+- Thin wrappers around Auth Service
+- Handle validation and redirects
+- Manage form state
+- Return user-friendly errors
+
+**API Routes** (`/src/app/api/auth/*`) - **Removed**:
+- All removed except `/api/auth/verify`
+- `/api/auth/verify` remains active (required for email verification links)
+
+### Previous Architecture (Before 2025-12-07)
+
+Previously used three-layer architecture:
+```
+UI → Server Actions → API Routes → Supabase
+```
+
+Migrated to service-based architecture for:
+- Better performance (no HTTP overhead)
+- Simpler code (fewer layers)
+- Type safety (no HTTP boundary)
+- Easier testing
+
+See: `/docs/specifications/auth-service-refactor.md`
+
+### Removed API Routes (2025-12-07)
+
+The following API routes have been **removed** and replaced with the Auth Service:
+
+| Removed Route | Replacement |
+|--------------|-------------|
+| `POST /api/auth/signup` | `import { signup } from '@/lib/auth/service'` |
+| `POST /api/auth/login` | Direct Supabase call in Server Actions |
+| `POST /api/auth/logout` | `import { logout } from '@/lib/auth/service'` |
+| `POST /api/auth/password/reset` | `import { resetPassword } from '@/lib/auth/service'` |
+| `PUT /api/auth/password` | `import { updatePassword } from '@/lib/auth/service'` |
+| `GET /api/auth/session` | `import { getSession } from '@/lib/auth/service'` |
+| `POST /api/auth/refresh` | `import { refreshSession } from '@/lib/auth/service'` |
+
+**Retained Route:**
+- `GET /api/auth/verify` - Required for email verification links (direct HTTP GET requests from email)
 
 ### Key Distinction: Pages vs APIs
 
@@ -1043,64 +1111,49 @@ The Web Application implements a **RESTful API layer** that acts as an intermedi
 - `/reset-password` - New password form page (receives code from email link)
 - `/dashboard/*` - Protected application pages
 
-**API Endpoints** (called internally by web pages):
-- Called server-side or via client-side JavaScript
-- Handle business logic and communicate with Supabase
-- Set cookies and manage sessions
-- Return JSON responses
+**API Endpoint** (called externally):
+- `/api/auth/verify` - Email verification callback from Supabase emails (the only remaining auth API route)
 
-This architecture provides:
-
-### API Endpoints
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `POST` | `/api/auth/signup` | Register new user account |
-| `GET` | `/api/auth/verify` | Verify email with code from link |
-| `POST` | `/api/auth/login` | Authenticate user and create session |
-| `POST` | `/api/auth/logout` | End user session |
-| `POST` | `/api/auth/refresh` | Refresh expiring session |
-| `POST` | `/api/auth/password/reset` | Request password reset email |
-| `PUT` | `/api/auth/password` | Update user password |
-| `GET` | `/api/auth/session` | Get current session status |
-
-### Benefits of API Layer
-- **Abstraction** - Frontend doesn't directly depend on Supabase client
-- **Security** - Sensitive operations handled server-side
-- **Validation** - Centralized input validation and sanitization
-- **Logging** - Audit logging for all authentication events
-- **Flexibility** - Easier to switch auth providers in the future
+### Benefits of Service-Based Architecture
+- **Performance** - Direct function calls eliminate HTTP overhead
+- **Type Safety** - End-to-end TypeScript without HTTP boundary
+- **Simplicity** - Fewer layers, clearer call stack
+- **Security** - Sensitive operations handled server-side with proper validation
+- **Logging** - Comprehensive audit logging for all authentication events
+- **Maintainability** - Single source of truth for authentication logic
 
 ## Flow Details
 
 ### User Sign Up
 - User navigates to the signup page and submits their email and password
-- Web application calls `/api/auth/signup` which invokes Supabase's `signUp()` method
+- Server Action `signupAction()` calls Auth Service `signup()` method
+- Auth Service invokes Supabase's `signUp()` method
 - For security (user enumeration protection):
   - New users: Supabase creates an unverified user record and sends a verification email
   - Existing users: Supabase sends an "account exists" notification email
-  - API returns the same generic success message in both cases
+  - Server Action returns the same generic success message in both cases
 - User is redirected to a "Check your email" page (not logged in yet)
 - User clicks the verification link in their email → navigates to `/verify-email?code=xxx`
-- Page calls `/api/auth/verify` which verifies the email and creates a session
+- Page calls `/api/auth/verify` (the only remaining API route) which verifies the email and creates a session
 - User is then redirected to the dashboard and logged in
 
 ### User Login
 - User submits credentials via the login form
-- Web application calls `/api/auth/login` which authenticates using Supabase's `signInWithPassword()`
+- Server Action `loginAction()` authenticates using Supabase's `signInWithPassword()` directly
 - Upon successful validation, a session is created
 - Session cookie is set and user gains access to protected routes
 
 ### Password Reset
 - User requests password reset with their email via `/forgot-password` page
-- Form submission calls `/api/auth/password/reset` which sends reset email via Supabase
+- Server Action `passwordResetRequestAction()` calls Auth Service `resetPassword()` method
+- Auth Service sends reset email via Supabase
 - User clicks the reset link in email → navigates to `/reset-password?code=xxx`
-- User submits new password which calls `/api/auth/password`
+- User submits new password via Server Action `passwordUpdateAction()` which calls Auth Service `updatePassword()`
 - Password is updated in the database and user is redirected to login
 
 ### Protected Route Access
 - Next.js Middleware intercepts requests to `/dashboard/*` routes
-- Session validity is checked via `getSession()`
+- Session validity is checked via Auth Service `getSession()`
 - Valid sessions allow access to the requested page
 - Invalid/expired sessions:
   - Store the original requested URL (e.g., `/dashboard/my-lists`)
@@ -1109,12 +1162,13 @@ This architecture provides:
 
 ### Session Refresh
 - Middleware automatically detects expiring sessions
-- Calls `/api/auth/refresh` to obtain a new session using the refresh token
+- Calls Auth Service `refreshSession()` to obtain a new session using the refresh token
 - Session cookie is updated seamlessly
 - Expired sessions trigger re-authentication
 
 ### User Logout
 - User initiates logout
-- Web application calls `/api/auth/logout` which invalidates the session via Supabase
+- Server Action `signOutAction()` calls Auth Service `logout()` method
+- Auth Service invalidates the session via Supabase
 - Session cookie is cleared
 - User is redirected to the login page
