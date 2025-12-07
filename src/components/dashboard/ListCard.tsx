@@ -1,18 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { MoreVertical } from "lucide-react";
+import {
+  MoreVertical,
+  Edit,
+  Copy,
+  Eye,
+  Upload,
+  Download,
+  Trash2,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ListCardProps } from "@/types/list";
 
 export function ListCard({ list, onClick }: ListCardProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const placeText = list.placeCount === 1 ? "place" : "places";
   const statusVariant = list.isPublished ? "default" : "secondary";
   const statusText = list.isPublished ? "Published" : "Draft";
@@ -30,6 +42,44 @@ export function ListCard({ list, onClick }: ListCardProps) {
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("Edit list:", list.id);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("Duplicate list:", list.id);
+    setIsDropdownOpen(false);
+  };
+
+  const handlePublishToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log(
+      list.isPublished ? "Unpublish list:" : "Publish list:",
+      list.id
+    );
+    setIsDropdownOpen(false);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDropdownOpen(false);
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${list.title}"?`
+    );
+    if (confirmed) {
+      console.log("Delete list:", list.id);
+    }
+  };
+
+  const handleViewPublic = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("View public page:", list.id);
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -55,7 +105,10 @@ export function ListCard({ list, onClick }: ListCardProps) {
 
           {/* Menu Button - Positioned absolutely in top-right */}
           <div className="absolute top-2 right-2">
-            <DropdownMenu>
+            <DropdownMenu
+              open={isDropdownOpen}
+              onOpenChange={setIsDropdownOpen}
+            >
               <DropdownMenuTrigger asChild onClick={handleMenuClick}>
                 <Button
                   variant="ghost"
@@ -67,7 +120,41 @@ export function ListCard({ list, onClick }: ListCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {/* TODO: Add menu items for issue #4 */}
+                <DropdownMenuItem onClick={handleEdit}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit List
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDuplicate}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Duplicate List
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePublishToggle}>
+                  {list.isPublished ? (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Unpublish
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Publish
+                    </>
+                  )}
+                </DropdownMenuItem>
+                {list.isPublished && (
+                  <DropdownMenuItem onClick={handleViewPublic}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Public Page
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete List
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

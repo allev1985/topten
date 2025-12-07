@@ -1,7 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -11,16 +12,41 @@ import { Button } from "@/components/ui/button";
 import { ListGrid } from "@/components/dashboard/ListGrid";
 import { mockLists } from "@/lib/mocks/lists";
 
+type FilterType = "all" | "published" | "drafts";
+
 /**
  * Dashboard page with authentication protection and responsive layout
  * Authentication is handled by middleware.ts and parent layout.tsx
  */
-export default function DashboardPage(): JSX.Element {
+function DashboardPageContent(): JSX.Element {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const filter = (searchParams.get("filter") as FilterType) || "all";
 
   const handleListClick = (listId: string) => {
     console.log("List clicked:", listId);
   };
+
+  const handleFilterChange = (newFilter: FilterType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newFilter === "all") {
+      params.delete("filter");
+    } else {
+      params.set("filter", newFilter);
+    }
+    router.push(`/dashboard?${params.toString()}`);
+  };
+
+  const filteredLists = useMemo(() => {
+    if (filter === "published") {
+      return mockLists.filter((list) => list.isPublished);
+    } else if (filter === "drafts") {
+      return mockLists.filter((list) => !list.isPublished);
+    }
+    return mockLists;
+  }, [filter]);
 
   return (
     <div className="flex min-h-screen">
@@ -57,9 +83,72 @@ export default function DashboardPage(): JSX.Element {
       <DashboardContent>
         <div className="mt-16 lg:mt-0">
           <DashboardHeader />
-          <ListGrid lists={mockLists} onListClick={handleListClick} />
+
+          {/* Filter Tabs */}
+          <div className="mb-6 flex gap-2 border-b">
+            <button
+              onClick={() => handleFilterChange("all")}
+              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
+                filter === "all"
+                  ? "border-b-2"
+                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+              }`}
+            >
+              All Lists
+            </button>
+            <button
+              onClick={() => handleFilterChange("published")}
+              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
+                filter === "published"
+                  ? "border-b-2"
+                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+              }`}
+            >
+              Published
+            </button>
+            <button
+              onClick={() => handleFilterChange("drafts")}
+              className={`border-primary text-primary hover:text-primary px-4 py-2 font-medium transition-colors ${
+                filter === "drafts"
+                  ? "border-b-2"
+                  : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+              }`}
+            >
+              Drafts
+            </button>
+          </div>
+
+          {/* List Grid or Empty State */}
+          {filteredLists.length > 0 ? (
+            <ListGrid lists={filteredLists} onListClick={handleListClick} />
+          ) : (
+            <div className="text-muted-foreground flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-lg">
+                {filter === "published"
+                  ? "No published lists yet"
+                  : filter === "drafts"
+                    ? "No draft lists yet"
+                    : "No lists yet"}
+              </p>
+              <p className="mt-2 text-sm">
+                {filter === "published"
+                  ? "Publish a list to see it here"
+                  : filter === "drafts"
+                    ? "Create a draft to see it here"
+                    : "Create your first list to get started"}
+              </p>
+            </div>
+          )}
         </div>
       </DashboardContent>
     </div>
+  );
+}
+
+export default function DashboardPage(): JSX.Element {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }
