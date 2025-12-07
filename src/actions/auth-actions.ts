@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import {
   signupSchema,
   loginSchema,
@@ -9,7 +8,6 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
-import type { AuthErrorResponse } from "@/lib/auth/errors";
 import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
@@ -17,17 +15,6 @@ import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
 import { signup, logout, resetPassword, updatePassword, getSession } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import { createClient } from "@/lib/supabase/server";
-
-/**
- * Helper to get cookies as a string for forwarding to API routes
- */
-async function getCookieHeader(): Promise<string> {
-  const cookieStore = await cookies();
-  return cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-}
 
 /**
  * Signup action success data
@@ -70,23 +57,6 @@ function mapZodErrors(
       const field = issue.path.map(String).join(".");
       if (!acc[field]) acc[field] = [];
       acc[field].push(issue.message);
-      return acc;
-    },
-    {} as Record<string, string[]>
-  );
-}
-
-/**
- * Helper to map API validation error details to field errors
- */
-function mapApiDetailsToFieldErrors(
-  details?: Array<{ field: string; message: string }>
-): Record<string, string[]> {
-  if (!details) return {};
-  return details.reduce(
-    (acc, detail) => {
-      if (!acc[detail.field]) acc[detail.field] = [];
-      acc[detail.field]!.push(detail.message);
       return acc;
     },
     {} as Record<string, string[]>
