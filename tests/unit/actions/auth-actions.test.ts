@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { User } from "@supabase/supabase-js";
 import {
   signupAction,
   loginAction,
@@ -43,24 +44,39 @@ vi.mock("@/lib/config", async (importOriginal) => {
 vi.mock("@/lib/auth/service");
 vi.mock("@/lib/auth/service/errors", () => ({
   AuthServiceError: class AuthServiceError extends Error {
-    constructor(message: string) {
+    public readonly code: string;
+    public readonly originalError?: unknown;
+
+    constructor(code: string, message: string, originalError?: unknown) {
       super(message);
       this.name = "AuthServiceError";
+      this.code = code;
+      this.originalError = originalError;
     }
   },
   isEmailNotVerifiedError: vi.fn(),
 }));
 
 // Import after mocking
-import { signup, logout, resetPassword, updatePassword, getSession } from "@/lib/auth/service";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+import {
+  signup,
+  // logout is not used in these tests (covered by signOutAction tests)
+  resetPassword,
+  updatePassword,
+  getSession,
+} from "@/lib/auth/service";
+import {
+  AuthServiceError,
+  isEmailNotVerifiedError,
+} from "@/lib/auth/service/errors";
 
 // Get typed mock references
 const mockSignup = vi.mocked(signup);
-const mockLogout = vi.mocked(logout);
+// mockLogout is not used in these tests (covered by signOutAction tests)
 const mockResetPassword = vi.mocked(resetPassword);
 const mockUpdatePassword = vi.mocked(updatePassword);
 const mockGetSession = vi.mocked(getSession);
+const mockIsEmailNotVerifiedError = vi.mocked(isEmailNotVerifiedError);
 
 // Mock fetch globally (still used by other actions)
 const mockFetch = vi.fn();
@@ -162,7 +178,7 @@ describe("Auth Actions", () => {
     it("redirects to verify-email on successful signup", async () => {
       mockSignup.mockResolvedValue({
         requiresEmailConfirmation: true,
-        user: { id: "123", email: "test@example.com" },
+        user: { id: "123", email: "test@example.com" } as Partial<User> as User,
         session: null,
       });
 
@@ -317,6 +333,9 @@ describe("Auth Actions", () => {
         },
       });
 
+      // Mock the error check to return true for email not verified
+      mockIsEmailNotVerifiedError.mockReturnValue(true);
+
       const formData = createFormData({
         email: "unverified@example.com",
         password: "ValidPass123!@#",
@@ -413,7 +432,10 @@ describe("Auth Actions", () => {
 
     it("returns error when session has expired", async () => {
       mockUpdatePassword.mockRejectedValue(
-        new AuthServiceError("Authentication link has expired. Please request a new one.")
+        new AuthServiceError(
+          "SERVICE_ERROR",
+          "Authentication link has expired. Please request a new one."
+        )
       );
 
       const formData = createFormData({
@@ -451,7 +473,7 @@ describe("Auth Actions", () => {
 
     it("returns error when update fails", async () => {
       mockUpdatePassword.mockRejectedValue(
-        new AuthServiceError("Update failed")
+        new AuthServiceError("SERVICE_ERROR", "Update failed")
       );
 
       const formData = createFormData({
@@ -532,7 +554,10 @@ describe("Auth Actions", () => {
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
+        session: {
+          expiresAt: "2025-12-08T00:00:00.000Z",
+          isExpiringSoon: false,
+        },
       });
 
       // Mock incorrect password verification
@@ -558,7 +583,10 @@ describe("Auth Actions", () => {
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
+        session: {
+          expiresAt: "2025-12-08T00:00:00.000Z",
+          isExpiringSoon: false,
+        },
       });
 
       // Mock correct password verification
@@ -592,7 +620,10 @@ describe("Auth Actions", () => {
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: { expiresAt: "2025-12-08T00:00:00.000Z", isExpiringSoon: false },
+        session: {
+          expiresAt: "2025-12-08T00:00:00.000Z",
+          isExpiringSoon: false,
+        },
       });
 
       // Mock correct password verification
@@ -606,7 +637,7 @@ describe("Auth Actions", () => {
 
       // Mock password update failure
       mockUpdatePassword.mockRejectedValue(
-        new AuthServiceError("Update failed")
+        new AuthServiceError("SERVICE_ERROR", "Update failed")
       );
 
       const formData = createFormData({
