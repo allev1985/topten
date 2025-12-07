@@ -12,7 +12,13 @@ import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
 import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
-import { signup, logout, resetPassword, updatePassword, getSession } from "@/lib/auth/service";
+import {
+  signup,
+  logout,
+  resetPassword,
+  updatePassword,
+  getSession,
+} from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import { createClient } from "@/lib/supabase/server";
 
