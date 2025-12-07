@@ -1,5 +1,7 @@
 /**
- * Next.js Authentication Middleware
+ * Next.js Authentication Proxy (Middleware)
+ *
+ * Note: This file uses Next.js 16's "proxy.ts" convention (formerly "middleware.ts").
  *
  * Protects routes based on authentication status:
  * - Protected routes (/dashboard/*): Require authentication
@@ -24,10 +26,12 @@ import {
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * Main middleware function
+ * Main proxy function
  * Handles authentication checks and session refresh
+ * 
+ * Note: This is the new Next.js 16 convention. Previously this was called "middleware".
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = getRequestPathname(request);
 
   // For public routes, still update session (for session refresh) but always allow access
@@ -88,8 +92,8 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Middleware configuration
- * Defines which paths the middleware runs on
+ * Proxy configuration
+ * Defines which paths the proxy runs on
  *
  * Excludes:
  * - _next/static (static files)

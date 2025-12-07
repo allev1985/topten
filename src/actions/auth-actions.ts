@@ -146,7 +146,7 @@ export async function signupAction(
 /**
  * Login server action
  * Authenticates user with email/password
- * Calls /api/auth/login endpoint
+ * Directly calls Supabase to ensure cookies are properly set
  */
 export async function loginAction(
   _prevState: ActionState<LoginSuccessData>,
@@ -160,7 +160,7 @@ export async function loginAction(
       ? redirectToValue
       : undefined;
 
-  // Validate input (for immediate feedback - API will re-validate)
+  // Validate input
   const result = loginSchema.safeParse({ email, password, redirectTo });
 
   if (!result.success) {
@@ -172,42 +172,50 @@ export async function loginAction(
     };
   }
 
-  const baseUrl = getAppUrl();
-
   try {
-    const response = await fetch(`${baseUrl}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: result.data.email,
-        password: result.data.password,
-        redirectTo: result.data.redirectTo,
-      }),
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    console.info(
+      "[Login]",
+      `Login attempt for email: ${result.data.email.substring(0, 3)}***`
+    );
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: result.data.email,
+      password: result.data.password,
     });
 
-    const data = await response.json();
+    if (error) {
+      console.error("[Login]", `Login failed: ${error.message}`);
 
-    if (!response.ok) {
-      const errorData = data as AuthErrorResponse;
-      // Use generic error message for security
+      // Check for unverified email
+      const isUnverified =
+        error.code === "email_not_confirmed" ||
+        (error.status === 400 &&
+          error.message.toLowerCase().includes("not confirmed"));
+
       return {
         data: null,
-        error: errorData.error.message || "Invalid email or password",
-        fieldErrors: mapApiDetailsToFieldErrors(errorData.error.details),
+        error: isUnverified
+          ? "Please verify your email before logging in"
+          : "Invalid email or password",
+        fieldErrors: {},
         isSuccess: false,
       };
     }
 
-    // Success - get validated redirect URL from API response
+    console.info("[Login]", `Login successful`);
+
+    // Get validated redirect URL
     const targetUrl =
-      data.redirectTo && isValidRedirect(data.redirectTo)
-        ? data.redirectTo
+      result.data.redirectTo && isValidRedirect(result.data.redirectTo)
+        ? result.data.redirectTo
         : REDIRECT_ROUTES.default;
 
     redirect(targetUrl);
   } catch (err) {
     // Check if this is a redirect (Next.js throws for redirect)
-    // Support both Next.js digest format and test mock format
     const isRedirect =
       (typeof err === "object" &&
         err !== null &&
@@ -221,7 +229,7 @@ export async function loginAction(
     }
 
     console.error(
-      "[Login] Network error:",
+      "[Login] Unexpected error:",
       err instanceof Error ? err.message : "Unknown error"
     );
 

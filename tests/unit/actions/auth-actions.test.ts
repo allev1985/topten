@@ -43,6 +43,25 @@ vi.mock("@/lib/config", async (importOriginal) => {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Mock Supabase client
+const mockSignInWithPassword = vi.fn();
+const mockGetUser = vi.fn();
+const mockSignOut = vi.fn();
+const mockUpdateUser = vi.fn();
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: {
+        signInWithPassword: mockSignInWithPassword,
+        getUser: mockGetUser,
+        signOut: mockSignOut,
+        updateUser: mockUpdateUser,
+      },
+    })
+  ),
+}));
+
 // Helper to create FormData
 function createFormData(data: Record<string, string>): FormData {
   const formData = new FormData();
@@ -65,6 +84,10 @@ describe("Auth Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockReset();
+    mockSignInWithPassword.mockReset();
+    mockGetUser.mockReset();
+    mockSignOut.mockReset();
+    mockUpdateUser.mockReset();
   });
 
   describe("signupAction", () => {
@@ -201,16 +224,12 @@ describe("Auth Actions", () => {
     });
 
     it("returns error for invalid credentials", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: {
-              code: "AUTH_ERROR",
-              message: "Invalid email or password",
-            },
-          }),
+      mockSignInWithPassword.mockResolvedValue({
+        data: { user: null, session: null },
+        error: {
+          message: "Invalid login credentials",
+          status: 400,
+        },
       });
 
       const formData = createFormData({
@@ -226,13 +245,12 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to dashboard on successful login", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            redirectTo: "/dashboard",
-          }),
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: "test@example.com" },
+          session: { access_token: "token-123" },
+        },
+        error: null,
       });
 
       const formData = createFormData({
@@ -244,28 +262,19 @@ describe("Auth Actions", () => {
         "REDIRECT:/dashboard"
       );
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3000/api/auth/login",
-        expect.objectContaining({
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: "test@example.com",
-            password: "ValidPass123!@#",
-            redirectTo: undefined,
-          }),
-        })
-      );
+      expect(mockSignInWithPassword).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "ValidPass123!@#",
+      });
     });
 
     it("redirects to specified redirectTo on successful login", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            redirectTo: "/settings",
-          }),
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: "test@example.com" },
+          session: { access_token: "token-123" },
+        },
+        error: null,
       });
 
       const formData = createFormData({
@@ -280,14 +289,12 @@ describe("Auth Actions", () => {
     });
 
     it("ignores invalid redirectTo and uses default", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            // API should validate and return default if invalid
-            redirectTo: "/dashboard",
-          }),
+      mockSignInWithPassword.mockResolvedValue({
+        data: {
+          user: { id: "user-123", email: "test@example.com" },
+          session: { access_token: "token-123" },
+        },
+        error: null,
       });
 
       const formData = createFormData({
@@ -296,9 +303,31 @@ describe("Auth Actions", () => {
         redirectTo: "https://evil.com",
       });
 
+      // Should use default redirect since evil.com is not valid
       await expect(loginAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/dashboard"
       );
+    });
+
+    it("returns error for unverified email", async () => {
+      mockSignInWithPassword.mockResolvedValue({
+        data: { user: null, session: null },
+        error: {
+          message: "Email not confirmed",
+          status: 400,
+          code: "email_not_confirmed",
+        },
+      });
+
+      const formData = createFormData({
+        email: "unverified@example.com",
+        password: "ValidPass123!@#",
+      });
+
+      const result = await loginAction(initialState, formData);
+
+      expect(result.isSuccess).toBe(false);
+      expect(result.error).toBe("Please verify your email before logging in");
     });
   });
 
