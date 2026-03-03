@@ -373,8 +373,8 @@ describe("Place Service", () => {
 
     it("throws ALREADY_IN_LIST when place is already attached", async () => {
       mockSelectRowsSequence = [
-        [{ id: LIST_ID }],          // ownership
-        [{ id: LIST_PLACE_ID }],    // existing attachment found
+        [{ id: LIST_ID }],                              // ownership
+        [{ id: LIST_PLACE_ID, deletedAt: null }],       // active row found
       ];
       await expect(
         addExistingPlaceToList({
@@ -383,6 +383,24 @@ describe("Place Service", () => {
           userId: USER_ID,
         })
       ).rejects.toMatchObject({ code: "ALREADY_IN_LIST" });
+    });
+
+    it("restores a previously removed place instead of inserting a duplicate", async () => {
+      mockSelectRowsSequence = [
+        [{ id: LIST_ID }],                                       // ownership
+        [{ id: LIST_PLACE_ID, deletedAt: new Date("2024-01-01") }], // soft-deleted row
+        [{ maxPos: 2 }],                                         // position query
+      ];
+      // mockUpdate is called with set({ deletedAt: null, position: 3 })
+      // No .returning() is called on the restore path — mock just needs to not throw
+
+      const result = await addExistingPlaceToList({
+        listId: LIST_ID,
+        placeId: PLACE_ID,
+        userId: USER_ID,
+      });
+
+      expect(result.listPlaceId).toBe(LIST_PLACE_ID);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {

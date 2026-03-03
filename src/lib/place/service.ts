@@ -106,9 +106,14 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
  * target list — suitable for the "add existing place" search path.
  *
  * A place is "available" when:
- *   - It is active (deletedAt IS NULL on the Place row)
- *   - It belongs to at least one of the user's active lists (via an active ListPlace row)
- *   - It does NOT have an active ListPlace row for the specified listId
+ *   - The Place record is active (deletedAt IS NULL)
+ *   - It is (or was) connected to at least one of the user's active lists via
+ *     any ListPlace row, active or soft-deleted — this is the ownership proof
+ *   - It does NOT have an *active* ListPlace row for the specified listId
+ *
+ * Soft-deleted ListPlace rows are intentionally included in the ownership join
+ * so that a place removed from all its lists remains discoverable and can be
+ * re-added (the re-add path restores the ListPlace row).
  *
  * @param params.listId  - Target list to exclude already-attached places from
  * @param params.userId  - Authenticated user whose lists are searched
@@ -151,13 +156,9 @@ export async function getAvailablePlacesForList(params: {
         address: places.address,
       })
       .from(places)
-      .innerJoin(
-        listPlaces,
-        and(
-          eq(listPlaces.placeId, places.id),
-          isNull(listPlaces.deletedAt)
-        )
-      )
+      // Join through any ListPlace row (active or soft-deleted) — only used to
+      // prove the place belongs to the user; activity is not required here.
+      .innerJoin(listPlaces, eq(listPlaces.placeId, places.id))
       .where(
         and(
           isNull(places.deletedAt),
@@ -303,12 +304,15 @@ export async function createPlace(params: {
  *
  * - Verifies list ownership before writing.
  * - Rejects if the place already has an active ListPlace row for this list.
- * - position is MAX(current positions) + 1.
+ * - If a soft-deleted ListPlace row exists for this list, it is restored
+ *   (deletedAt set back to null, position recomputed to MAX+1) rather than
+ *   inserting a duplicate row — this is the idiomatic re-add path.
+ * - If no prior row exists, a fresh ListPlace row is inserted at MAX+1.
  *
  * @param params.listId  - Target list
  * @param params.placeId - Existing place to attach
  * @param params.userId  - Authenticated user (ownership check)
- * @returns AddExistingPlaceResult containing the new listPlace id
+ * @returns AddExistingPlaceResult containing the listPlace id (restored or new)
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
@@ -341,24 +345,25 @@ export async function addExistingPlaceToList(params: {
     throw notFoundError();
   }
 
-  // Check for existing active attachment
+  // Check for any existing row — active or previously soft-deleted
   const existing = await db
-    .select({ id: listPlaces.id })
+    .select({ id: listPlaces.id, deletedAt: listPlaces.deletedAt })
     .from(listPlaces)
     .where(
       and(
         eq(listPlaces.listId, listId),
-        eq(listPlaces.placeId, placeId),
-        isNull(listPlaces.deletedAt)
+        eq(listPlaces.placeId, placeId)
       )
     );
 
-  if (existing.length > 0) {
+  const existingRow = existing[0];
+
+  if (existingRow && existingRow.deletedAt === null) {
     throw alreadyInListError();
   }
 
   try {
-    // Compute next position
+    // Compute next position (append to end regardless of restore or fresh insert)
     const posResult = await db
       .select({ maxPos: max(listPlaces.position) })
       .from(listPlaces)
@@ -367,6 +372,21 @@ export async function addExistingPlaceToList(params: {
       );
 
     const nextPosition = (posResult[0]?.maxPos ?? 0) + 1;
+
+    if (existingRow) {
+      // Restore the previously removed attachment instead of creating a duplicate
+      await db
+        .update(listPlaces)
+        .set({ deletedAt: null, position: nextPosition })
+        .where(eq(listPlaces.id, existingRow.id));
+
+      console.info(
+        "[PlaceService:addExistingPlaceToList]",
+        `Place ${placeId} restored to list ${listId} at position ${nextPosition}`
+      );
+
+      return { listPlaceId: existingRow.id };
+    }
 
     const lpRows = await db
       .insert(listPlaces)

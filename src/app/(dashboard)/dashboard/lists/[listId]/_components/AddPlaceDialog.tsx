@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useLayoutEffect, useState } from "react";
 import {
   createPlaceAction,
   addExistingPlaceToListAction,
@@ -75,8 +75,10 @@ export function AddPlaceDialog({
     buildAddExistingInitial()
   );
 
-  // Close on success
-  useEffect(() => {
+  // Close on success — useLayoutEffect fires before paint so there is no
+  // intermediate frame where the dialog re-renders with a re-enabled button
+  // and the just-added place still listed.
+  useLayoutEffect(() => {
     if (createState.isSuccess || addState.isSuccess) {
       setOpen(false);
       setSearchTerm("");
