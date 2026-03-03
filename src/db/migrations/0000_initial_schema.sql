@@ -89,9 +89,18 @@ CREATE UNIQUE INDEX "list_places_list_place_idx" ON "list_places" USING btree ("
 -- so the trigger can read them from raw_user_meta_data.
 --
 -- Fallbacks:
---   name         → email prefix  (e.g. "alice" from "alice@example.com")
---   vanity_slug  → auth user UUID (guaranteed unique; app can prompt
+--   name         → email prefix (e.g. "alice" from "alice@example.com")
+--                  → auth user UUID if email is also absent
+--   vanity_slug  → requested slug if available, otherwise auth user UUID
+--                  (pre-checked to avoid unique conflicts; app can prompt
 --                  the user to personalise it later)
+--
+-- Conflict handling:
+--   ON CONFLICT (id) DO NOTHING  — silently skips if a profile row already
+--     exists (e.g. pre-seeded in tests or a retried auth insert).
+--   vanity_slug conflicts — resolved before the INSERT via an existence
+--     check; falls back to the auth UUID which cannot conflict with an
+--     existing slug because it matches this row's own PK.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -111,8 +120,17 @@ BEGIN
       END,
       NEW.id::text
     ),
-    COALESCE(NULLIF(NEW.raw_user_meta_data->>'vanity_slug', ''), NEW.id::text)
-  );
+    CASE
+      WHEN NULLIF(NEW.raw_user_meta_data->>'vanity_slug', '') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM public.users
+          WHERE vanity_slug = NEW.raw_user_meta_data->>'vanity_slug'
+        )
+      THEN NEW.raw_user_meta_data->>'vanity_slug'
+      ELSE NEW.id::text
+    END
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$;
