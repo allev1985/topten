@@ -68,6 +68,16 @@ export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
 export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
 
 /**
+ * Dashboard route helpers
+ */
+export const DASHBOARD_ROUTES = {
+  /** Dashboard home */
+  home: "/dashboard",
+  /** Individual list detail page */
+  listDetail: (listId: string) => `/dashboard/lists/${listId}`,
+} as const;
+
+/**
  * Get the application URL from environment or request origin
  * @param requestOrigin - Optional origin from request headers
  */

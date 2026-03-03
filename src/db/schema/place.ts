@@ -4,6 +4,7 @@ import {
   varchar,
   decimal,
   timestamp,
+  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -26,5 +27,8 @@ export const places = pgTable(
       .notNull(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
-  (table) => [uniqueIndex("places_google_place_id_idx").on(table.googlePlaceId)]
+  (table) => [
+    uniqueIndex("places_google_place_id_idx").on(table.googlePlaceId),
+    index("places_deleted_at_idx").on(table.deletedAt),
+  ]
 );
