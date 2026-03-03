@@ -58,6 +58,7 @@ export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
           <div className="space-y-2">
             <Label htmlFor="vanitySlug">Profile URL</Label>
             <Input
+              key={currentSlug}
               id="vanitySlug"
               name="vanitySlug"
               type="text"
