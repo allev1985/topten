@@ -4,23 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { ListCard } from "@/components/dashboard/ListCard";
 import type { List } from "@/types/list";
 
-// Mock Next.js Image component
-vi.mock("next/image", () => ({
-  default: ({
-    src,
-    alt,
-    ...props
-  }: {
-    src: string;
-    alt: string;
-    [key: string]: unknown;
-  }) => <img src={src} alt={alt} {...props} />,
-}));
-
 const mockPublishedList: List = {
   id: "test-id-1",
   title: "Test Published List",
-  heroImageUrl: "https://example.com/image.jpg",
+  slug: "a1b2",
+  description: "The best coffee spots in the city.",
   isPublished: true,
   placeCount: 5,
 };
@@ -28,7 +16,7 @@ const mockPublishedList: List = {
 const mockDraftList: List = {
   id: "test-id-2",
   title: "Test Draft List",
-  heroImageUrl: "https://example.com/image.jpg",
+  slug: "c3d4",
   isPublished: false,
   placeCount: 3,
 };
@@ -66,12 +54,20 @@ describe("ListCard", () => {
       expect(screen.getByText("Draft")).toBeInTheDocument();
     });
 
-    it("renders hero image with correct alt text", () => {
+    it("renders description when present", () => {
       const onClick = vi.fn();
       render(<ListCard list={mockPublishedList} onClick={onClick} />);
-      const img = screen.getByAltText("Test Published List cover image");
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", "https://example.com/image.jpg");
+      expect(
+        screen.getByText("The best coffee spots in the city.")
+      ).toBeInTheDocument();
+    });
+
+    it("renders nothing in description area when description is absent", () => {
+      const onClick = vi.fn();
+      render(<ListCard list={mockDraftList} onClick={onClick} />);
+      expect(
+        screen.queryByText("The best coffee spots in the city.")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -96,7 +92,6 @@ describe("ListCard", () => {
       await user.click(menuButton);
 
       expect(screen.getByText("Edit List")).toBeInTheDocument();
-      expect(screen.getByText("Duplicate List")).toBeInTheDocument();
       expect(screen.getByText("Delete List")).toBeInTheDocument();
     });
 
@@ -165,145 +160,97 @@ describe("ListCard", () => {
   });
 
   describe("menu actions", () => {
-    it("logs to console when Edit is clicked", async () => {
+    it("calls onEdit callback when Edit is clicked", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onEdit = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />);
 
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
+      const menuButton = screen.getByLabelText("Options for Test Published List");
       await user.click(menuButton);
 
-      const editButton = screen.getByText("Edit List");
-      await user.click(editButton);
+      await user.click(screen.getByText("Edit List"));
 
-      expect(consoleLog).toHaveBeenCalledWith("Edit list:", "test-id-1");
-      consoleLog.mockRestore();
+      expect(onEdit).toHaveBeenCalledWith("test-id-1");
     });
 
-    it("logs to console when Duplicate is clicked", async () => {
+    it("calls onPublishToggle when Publish is clicked for draft", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onPublishToggle = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
-
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
-      await user.click(menuButton);
-
-      const duplicateButton = screen.getByText("Duplicate List");
-      await user.click(duplicateButton);
-
-      expect(consoleLog).toHaveBeenCalledWith("Duplicate list:", "test-id-1");
-      consoleLog.mockRestore();
-    });
-
-    it("logs to console when Publish is clicked for draft", async () => {
-      const user = userEvent.setup();
-      const onClick = vi.fn();
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
-
-      render(<ListCard list={mockDraftList} onClick={onClick} />);
+      render(<ListCard list={mockDraftList} onClick={onClick} onPublishToggle={onPublishToggle} />);
 
       const menuButton = screen.getByLabelText("Options for Test Draft List");
       await user.click(menuButton);
 
-      const publishButton = screen.getByText("Publish");
-      await user.click(publishButton);
+      await user.click(screen.getByText("Publish"));
 
-      expect(consoleLog).toHaveBeenCalledWith("Publish list:", "test-id-2");
-      consoleLog.mockRestore();
+      expect(onPublishToggle).toHaveBeenCalledWith("test-id-2");
     });
 
-    it("logs to console when Unpublish is clicked for published list", async () => {
+    it("calls onPublishToggle when Unpublish is clicked for published list", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onPublishToggle = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onPublishToggle={onPublishToggle} />);
 
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
+      const menuButton = screen.getByLabelText("Options for Test Published List");
       await user.click(menuButton);
 
-      const unpublishButton = screen.getByText("Unpublish");
-      await user.click(unpublishButton);
+      await user.click(screen.getByText("Unpublish"));
 
-      expect(consoleLog).toHaveBeenCalledWith("Unpublish list:", "test-id-1");
-      consoleLog.mockRestore();
+      expect(onPublishToggle).toHaveBeenCalledWith("test-id-1");
     });
 
-    it("shows confirmation dialog when Delete is clicked", async () => {
+    it("shows AlertDialog confirmation when Delete is clicked", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+      const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
 
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
+      const menuButton = screen.getByLabelText("Options for Test Published List");
       await user.click(menuButton);
 
-      const deleteButton = screen.getByText("Delete List");
-      await user.click(deleteButton);
+      await user.click(screen.getByText("Delete List"));
 
-      expect(confirmSpy).toHaveBeenCalledWith(
-        'Are you sure you want to delete "Test Published List"?'
-      );
-
-      confirmSpy.mockRestore();
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+      expect(onDelete).not.toHaveBeenCalled();
     });
 
-    it("logs to console when Delete is confirmed", async () => {
+    it("calls onDelete when Delete is confirmed in AlertDialog", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
 
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
+      const menuButton = screen.getByLabelText("Options for Test Published List");
       await user.click(menuButton);
 
-      const deleteButton = screen.getByText("Delete List");
-      await user.click(deleteButton);
+      await user.click(screen.getByText("Delete List"));
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
 
-      expect(consoleLog).toHaveBeenCalledWith("Delete list:", "test-id-1");
-
-      confirmSpy.mockRestore();
-      consoleLog.mockRestore();
+      expect(onDelete).toHaveBeenCalledWith("test-id-1");
     });
 
-    it("does not log when Delete is cancelled", async () => {
+    it("does not call onDelete when cancelled in AlertDialog", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
 
-      const menuButton = screen.getByLabelText(
-        "Options for Test Published List"
-      );
+      const menuButton = screen.getByLabelText("Options for Test Published List");
       await user.click(menuButton);
 
-      const deleteButton = screen.getByText("Delete List");
-      await user.click(deleteButton);
+      await user.click(screen.getByText("Delete List"));
+      await user.click(screen.getByRole("button", { name: /cancel/i }));
 
-      // Console should not be called with delete message when cancelled
-      expect(consoleLog).not.toHaveBeenCalledWith("Delete list:", "test-id-1");
-
-      confirmSpy.mockRestore();
-      consoleLog.mockRestore();
+      expect(onDelete).not.toHaveBeenCalled();
     });
 
     it("logs to console when View Public Page is clicked", async () => {
@@ -342,9 +289,9 @@ describe("ListCard", () => {
     it("does not trigger card click when menu item is clicked", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      const onEdit = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} />);
+      render(<ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />);
 
       const menuButton = screen.getByLabelText(
         "Options for Test Published List"
@@ -355,7 +302,6 @@ describe("ListCard", () => {
       await user.click(editButton);
 
       expect(onClick).not.toHaveBeenCalled();
-      consoleLog.mockRestore();
     });
   });
 
