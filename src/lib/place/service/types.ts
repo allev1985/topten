@@ -39,6 +39,6 @@ export interface UpdatePlaceResult {
 }
 
 /** Result of a successful deletePlaceFromList operation */
-export interface DeletePlaceResult {
+export interface RemovePlaceFromListResult {
   success: true;
 }

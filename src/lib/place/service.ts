@@ -36,7 +36,7 @@ import type {
   CreatePlaceResult,
   AddExistingPlaceResult,
   UpdatePlaceResult,
-  DeletePlaceResult,
+  RemovePlaceFromListResult,
 } from "./service/types";
 
 export type {
@@ -45,7 +45,7 @@ export type {
   CreatePlaceResult,
   AddExistingPlaceResult,
   UpdatePlaceResult,
-  DeletePlaceResult,
+  RemovePlaceFromListResult,
 };
 
 export { PlaceServiceError };
@@ -507,7 +507,7 @@ export async function updatePlace(params: {
  * @param params.placeId - The place's UUID
  * @param params.listId  - The list to remove the place from
  * @param params.userId  - Authenticated user's id (ownership check)
- * @returns DeletePlaceResult { success: true }
+ * @returns RemovePlaceFromListResult { success: true }
  * @throws {PlaceServiceError} code NOT_FOUND if attachment missing, already removed, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
@@ -515,7 +515,7 @@ export async function deletePlaceFromList(params: {
   placeId: string;
   listId: string;
   userId: string;
-}): Promise<DeletePlaceResult> {
+}): Promise<RemovePlaceFromListResult> {
   const { placeId, listId, userId } = params;
 
   console.info(
