@@ -8,8 +8,8 @@ import {
   type UpdateSlugSuccessData,
 } from "@/schemas/profile";
 import type { ActionState } from "@/types/forms";
-import { getSession } from "@/lib/auth/service";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
+import { requireAuth } from "@/lib/utils/actions";
 import {
   updateName,
   updateSlug,
@@ -30,18 +30,12 @@ export async function updateNameAction(
   _prevState: ActionState<UpdateNameSuccessData>,
   formData: FormData
 ): Promise<ActionState<UpdateNameSuccessData>> {
-  const sessionResult = await getSession();
-
-  if (!sessionResult.authenticated || !sessionResult.user?.id) {
-    return {
-      data: null,
-      error: "You must be logged in to update your profile",
-      fieldErrors: {},
-      isSuccess: false,
-    };
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
   }
 
-  const currentUserId = sessionResult.user.id;
+  const currentUserId = auth.userId;
   const rawName = formData.get("name");
   const name = typeof rawName === "string" ? rawName : "";
 
@@ -85,18 +79,12 @@ export async function updateSlugAction(
   _prevState: ActionState<UpdateSlugSuccessData>,
   formData: FormData
 ): Promise<ActionState<UpdateSlugSuccessData>> {
-  const sessionResult = await getSession();
-
-  if (!sessionResult.authenticated || !sessionResult.user?.id) {
-    return {
-      data: null,
-      error: "You must be logged in to update your profile",
-      fieldErrors: {},
-      isSuccess: false,
-    };
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
   }
 
-  const currentUserId = sessionResult.user.id;
+  const currentUserId = auth.userId;
   const vanitySlug = formData.get("vanitySlug");
 
   const result = updateSlugSchema.safeParse({ vanitySlug });

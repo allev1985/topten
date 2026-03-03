@@ -31,18 +31,16 @@ describe("DashboardHeader", () => {
       expect(button).not.toBeDisabled();
     });
 
-    it("clicking '+ New List' logs to console", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    it("clicking '+ New List' calls onNewList callback", async () => {
+      const onNewList = vi.fn();
       const user = userEvent.setup();
 
-      render(<DashboardHeader />);
+      render(<DashboardHeader onNewList={onNewList} />);
 
       const button = screen.getByRole("button", { name: /new list/i });
       await user.click(button);
 
-      expect(consoleSpy).toHaveBeenCalledWith("New list clicked");
-
-      consoleSpy.mockRestore();
+      expect(onNewList).toHaveBeenCalledOnce();
     });
 
     it("header layout is responsive on mobile", () => {
