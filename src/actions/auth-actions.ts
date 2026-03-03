@@ -21,6 +21,7 @@ import {
 } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import { createClient } from "@/lib/supabase/server";
+import { mapZodErrors } from "@/lib/utils/validation/zod";
 
 /**
  * Signup action success data
@@ -50,23 +51,6 @@ export interface PasswordResetRequestSuccessData {
 export interface PasswordUpdateSuccessData {
   message: string;
   redirectTo?: string;
-}
-
-/**
- * Helper to map Zod errors to field errors
- */
-function mapZodErrors(
-  issues: { path: PropertyKey[]; message: string }[]
-): Record<string, string[]> {
-  return issues.reduce(
-    (acc, issue) => {
-      const field = issue.path.map(String).join(".");
-      if (!acc[field]) acc[field] = [];
-      acc[field].push(issue.message);
-      return acc;
-    },
-    {} as Record<string, string[]>
-  );
 }
 
 /**

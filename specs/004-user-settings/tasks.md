@@ -16,8 +16,8 @@
 
 **Purpose**: Verify project structure and create shared directories
 
-- [ ] T001 Create `src/app/(dashboard)/settings/_components/` directory (client form co-location)
-- [ ] T002 Confirm no DB migrations required (data-model.md: no schema changes)
+- [x] T001 Create `src/app/(dashboard)/settings/_components/` directory (client form co-location)
+- [x] T002 Confirm no DB migrations required (data-model.md: no schema changes)
 
 ---
 
@@ -27,8 +27,8 @@
 
 **⚠️ CRITICAL**: Phases 3–5 depend on these files being present
 
-- [ ] T003 Create Zod schemas in `src/schemas/profile.ts` (`updateNameSchema`, `updateSlugSchema`, `UpdateNameSuccessData`, `UpdateSlugSuccessData`)
-- [ ] T004 Create server actions in `src/actions/profile-actions.ts` (`updateNameAction`, `updateSlugAction`) following auth-actions.ts pattern with two-layer slug uniqueness defence
+- [x] T003 Create Zod schemas in `src/schemas/profile.ts` (`updateNameSchema`, `updateSlugSchema`, `UpdateNameSuccessData`, `UpdateSlugSuccessData`)
+- [x] T004 Create server actions in `src/actions/profile-actions.ts` (`updateNameAction`, `updateSlugAction`) following auth-actions.ts pattern with two-layer slug uniqueness defence
 
 **Checkpoint**: Foundation ready — form components, page, and tests can now be implemented
 
@@ -42,12 +42,12 @@
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Unit tests for `updateSlugAction` in `tests/unit/actions/profile-actions.test.ts` (unauthenticated, valid, taken, race-condition 23505, format validation, own-slug no-conflict)
-- [ ] T006 [P] [US1] Component tests for `SlugSettingsForm` in `tests/component/settings/SlugSettingsForm.test.tsx` (renders with initial value, shows field error, shows success, submit triggers action)
+- [x] T005 [P] [US1] Unit tests for `updateSlugAction` in `tests/unit/actions/profile-actions.test.ts` (unauthenticated, valid, taken, race-condition 23505, format validation, own-slug no-conflict)
+- [x] T006 [P] [US1] Component tests for `SlugSettingsForm` in `tests/component/settings/SlugSettingsForm.test.tsx` (renders with initial value, shows field error, shows success, submit triggers action)
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Create `SlugSettingsForm.tsx` in `src/app/(dashboard)/settings/_components/SlugSettingsForm.tsx` (Card + `useFormState` + `updateSlugAction`, shows current slug, inline field/success/error feedback)
+- [x] T007 [US1] Create `SlugSettingsForm.tsx` in `src/app/(dashboard)/settings/_components/SlugSettingsForm.tsx` (Card + `useFormState` + `updateSlugAction`, shows current slug, inline field/success/error feedback)
 
 **Checkpoint**: `updateSlugAction` and `SlugSettingsForm` fully functional and tested independently
 
@@ -61,12 +61,12 @@
 
 ### Tests for User Story 2
 
-- [ ] T008 [P] [US2] Unit tests for `updateNameAction` in `tests/unit/actions/profile-actions.test.ts` (unauthenticated, valid, empty name, name too long)
-- [ ] T009 [P] [US2] Component tests for `NameSettingsForm` in `tests/component/settings/NameSettingsForm.test.tsx` (renders with initial value, shows field error, shows success, submit triggers action)
+- [x] T008 [P] [US2] Unit tests for `updateNameAction` in `tests/unit/actions/profile-actions.test.ts` (unauthenticated, valid, empty name, name too long)
+- [x] T009 [P] [US2] Component tests for `NameSettingsForm` in `tests/component/settings/NameSettingsForm.test.tsx` (renders with initial value, shows field error, shows success, submit triggers action)
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Create `NameSettingsForm.tsx` in `src/app/(dashboard)/settings/_components/NameSettingsForm.tsx` (Card + `useFormState` + `updateNameAction`, pre-populated name field, inline feedback)
+- [x] T010 [US2] Create `NameSettingsForm.tsx` in `src/app/(dashboard)/settings/_components/NameSettingsForm.tsx` (Card + `useFormState` + `updateNameAction`, pre-populated name field, inline feedback)
 
 **Checkpoint**: `updateNameAction` and `NameSettingsForm` fully functional and tested independently
 
@@ -80,7 +80,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] Embed `<PasswordChangeForm />` from `src/app/(dashboard)/settings/password/password-change-form.tsx` inside the unified settings page (reuse only — zero new logic)
+- [x] T011 [US3] Embed `<PasswordChangeForm />` from `src/app/(dashboard)/settings/password/password-change-form.tsx` inside the unified settings page (reuse only — zero new logic)
 
 **Checkpoint**: All three form sections (slug, name, password) independently functional
 
@@ -90,15 +90,15 @@
 
 **Goal**: Single `/dashboard/settings` server component that loads profile data, renders three sections, is protected by auth middleware.
 
-- [ ] T012 Create server component `src/app/(dashboard)/settings/page.tsx` — calls `getSession()`, queries `users` table for `name` + `vanitySlug`, passes props to `SlugSettingsForm`, `NameSettingsForm`, and renders `PasswordChangeForm`
-- [ ] T013 [P] Integration test for slug uniqueness in `tests/integration/profile-actions.integration.test.ts` (end-to-end against DB: unique slug saves, duplicate returns field error, own-slug no-conflict)
-- [ ] T014 [P] E2E test for settings page in `tests/e2e/settings.spec.ts` (full journey: load page, update slug, update name, password validation errors)
+- [x] T012 Create server component `src/app/(dashboard)/settings/page.tsx` — calls `getSession()`, queries `users` table for `name` + `vanitySlug`, passes props to `SlugSettingsForm`, `NameSettingsForm`, and renders `PasswordChangeForm`
+- [x] T013 [P] Integration test for slug uniqueness in `tests/integration/profile-actions.integration.test.ts` (end-to-end against DB: unique slug saves, duplicate returns field error, own-slug no-conflict)
+- [x] T014 [P] E2E test for settings page in `tests/e2e/settings.spec.ts` (full journey: load page, update slug, update name, password validation errors)
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T015 Verify `src/middleware.ts` already covers `/dashboard/settings` route protection (no code change expected — confirm only)
+- [x] T015 Verify `src/middleware.ts` already covers `/dashboard/settings` route protection (no code change expected — confirm only)
 
 ---
 
