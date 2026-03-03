@@ -131,9 +131,7 @@ export async function updateListAction(
     title:
       typeof rawTitle === "string" && rawTitle !== "" ? rawTitle : undefined,
     description:
-      typeof rawDescription === "string" && rawDescription !== ""
-        ? rawDescription
-        : undefined,
+      typeof rawDescription === "string" ? rawDescription : undefined,
   });
 
   if (!result.success) {
