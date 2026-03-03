@@ -139,3 +139,86 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+--> statement-breakpoint
+
+-- ============================================================
+-- Row Level Security (RLS)
+-- Protects public tables from unauthenticated/unauthorized
+-- access via PostgREST (Supabase anon key).
+-- Server-side code that uses the service_role key or a direct
+-- DATABASE_URL connection bypasses RLS automatically.
+-- ============================================================
+
+ALTER TABLE "users" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+ALTER TABLE "lists" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+ALTER TABLE "places" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+ALTER TABLE "list_places" ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+
+-- users: anyone can read non-deleted profiles (needed for /@vanity_slug routes)
+CREATE POLICY "users_select_public" ON "users"
+  FOR SELECT USING (deleted_at IS NULL);
+--> statement-breakpoint
+
+-- users: only the account owner can update their own profile
+CREATE POLICY "users_update_own" ON "users"
+  FOR UPDATE USING (auth.uid() = id);
+--> statement-breakpoint
+
+-- lists: public can read published non-deleted lists; owner can also read their own drafts
+CREATE POLICY "lists_select_public_or_owner" ON "lists"
+  FOR SELECT USING (
+    deleted_at IS NULL AND (is_published = true OR user_id = auth.uid())
+  );
+--> statement-breakpoint
+
+-- lists: authenticated users can create lists for themselves
+CREATE POLICY "lists_insert_own" ON "lists"
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+--> statement-breakpoint
+
+-- lists: only the list owner can update their own lists
+CREATE POLICY "lists_update_own" ON "lists"
+  FOR UPDATE USING (user_id = auth.uid());
+--> statement-breakpoint
+
+-- places: anyone can read non-deleted places (public reference / cached Google Places data)
+CREATE POLICY "places_select_public" ON "places"
+  FOR SELECT USING (deleted_at IS NULL);
+--> statement-breakpoint
+
+-- list_places: public can read entries for published lists; list owner can read all their entries
+CREATE POLICY "list_places_select_public_or_owner" ON "list_places"
+  FOR SELECT USING (
+    deleted_at IS NULL AND EXISTS (
+      SELECT 1 FROM lists
+      WHERE lists.id = list_places.list_id
+        AND lists.deleted_at IS NULL
+        AND (lists.is_published = true OR lists.user_id = auth.uid())
+    )
+  );
+--> statement-breakpoint
+
+-- list_places: only the list owner can add entries to their lists
+CREATE POLICY "list_places_insert_own" ON "list_places"
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM lists
+      WHERE lists.id = list_places.list_id
+        AND lists.user_id = auth.uid()
+    )
+  );
+--> statement-breakpoint
+
+-- list_places: only the list owner can update entries in their lists
+CREATE POLICY "list_places_update_own" ON "list_places"
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM lists
+      WHERE lists.id = list_places.list_id
+        AND lists.user_id = auth.uid()
+    )
+  );
