@@ -50,8 +50,9 @@ describe("LandingPageClient - Responsive Layout", () => {
 
       expect(main?.className).toContain("px-4");
       expect(main?.className).toContain("md:px-8");
-      expect(main?.className).toContain("py-12");
-      expect(main?.className).toContain("md:py-16");
+      expect(main?.className).toContain("py-8");
+      expect(main?.className).toContain("md:py-12");
+      expect(main?.className).toContain("lg:py-16");
     });
 
     it("constrains content to max-width", () => {
