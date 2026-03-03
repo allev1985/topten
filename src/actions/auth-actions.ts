@@ -17,11 +17,11 @@ import {
   logout,
   resetPassword,
   updatePassword,
-  getSession,
 } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import { createClient } from "@/lib/supabase/server";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
+import { requireAuth } from "@/lib/utils/actions";
 
 /**
  * Signup action success data
@@ -402,9 +402,9 @@ export async function passwordChangeAction(
 
   try {
     // First, get the current user's session to retrieve their email
-    const sessionResult = await getSession();
+    const auth = await requireAuth();
 
-    if (!sessionResult.authenticated || !sessionResult.user?.email) {
+    if ("error" in auth || !auth.email) {
       return {
         data: null,
         error: "Authentication required",
@@ -416,7 +416,7 @@ export async function passwordChangeAction(
     // Verify current password by attempting to sign in with Supabase client
     const supabase = await createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: sessionResult.user.email,
+      email: auth.email,
       password: currentPassword,
     });
 

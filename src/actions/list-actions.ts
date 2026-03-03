@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createListSchema, updateListSchema } from "@/schemas/list";
 import type { ActionState } from "@/types/forms";
-import { getSession } from "@/lib/auth/service";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
+import { requireAuth } from "@/lib/utils/actions";
 import {
   createList,
   updateList,
@@ -37,16 +37,6 @@ export interface PublishListSuccessData {
 export interface UnpublishListSuccessData {
   listId: string;
   isPublished: boolean;
-}
-
-// ─── Shared auth helper ───────────────────────────────────────────────────────
-
-async function requireAuth(): Promise<{ userId: string } | { error: string }> {
-  const session = await getSession();
-  if (!session.authenticated || !session.user?.id) {
-    return { error: "You must be logged in to manage lists" };
-  }
-  return { userId: session.user.id };
 }
 
 // ─── createListAction ─────────────────────────────────────────────────────────
