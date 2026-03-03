@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/service";
 import { getListsByUser } from "@/lib/list/service";
 import { ListServiceError } from "@/lib/list/service/errors";
@@ -18,10 +19,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
   const sessionResult = await getSession();
 
   if (!sessionResult.authenticated || !sessionResult.user?.id) {
-    // Middleware should prevent reaching here, but guard defensively.
-    return (
-      <DashboardClient initialLists={[]} initialError="Not authenticated" />
-    );
+    redirect("/login");
   }
 
   let lists: Awaited<ReturnType<typeof getListsByUser>> = [];
