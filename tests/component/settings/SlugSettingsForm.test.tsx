@@ -122,6 +122,29 @@ describe("SlugSettingsForm", () => {
       expect(screen.getByText("/new-slug")).toBeInTheDocument();
     });
 
+    it("input value reflects new slug after success", () => {
+      mockState.isSuccess = true;
+      mockState.data = { vanitySlug: "new-slug" };
+
+      render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
+
+      const input = screen.getByRole("textbox", { name: /profile url/i });
+      expect(input).toHaveValue("new-slug");
+    });
+
+    it("input value updates when initialSlug prop changes (server re-render)", () => {
+      const { rerender } = render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
+
+      const input = screen.getByRole("textbox", { name: /profile url/i });
+      expect(input).toHaveValue(DEFAULT_SLUG);
+
+      rerender(<SlugSettingsForm initialSlug="refreshed-slug" />);
+
+      expect(screen.getByRole("textbox", { name: /profile url/i })).toHaveValue(
+        "refreshed-slug"
+      );
+    });
+
     it("form submission calls the bound formAction", async () => {
       const user = userEvent.setup();
       render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
