@@ -1,26 +1,12 @@
 <!-- Sync Impact Report
-- Version change: 1.2.0 → 2.0.0
+- Version change: 1.2.0 → 2.0.0 → 2.1.0
 - Modified principles:
-  - I. Code Quality & Maintainability — unchanged
-  - II. Testing Discipline — unchanged
-  - III. User Experience Consistency — unchanged
-  - IV. Performance & Resource Efficiency — unchanged
-  - V. Observability & Debuggability — unchanged
-- Added principles:
-  - VI. Architecture Integrity (service-based auth, server actions, no API routes)
-  - VII. Data Integrity (soft deletes, deleted_at filtering)
-  - VIII. Security Boundaries (server-side secrets, Google Places isolation)
-- Added sections:
-  - Overview
-  - Technology Stack & Constraints
-  - URL & Routing Conventions
-- Removed sections: none
-- Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md (no changes needed)
-  - ✅ .specify/templates/spec-template.md (no changes needed)
-  - ✅ .specify/templates/tasks-template.md (no changes needed)
-  - ✅ .specify/templates/agent-file-template.md (no changes needed)
-  - ✅ .specify/templates/checklist-template.md (no changes needed)
+  - VI. Architecture Integrity — extended with explicit Server Action layering rule
+- Modified sections:
+  - Technology Stack & Constraints — added profile service row
+  - URL & Routing Conventions — corrected /settings → /dashboard/settings
+- All other principles unchanged
+- Templates requiring updates: none
 - Follow-up TODOs: none
 -->
 
@@ -112,21 +98,55 @@ work practical.
 
 ### VI. Architecture Integrity (NON-NEGOTIABLE)
 
-YourFavs uses a **service-based architecture**. The auth service
-(`src/lib/auth/service.ts`) is the single point of truth for all auth business
-logic — server actions call it directly; no HTTP roundtrip is introduced.
+YourFavs uses a **service-based architecture**. Every domain has a dedicated
+service module that owns all business logic and database access for that domain.
 
-- Server Actions (`src/actions/`) MUST be the entry point for all form
-  submissions and mutations. New API routes MUST NOT be created unless there is
-  an explicit callback requirement (e.g., the existing `GET /api/auth/verify`).
-- External integrations (Google Places) MUST be called server-side only and
-  MUST flow through designated service modules — never from client components.
-- Place data returned from Google Places MUST be cached in the `Place` table.
-  Failed API calls MUST fall back gracefully to cached data and MUST NOT block
-  list operations.
+#### Server Action layer contract
 
-**Rationale**: Consistent layering prevents scattered integration code, reduces
-surface area for security issues, and keeps the data layer predictable.
+Server Actions (`src/actions/`) are **thin coordination layers only**. Their
+sole responsibilities are:
+
+1. **Authenticate** — verify the session via `getSession()`; return an auth
+   error `ActionState` immediately if the user is not authenticated.
+2. **Validate input** — run Zod schema validation with `safeParse()`; return
+   field-level `ActionState` errors immediately on failure.
+3. **Delegate to the service** — call the appropriate domain service function
+   (e.g., `updateSlug()` from `src/lib/profile/service.ts`).
+4. **Map service errors** — catch `ProfileServiceError`, `AuthServiceError`, or
+   equivalent typed errors and convert them to the correct `ActionState` shape.
+5. **Revalidate** — call `revalidatePath()` on success and return success
+   `ActionState`.
+
+**Server Actions MUST NOT contain**:
+- Direct Drizzle / database calls (no `db.select`, `db.update`, etc.)
+- Raw SQL or query logic
+- Business rules, uniqueness logic, or complex conditional flows
+
+Anything beyond the five steps above belongs in the service layer.
+
+#### Service layer contract
+
+Domain services (`src/lib/{domain}/service.ts`) are the **single source of
+truth** for business logic and database access within their domain.
+
+- The auth service (`src/lib/auth/service.ts`) owns all auth operations.
+- The profile service (`src/lib/profile/service.ts`) owns all profile mutations.
+- Each service MUST expose typed result objects and typed error classes
+  (`src/lib/{domain}/service/types.ts`, `src/lib/{domain}/service/errors.ts`).
+- Services MUST NOT call other services directly — co-ordination belongs in the
+  action layer or a dedicated orchestration module if complexity warrants it.
+- External integrations (Google Places) MUST flow through their own service
+  module and MUST be called server-side only.
+
+#### API routes
+
+New API Routes MUST NOT be created unless there is an explicit callback
+requirement (e.g., the existing `GET /api/auth/verify`). All mutations go
+through Server Actions.
+
+**Rationale**: A strict two-layer contract (action = coordination, service =
+logic) keeps business rules testable in isolation, prevents scattered database
+code, eliminates duplication, and makes each layer independently verifiable.
 
 ### VII. Data Integrity
 
@@ -165,7 +185,8 @@ credential leakage and common web vulnerabilities.
 |-------|-----------|----------|
 | Framework | Next.js App Router (Vercel) | Prefer Server Components; use Client Components only for interactivity |
 | Auth & DB | Supabase (Postgres + Auth) | All auth logic via `src/lib/auth/service.ts` |
-| ORM | Drizzle | Schema in `src/db/schema/`; run migrations before deploying schema changes |
+| ORM | Drizzle | Schema in `src/db/schema/`; run migrations before deploying schema changes; direct DB calls in service layer only |
+| Profile | Profile service (`src/lib/profile/service.ts`) | All profile mutations via this service; never called directly from components |
 | UI | Tailwind CSS v4 + shadcn/ui | Never edit `src/components/ui/` directly |
 | Places | Google Places API | Server-side only; cache results in `Place` table |
 | Testing | Vitest + Playwright | Tests required before merge |
@@ -180,9 +201,9 @@ credential leakage and common web vulnerabilities.
 | `/@{vanity_slug}` | Creator profile |
 | `/@{vanity_slug}/{list-slug}` | Individual list |
 | `/dashboard` | Authenticated creator workspace |
-| `/settings` | Account settings |
+| `/dashboard/settings` | Account settings |
 
-- `/dashboard` and `/settings` are protected by middleware.
+- `/dashboard` and `/dashboard/settings` are protected by middleware.
 - Public routes: `/`, `/login`, `/signup`, `/verify-email`, `/forgot-password`,
   `/reset-password`.
 - New routes MUST be registered in `src/lib/config/` (route constants) and
