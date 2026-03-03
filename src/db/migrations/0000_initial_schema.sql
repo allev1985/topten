@@ -163,9 +163,17 @@ CREATE POLICY "users_select_public" ON "users"
   FOR SELECT USING (deleted_at IS NULL);
 --> statement-breakpoint
 
--- users: only the account owner can update their own profile
+-- users: the trigger (SECURITY DEFINER) handles profile creation on signup;
+-- this policy covers direct inserts (admin tooling, tests) where auth context is set
+CREATE POLICY "users_insert_own" ON "users"
+  FOR INSERT WITH CHECK (auth.uid() = id);
+--> statement-breakpoint
+
+-- users: only the account owner can update their own profile;
+-- WITH CHECK prevents reassigning id to a different auth user
 CREATE POLICY "users_update_own" ON "users"
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 --> statement-breakpoint
 
 -- lists: public can read published non-deleted lists; owner can also read their own drafts
@@ -180,14 +188,28 @@ CREATE POLICY "lists_insert_own" ON "lists"
   FOR INSERT WITH CHECK (user_id = auth.uid());
 --> statement-breakpoint
 
--- lists: only the list owner can update their own lists
+-- lists: only the list owner can update their own lists;
+-- WITH CHECK prevents transferring a list to a different user
 CREATE POLICY "lists_update_own" ON "lists"
-  FOR UPDATE USING (user_id = auth.uid());
+  FOR UPDATE USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 --> statement-breakpoint
 
 -- places: anyone can read non-deleted places (public reference / cached Google Places data)
 CREATE POLICY "places_select_public" ON "places"
   FOR SELECT USING (deleted_at IS NULL);
+--> statement-breakpoint
+
+-- places: any authenticated user can cache a new place from the Google Places API
+CREATE POLICY "places_insert_authenticated" ON "places"
+  FOR INSERT TO authenticated WITH CHECK (true);
+--> statement-breakpoint
+
+-- places: any authenticated user can refresh cached Google Places data
+CREATE POLICY "places_update_authenticated" ON "places"
+  FOR UPDATE TO authenticated
+  USING (deleted_at IS NULL)
+  WITH CHECK (true);
 --> statement-breakpoint
 
 -- list_places: public can read entries for published lists; list owner can read all their entries
@@ -213,9 +235,17 @@ CREATE POLICY "list_places_insert_own" ON "list_places"
   );
 --> statement-breakpoint
 
--- list_places: only the list owner can update entries in their lists
+-- list_places: only the list owner can update entries in their lists;
+-- WITH CHECK prevents moving an entry to a list owned by a different user
 CREATE POLICY "list_places_update_own" ON "list_places"
   FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM lists
+      WHERE lists.id = list_places.list_id
+        AND lists.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
     EXISTS (
       SELECT 1 FROM lists
       WHERE lists.id = list_places.list_id
