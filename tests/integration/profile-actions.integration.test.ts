@@ -28,40 +28,9 @@ vi.mock("@/lib/auth/service");
 // interface to exercise the profile-actions queries.
 // -------------------------------------------------------
 
-type WhereCallback = () => Promise<unknown[]>;
-
-let mockSelectWhereCb: WhereCallback = async () => [];
+let mockSelectWhereCb: () => Promise<unknown[]> = async () => [];
 let mockUpdateError: unknown = null;
 
-const createWhereChain = (cb: WhereCallback) => ({
-  limit: () => ({
-    then: (resolve: (rows: unknown[]) => unknown) =>
-      cb().then(resolve),
-  }),
-});
-
-const createUpdateChain = () => ({
-  set: () => ({
-    where: () =>
-      mockUpdateError
-        ? Promise.reject(mockUpdateError)
-        : Promise.resolve(),
-  }),
-});
-
-vi.mock("@/db", () => ({
-  db: {
-    select: () => ({
-      from: () => ({
-        where: (cb: WhereCallback) => createWhereChain(cb),
-      }),
-    }),
-    update: () => createUpdateChain(),
-  },
-}));
-
-// Use a simplified fluent mock where `.where` receives the actual condition
-// but we intercept at the `.then` level via mockSelectWhereCb.
 vi.mock("@/db", () => {
   return {
     db: {
