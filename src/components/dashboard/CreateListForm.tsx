@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createListAction } from "@/actions/list-actions";
 import type { CreateListSuccessData } from "@/actions/list-actions";
 import type { ActionState } from "@/types/forms";
@@ -37,6 +37,8 @@ export function CreateListForm({
     initialState
   );
 
+  const [title, setTitle] = useState("");
+
   // Notify parent on success
   useEffect(() => {
     if (state.isSuccess) {
@@ -58,6 +60,8 @@ export function CreateListForm({
         <Input
           id="create-title"
           name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Top 10 coffee shops in London"
           maxLength={255}
           required
@@ -76,7 +80,7 @@ export function CreateListForm({
         )}
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending || title.trim() === ""} className="w-full">
         {isPending ? "Creating…" : "Create List"}
       </Button>
     </form>

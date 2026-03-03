@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { updateListAction } from "@/actions/list-actions";
 import type { UpdateListSuccessData } from "@/actions/list-actions";
 import type { ActionState } from "@/types/forms";
@@ -43,6 +43,13 @@ export function EditListForm({
     buildInitialState()
   );
 
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription ?? "");
+
+  const isDirty =
+    title.trim() !== initialTitle.trim() ||
+    description.trim() !== (initialDescription ?? "").trim();
+
   // Notify parent on success
   useEffect(() => {
     if (state.isSuccess) {
@@ -68,7 +75,8 @@ export function EditListForm({
         <Input
           id="edit-title"
           name="title"
-          defaultValue={initialTitle}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           maxLength={255}
           aria-describedby={
             state.fieldErrors.title ? "edit-title-error" : undefined
@@ -91,7 +99,8 @@ export function EditListForm({
         <Textarea
           id="edit-description"
           name="description"
-          defaultValue={initialDescription}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder="A short description of this list (optional)"
           aria-describedby={
@@ -109,7 +118,7 @@ export function EditListForm({
         )}
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending || !isDirty} className="w-full">
         {isPending ? "Saving…" : "Save Changes"}
       </Button>
     </form>
