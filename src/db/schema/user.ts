@@ -7,12 +7,25 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { authUsers } from "./authUser";
 
+/**
+ * Application profile table — extends auth.users (Supabase Auth).
+ *
+ * id is a foreign key to auth.users.id, not self-generated. The record is
+ * created after the Supabase Auth user is created (e.g. on first sign-in or
+ * email verification) and cascades on delete.
+ *
+ * Auth-owned fields (email, password, email_confirmed_at, last_sign_in_at)
+ * live in auth.users and are accessed via JOIN using the authUsers reference.
+ * See: src/db/schema/authUser.ts
+ */
 export const users = pgTable(
   "users",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    email: varchar("email", { length: 255 }).notNull().unique(),
+    id: uuid("id")
+      .primaryKey()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 255 }).notNull(),
     bio: text("bio"),
     avatarUrl: varchar("avatar_url", { length: 2048 }),
