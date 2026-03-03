@@ -17,10 +17,46 @@ import {
   profileServiceError,
   isUniqueViolation,
 } from "./service/errors";
-import type { UpdateNameResult, UpdateSlugResult } from "./service/types";
+import type { UpdateNameResult, UpdateSlugResult, SettingsProfile } from "./service/types";
 
 export { ProfileServiceError };
-export type { UpdateNameResult, UpdateSlugResult };
+export type { UpdateNameResult, UpdateSlugResult, SettingsProfile };
+
+/**
+ * Retrieve the profile data required for the settings page.
+ *
+ * @param userId - The authenticated user's id (FK to auth.users)
+ * @returns SettingsProfile if found, or null if no matching active record exists
+ * @throws {ProfileServiceError} code SERVICE_ERROR on DB failure
+ */
+export async function getProfileForSettings(
+  userId: string
+): Promise<SettingsProfile | null> {
+  console.info(
+    "[ProfileService:getProfileForSettings]",
+    `Fetching settings profile for user ${userId}`
+  );
+
+  try {
+    const rows = await db
+      .select({ name: users.name, vanitySlug: users.vanitySlug })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .limit(1);
+
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error(
+      "[ProfileService:getProfileForSettings]",
+      "DB error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw profileServiceError(
+      "Failed to load profile settings. Please try again.",
+      err
+    );
+  }
+}
 
 /**
  * Update the display name of a user profile.

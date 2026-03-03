@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { eq, and, isNull } from "drizzle-orm";
 import type { JSX } from "react";
-import { db } from "@/db";
-import { users } from "@/db/schema/user";
 import { getSession } from "@/lib/auth/service";
+import { getProfileForSettings } from "@/lib/profile/service";
 import { SlugSettingsForm } from "./_components/SlugSettingsForm";
 import { NameSettingsForm } from "./_components/NameSettingsForm";
 import { PasswordChangeForm } from "./password/password-change-form";
@@ -26,12 +24,7 @@ export default async function SettingsPage(): Promise<JSX.Element> {
 
   const currentUserId = sessionResult.user.id;
 
-  const profile = await db
-    .select({ name: users.name, vanitySlug: users.vanitySlug })
-    .from(users)
-    .where(and(eq(users.id, currentUserId), isNull(users.deletedAt)))
-    .limit(1)
-    .then((rows) => rows[0] ?? null);
+  const profile = await getProfileForSettings(currentUserId);
 
   if (!profile) {
     // Edge case: authenticated but no application profile yet.
