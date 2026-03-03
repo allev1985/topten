@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SlugSettingsForm } from "@/app/(dashboard)/settings/_components/SlugSettingsForm";
+import { SlugSettingsForm } from "@/app/(dashboard)/dashboard/settings/_components/SlugSettingsForm";
 
 // Mock the server action — the component imports it but the hook controls behaviour
 vi.mock("@/actions/profile-actions", () => ({

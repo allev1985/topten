@@ -3,15 +3,10 @@
 import type { JSX } from "react";
 import { useState, Suspense, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Menu } from "lucide-react";
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ListCardSkeleton } from "@/components/dashboard/ListCardSkeleton";
 import { ErrorState } from "@/components/dashboard/ErrorState";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { ListGrid } from "@/components/dashboard/ListGrid";
 import { mockLists } from "@/lib/mocks/lists";
 import type { List } from "@/types/list";
@@ -41,7 +36,6 @@ function getFilterTabClassName(isActive: boolean): string {
  * Authentication is handled by middleware.ts and parent layout.tsx
  */
 function DashboardPageContent(): JSX.Element {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [state, setState] = useState<DashboardState>({ type: "loading" });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -112,40 +106,8 @@ function DashboardPageContent(): JSX.Element {
   }, [state, filter]);
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop Sidebar - Fixed on left */}
-      <aside className="bg-background fixed top-0 left-0 hidden h-screen w-64 border-r lg:block">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <DashboardSidebar />
-        </Suspense>
-      </aside>
-
-      {/* Mobile Navigation Header */}
-      <nav className="bg-background fixed top-0 right-0 left-0 z-50 border-b lg:hidden">
-        <div className="p-4">
-          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <Suspense fallback={<div className="p-6">Loading...</div>}>
-                <DashboardSidebar />
-              </Suspense>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </nav>
-
-      {/* Main Content Area */}
-      <DashboardContent>
-        <div className="mt-16 lg:mt-0">
-          <DashboardHeader />
+    <>
+      <DashboardHeader />
 
           {/* Filter Tabs */}
           <div className="mb-6 flex gap-2 border-b">
@@ -185,9 +147,7 @@ function DashboardPageContent(): JSX.Element {
           ) : (
             <ListGrid lists={filteredLists} onListClick={handleListClick} />
           )}
-        </div>
-      </DashboardContent>
-    </div>
+    </>
   );
 }
 
