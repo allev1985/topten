@@ -42,7 +42,8 @@ export async function updateNameAction(
   }
 
   const currentUserId = sessionResult.user.id;
-  const name = formData.get("name");
+  const rawName = formData.get("name");
+  const name = typeof rawName === "string" ? rawName : "";
 
   const result = updateNameSchema.safeParse({ name });
 
