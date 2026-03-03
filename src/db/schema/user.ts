@@ -14,7 +14,8 @@ import { authUsers } from "./authUser";
  *
  * id is a foreign key to auth.users.id, not self-generated. The record is
  * created after the Supabase Auth user is created (e.g. on first sign-in or
- * email verification) and cascades on delete.
+ * email verification) and is RESTRICT on delete — hard deletes of auth users
+ * are blocked at the DB level; deletion is via soft delete (deleted_at) only.
  *
  * Auth-owned fields (email, password, email_confirmed_at, last_sign_in_at)
  * live in auth.users and are accessed via JOIN using the authUsers reference.
@@ -25,7 +26,7 @@ export const users = pgTable(
   {
     id: uuid("id")
       .primaryKey()
-      .references(() => authUsers.id, { onDelete: "cascade" }),
+      .references(() => authUsers.id, { onDelete: "restrict" }),
     name: varchar("name", { length: 255 }).notNull(),
     bio: text("bio"),
     avatarUrl: varchar("avatar_url", { length: 2048 }),

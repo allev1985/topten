@@ -54,7 +54,7 @@ CREATE TABLE "list_places" (
 );
 --> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_id_auth_users_id_fk"
-	FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;
+	FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE restrict ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "lists" ADD CONSTRAINT "lists_user_id_users_id_fk"
 	FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
