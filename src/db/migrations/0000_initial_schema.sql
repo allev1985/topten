@@ -103,7 +103,14 @@ BEGIN
   INSERT INTO public.users (id, name, vanity_slug)
   VALUES (
     NEW.id,
-    COALESCE(NULLIF(NEW.raw_user_meta_data->>'name', ''), split_part(NEW.email, '@', 1)),
+    COALESCE(
+      NULLIF(NEW.raw_user_meta_data->>'name', ''),
+      CASE
+        WHEN NEW.email IS NULL OR NEW.email = '' THEN NULL
+        ELSE split_part(NEW.email, '@', 1)
+      END,
+      NEW.id::text
+    ),
     COALESCE(NULLIF(NEW.raw_user_meta_data->>'vanity_slug', ''), NEW.id::text)
   );
   RETURN NEW;
