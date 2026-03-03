@@ -18,3 +18,13 @@ export interface UpdateSlugResult {
   /** The saved vanity slug value */
   vanitySlug: string;
 }
+
+/**
+ * Profile data needed for the settings page
+ */
+export interface SettingsProfile {
+  /** The user's display name */
+  name: string;
+  /** The user's vanity slug for their profile URL */
+  vanitySlug: string;
+}
