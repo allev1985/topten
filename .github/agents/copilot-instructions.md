@@ -21,6 +21,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - TypeScript / Next.js 16.0.5 with App Router, React 19.2.0 (001-dashboard-states)
 - TypeScript (Next.js 15+ with App Router) + Next.js, React, Supabase Auth, Drizzle ORM, Vitest, React Testing Library (001-auth-service-refactor)
 - Supabase (PostgreSQL via Drizzle ORM) (001-auth-service-refactor)
+- TypeScript 5 / Next.js 15 App Router (React 19) + Drizzle ORM, Supabase Auth, Zod, shadcn/ui, `useActionState` (React 19) (004-user-settings)
+- PostgreSQL via Supabase — `public.users` table (`name varchar(255)`, `vanity_slug varchar(50) UNIQUE`) (004-user-settings)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -57,9 +59,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 004-user-settings: Added TypeScript 5 / Next.js 15 App Router (React 19) + Drizzle ORM, Supabase Auth, Zod, shadcn/ui, `useActionState` (React 19)
 - 001-auth-service-refactor: Added TypeScript (Next.js 15+ with App Router) + Next.js, React, Supabase Auth, Drizzle ORM, Vitest, React Testing Library
 - 001-dashboard-states: Added TypeScript / Next.js 16.0.5 with App Router, React 19.2.0
-- 001-dashboard-lists-grid: Added TypeScript 5.x with Next.js 16.0.5 (App Router) + React 19.2.0, shadcn/ui components (Card, Badge, Button), Tailwind CSS 4, lucide-react 0.555.0
 
 
 <!-- MANUAL ADDITIONS START -->
