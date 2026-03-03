@@ -148,7 +148,7 @@ Write React Testing Library tests for `NameSettingsForm` and `SlugSettingsForm`:
 
 ---
 
-### Step 6 — Settings Page (`src/app/(dashboard)/settings/page.tsx`)
+### Step 6 — Settings Page (`src/app/(dashboard)/dashboard/settings/page.tsx`)
 
 Replace/create the unified settings page as a **server component**:
 
