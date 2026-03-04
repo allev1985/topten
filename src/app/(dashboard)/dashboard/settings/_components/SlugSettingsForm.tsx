@@ -49,14 +49,14 @@ export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
 
           {state.isSuccess && (
             <Alert>
-              <AlertDescription role="status">
+              <AlertDescription role="status" aria-label="Profile URL updated successfully.">
                 Profile URL updated successfully.
               </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="vanitySlug">Profile URL</Label>
+            <Label htmlFor="vanitySlug">Your profile URL</Label>
             <Input
               key={currentSlug}
               id="vanitySlug"
@@ -82,6 +82,7 @@ export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
               <span
                 id="vanitySlug-error"
                 role="alert"
+                aria-label={state.fieldErrors.vanitySlug[0]}
                 className="text-destructive text-sm"
               >
                 {state.fieldErrors.vanitySlug[0]}

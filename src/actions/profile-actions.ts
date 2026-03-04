@@ -32,7 +32,7 @@ export async function updateNameAction(
 ): Promise<ActionState<UpdateNameSuccessData>> {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+    return { data: null, error: "You must be logged in to update your profile", fieldErrors: {}, isSuccess: false };
   }
 
   const currentUserId = auth.userId;
@@ -81,7 +81,7 @@ export async function updateSlugAction(
 ): Promise<ActionState<UpdateSlugSuccessData>> {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+    return { data: null, error: "You must be logged in to update your profile", fieldErrors: {}, isSuccess: false };
   }
 
   const currentUserId = auth.userId;

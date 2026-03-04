@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useActionState } from "react";
 import {
   createPlaceAction,
   addExistingPlaceToListAction,
@@ -67,13 +67,13 @@ export function AddPlaceDialog({
   const [createName, setCreateName] = useState("");
   const [createAddress, setCreateAddress] = useState("");
 
-  const [createState, setCreateState] = useState<ActionState<CreatePlaceSuccessData>>(
+  const [createState, createFormAction, isCreatePending] = useActionState(
+    createPlaceAction,
     buildCreateInitial()
   );
   const [addState, setAddState] = useState<ActionState<AddExistingPlaceSuccessData>>(
     buildAddExistingInitial()
   );
-  const [isCreatePending, startCreateTransition] = useTransition();
   const [isAddPending, startAddTransition] = useTransition();
 
   const closeAndReset = () => {
@@ -82,10 +82,21 @@ export function AddPlaceDialog({
     setSelectedPlace(null);
     setCreateName("");
     setCreateAddress("");
-    setCreateState(buildCreateInitial());
     setAddState(buildAddExistingInitial());
     setPath(hasAvailable ? "search" : "create");
   };
+
+  useEffect(() => {
+    if (createState.isSuccess) {
+      setOpen(false);
+      setSearchTerm("");
+      setSelectedPlace(null);
+      setCreateName("");
+      setCreateAddress("");
+      setAddState(buildAddExistingInitial());
+      setPath(hasAvailable ? "search" : "create");
+    }
+  }, [createState.isSuccess, hasAvailable]);
 
   // Reset state when dialog opens/closes
   const handleOpenChange = (next: boolean) => {
@@ -102,18 +113,6 @@ export function AddPlaceDialog({
     startAddTransition(async () => {
       const result = await addExistingPlaceToListAction(addState, formData);
       setAddState(result);
-      if (result.isSuccess) {
-        closeAndReset();
-      }
-    });
-  };
-
-  const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    startCreateTransition(async () => {
-      const result = await createPlaceAction(createState, formData);
-      setCreateState(result);
       if (result.isSuccess) {
         closeAndReset();
       }
@@ -241,7 +240,7 @@ export function AddPlaceDialog({
 
         {/* ── Path B: Create new place ──────────────────────────────────────── */}
         {path === "create" && (
-          <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <form action={createFormAction} className="space-y-4">
             <input type="hidden" name="listId" value={listId} />
 
             {/* Form-level error */}

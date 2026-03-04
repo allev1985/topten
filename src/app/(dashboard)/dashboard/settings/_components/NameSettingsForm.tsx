@@ -45,7 +45,7 @@ export function NameSettingsForm({ initialName }: NameSettingsFormProps) {
 
           {state.isSuccess && (
             <Alert>
-              <AlertDescription role="status">
+              <AlertDescription role="status" aria-label="Name updated successfully.">
                 Name updated successfully.
               </AlertDescription>
             </Alert>
@@ -69,6 +69,7 @@ export function NameSettingsForm({ initialName }: NameSettingsFormProps) {
               <span
                 id="name-error"
                 role="alert"
+                aria-label={state.fieldErrors.name[0]}
                 className="text-destructive text-sm"
               >
                 {state.fieldErrors.name[0]}
