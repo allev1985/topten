@@ -59,7 +59,7 @@ function mapToList(summary: ListSummary): List {
     description: summary.description ?? undefined,
     isPublished: summary.isPublished,
     createdAt: summary.createdAt,
-    placeCount: 0,
+    placeCount: summary.placeCount,
   };
 }
 
