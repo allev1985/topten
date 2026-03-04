@@ -464,37 +464,36 @@ export async function updatePlace(params: {
     `Updating place ${placeId} for user ${userId}`
   );
 
-  // Verify list ownership and that the place is attached to this list
-  const ownerRows = await db
-    .select({ placeId: listPlaces.placeId })
-    .from(listPlaces)
-    .innerJoin(lists, eq(listPlaces.listId, lists.id))
-    .innerJoin(places, eq(listPlaces.placeId, places.id))
-    .where(
-      and(
-        eq(listPlaces.placeId, placeId),
-        eq(listPlaces.listId, listId),
-        eq(lists.userId, userId),
-        isNull(lists.deletedAt),
-        isNull(listPlaces.deletedAt),
-        isNull(places.deletedAt)
-      )
-    );
-
-  if (ownerRows.length === 0) {
-    throw notFoundError();
-  }
-
-  const updateValues: Partial<{
-    name: string;
-    address: string;
-    updatedAt: Date;
-  }> = { updatedAt: new Date() };
-
-  if (name !== undefined) updateValues.name = name;
-  if (address !== undefined) updateValues.address = address;
-
   try {
+    // Verify list ownership and that the place is attached to this list
+    const ownerRows = await db
+      .select({ placeId: listPlaces.placeId })
+      .from(listPlaces)
+      .innerJoin(lists, eq(listPlaces.listId, lists.id))
+      .innerJoin(places, eq(listPlaces.placeId, places.id))
+      .where(
+        and(
+          eq(listPlaces.placeId, placeId),
+          eq(listPlaces.listId, listId),
+          eq(lists.userId, userId),
+          isNull(lists.deletedAt),
+          isNull(listPlaces.deletedAt),
+          isNull(places.deletedAt)
+        )
+      );
+
+    if (ownerRows.length === 0) {
+      throw notFoundError();
+    }
+
+    const updateValues: Partial<{
+      name: string;
+      address: string;
+      updatedAt: Date;
+    }> = { updatedAt: new Date() };
+
+    if (name !== undefined) updateValues.name = name;
+    if (address !== undefined) updateValues.address = address;
     const rows = await db
       .update(places)
       .set(updateValues)
