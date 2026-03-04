@@ -22,7 +22,7 @@ interface ListDetailPageProps {
 export default async function ListDetailPage({
   params,
 }: ListDetailPageProps): Promise<JSX.Element> {
-  const { listId } = await params;
+  const { listId } = params;
 
   const sessionResult = await getSession();
   if (!sessionResult.authenticated || !sessionResult.user?.id) {
