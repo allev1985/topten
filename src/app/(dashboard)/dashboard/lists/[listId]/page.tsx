@@ -7,7 +7,7 @@ import { getListsByUser } from "@/lib/list/service";
 import { PlaceList } from "./_components/PlaceList";
 
 interface ListDetailPageProps {
-  params: Promise<{ listId: string }>;
+  params: { listId: string };
 }
 
 /**
