@@ -12,6 +12,7 @@ export type { PlaceSummary };
  */
 export interface PlaceRecord {
   id: string;
+  userId: string;
   googlePlaceId: string;
   name: string;
   address: string;

@@ -137,32 +137,21 @@ export async function getAvailablePlacesForList(params: {
       .select({ placeId: listPlaces.placeId })
       .from(listPlaces)
       .where(
-        and(
-          eq(listPlaces.listId, listId),
-          isNull(listPlaces.deletedAt)
-        )
+        and(eq(listPlaces.listId, listId), isNull(listPlaces.deletedAt))
       );
 
-    // Subquery: placeIds belonging to the user (via any active list)
-    const userListIds = db
-      .select({ id: lists.id })
-      .from(lists)
-      .where(and(eq(lists.userId, userId), isNull(lists.deletedAt)));
-
+    // places.userId is the direct ownership proof — no list join required
     const rows = await db
-      .selectDistinct({
+      .select({
         id: places.id,
         name: places.name,
         address: places.address,
       })
       .from(places)
-      // Join through any ListPlace row (active or soft-deleted) — only used to
-      // prove the place belongs to the user; activity is not required here.
-      .innerJoin(listPlaces, eq(listPlaces.placeId, places.id))
       .where(
         and(
+          eq(places.userId, userId),
           isNull(places.deletedAt),
-          inArray(listPlaces.listId, userListIds),
           not(inArray(places.id, attachedInTarget))
         )
       )
@@ -256,6 +245,7 @@ export async function createPlace(params: {
       const placeRows = await tx
         .insert(places)
         .values({
+          userId,
           googlePlaceId: crypto.randomUUID(),
           name,
           address,

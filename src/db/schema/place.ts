@@ -7,14 +7,16 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { users } from "./user";
 
 export const places = pgTable(
   "places",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    googlePlaceId: varchar("google_place_id", { length: 255 })
+    userId: uuid("user_id")
       .notNull()
-      .unique(),
+      .references(() => users.id),
+    googlePlaceId: varchar("google_place_id", { length: 255 }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     address: varchar("address", { length: 500 }).notNull(),
     latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
@@ -28,7 +30,11 @@ export const places = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
-    uniqueIndex("places_google_place_id_idx").on(table.googlePlaceId),
+    uniqueIndex("places_user_google_place_id_idx").on(
+      table.userId,
+      table.googlePlaceId
+    ),
+    index("places_user_id_idx").on(table.userId),
     index("places_deleted_at_idx").on(table.deletedAt),
   ]
 );
