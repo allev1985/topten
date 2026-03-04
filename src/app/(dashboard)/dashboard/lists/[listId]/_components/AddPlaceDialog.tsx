@@ -64,6 +64,8 @@ export function AddPlaceDialog({
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlace, setSelectedPlace] = useState<PlaceSummary | null>(null);
+  const [createName, setCreateName] = useState("");
+  const [createAddress, setCreateAddress] = useState("");
 
   const [createState, createAction, isCreatePending] = useActionState(
     createPlaceAction,
@@ -83,6 +85,8 @@ export function AddPlaceDialog({
       setOpen(false);
       setSearchTerm("");
       setSelectedPlace(null);
+      setCreateName("");
+      setCreateAddress("");
     }
   }, [createState.isSuccess, addState.isSuccess]);
 
@@ -92,6 +96,8 @@ export function AddPlaceDialog({
     if (!next) {
       setSearchTerm("");
       setSelectedPlace(null);
+      setCreateName("");
+      setCreateAddress("");
       setPath(hasAvailable ? "search" : "create");
     }
   };
@@ -235,6 +241,8 @@ export function AddPlaceDialog({
                 placeholder="e.g. The Coffee House"
                 maxLength={255}
                 required
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
               />
               {createState.fieldErrors["name"] && (
                 <p className="text-destructive text-xs">
@@ -251,6 +259,8 @@ export function AddPlaceDialog({
                 placeholder="e.g. 1 Main St, London"
                 maxLength={500}
                 required
+                value={createAddress}
+                onChange={(e) => setCreateAddress(e.target.value)}
               />
               {createState.fieldErrors["address"] && (
                 <p className="text-destructive text-xs">
@@ -268,7 +278,14 @@ export function AddPlaceDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreatePending}>
+              <Button
+                type="submit"
+                disabled={
+                  isCreatePending ||
+                  !createName.trim() ||
+                  !createAddress.trim()
+                }
+              >
                 {isCreatePending ? "Creating…" : "Create place"}
               </Button>
             </div>
