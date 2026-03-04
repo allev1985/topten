@@ -99,6 +99,8 @@ export function AddPlaceDialog({
       setCreateName("");
       setCreateAddress("");
       setPath(hasAvailable ? "search" : "create");
+      setCreateName("");
+      setCreateAddress("");
     }
   };
 
@@ -282,8 +284,8 @@ export function AddPlaceDialog({
                 type="submit"
                 disabled={
                   isCreatePending ||
-                  !createName.trim() ||
-                  !createAddress.trim()
+                  createName.trim().length === 0 ||
+                  createAddress.trim().length === 0
                 }
               >
                 {isCreatePending ? "Creating…" : "Create place"}
