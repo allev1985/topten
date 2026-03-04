@@ -30,5 +30,6 @@ export const listPlaces = pgTable(
   (table) => [
     index("list_places_list_position_idx").on(table.listId, table.position),
     uniqueIndex("list_places_list_place_idx").on(table.listId, table.placeId),
+    index("list_places_place_id_idx").on(table.placeId),
   ]
 );

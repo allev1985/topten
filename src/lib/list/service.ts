@@ -19,9 +19,10 @@
  * @module list/service
  */
 
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc, count } from "drizzle-orm";
 import { db } from "@/db";
 import { lists } from "@/db/schema/list";
+import { listPlaces } from "@/db/schema/listPlace";
 import {
   ListServiceError,
   notFoundError,
@@ -37,6 +38,8 @@ import type {
   PublishListResult,
   UnpublishListResult,
 } from "./service/types";
+
+export { ListServiceError };
 
 export type {
   ListSummary,
@@ -81,9 +84,15 @@ export async function getListsByUser(userId: string): Promise<ListSummary[]> {
         description: lists.description,
         isPublished: lists.isPublished,
         createdAt: lists.createdAt,
+        placeCount: count(listPlaces.id),
       })
       .from(lists)
+      .leftJoin(
+        listPlaces,
+        and(eq(listPlaces.listId, lists.id), isNull(listPlaces.deletedAt))
+      )
       .where(and(eq(lists.userId, userId), isNull(lists.deletedAt)))
+      .groupBy(lists.id)
       .orderBy(desc(lists.createdAt));
 
     console.info(

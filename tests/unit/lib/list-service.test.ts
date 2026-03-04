@@ -27,6 +27,8 @@ const { mockSelect, mockInsert, mockUpdate } = vi.hoisted(() => ({
 }));
 
 const mockOrderBy = vi.fn();
+const mockGroupBy = vi.fn();
+const mockLeftJoin = vi.fn();
 const mockSelectWhere = vi.fn();
 const mockFrom = vi.fn();
 
@@ -98,8 +100,10 @@ beforeEach(() => {
     if (mockSelectError) return Promise.reject(mockSelectError);
     return Promise.resolve(mockSelectRows);
   });
-  mockSelectWhere.mockReturnValue({ orderBy: mockOrderBy });
-  mockFrom.mockReturnValue({ where: mockSelectWhere });
+  mockGroupBy.mockReturnValue({ orderBy: mockOrderBy });
+  mockSelectWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy });
+  mockLeftJoin.mockReturnValue({ where: mockSelectWhere });
+  mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, where: mockSelectWhere });
   mockSelect.mockReturnValue({ from: mockFrom });
 
   // insert chain

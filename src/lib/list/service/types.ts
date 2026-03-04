@@ -14,6 +14,7 @@ export interface ListSummary {
   description: string | null;
   isPublished: boolean;
   createdAt: Date;
+  placeCount: number;
 }
 
 /**
