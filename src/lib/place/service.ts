@@ -556,28 +556,27 @@ export async function deletePlaceFromList(params: {
     `Removing place ${placeId} from list ${listId} for user ${userId}`
   );
 
-  // Verify list ownership and that the attachment is currently active
-  const ownerRows = await db
-    .select({ placeId: listPlaces.placeId })
-    .from(listPlaces)
-    .innerJoin(lists, eq(listPlaces.listId, lists.id))
-    .innerJoin(places, eq(listPlaces.placeId, places.id))
-    .where(
-      and(
-        eq(listPlaces.placeId, placeId),
-        eq(listPlaces.listId, listId),
-        eq(lists.userId, userId),
-        isNull(lists.deletedAt),
-        isNull(listPlaces.deletedAt),
-        isNull(places.deletedAt)
-      )
-    );
-
-  if (ownerRows.length === 0) {
-    throw notFoundError();
-  }
-
   try {
+    // Verify list ownership and that the attachment is currently active
+    const ownerRows = await db
+      .select({ placeId: listPlaces.placeId })
+      .from(listPlaces)
+      .innerJoin(lists, eq(listPlaces.listId, lists.id))
+      .innerJoin(places, eq(listPlaces.placeId, places.id))
+      .where(
+        and(
+          eq(listPlaces.placeId, placeId),
+          eq(listPlaces.listId, listId),
+          eq(lists.userId, userId),
+          isNull(lists.deletedAt),
+          isNull(listPlaces.deletedAt),
+          isNull(places.deletedAt)
+        )
+      );
+
+    if (ownerRows.length === 0) {
+      throw notFoundError();
+    }
     // Soft-delete the ListPlace row — the Place record is left untouched
     const rows = await db
       .update(listPlaces)

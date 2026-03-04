@@ -85,6 +85,8 @@ export function AddPlaceDialog({
       setOpen(false);
       setSearchTerm("");
       setSelectedPlace(null);
+      setCreateName("");
+      setCreateAddress("");
     }
   }, [createState.isSuccess, addState.isSuccess]);
 
@@ -94,6 +96,8 @@ export function AddPlaceDialog({
     if (!next) {
       setSearchTerm("");
       setSelectedPlace(null);
+      setCreateName("");
+      setCreateAddress("");
       setPath(hasAvailable ? "search" : "create");
       setCreateName("");
       setCreateAddress("");
