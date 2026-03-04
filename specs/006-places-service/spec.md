@@ -24,7 +24,7 @@ A signed-in user navigates to one of their lists. They click "Add a place". The 
 5. **Given** the "Create new place" form is open, **When** the user submits with an empty name, **Then** the submission is rejected with a validation error and no records are created.
 6. **Given** the "Create new place" form is open, **When** the user submits with an empty address, **Then** the submission is rejected with a validation error and no records are created.
 7. **Given** a user creates a new place, **Then** the `googlePlaceId` field is set to a system-generated UUID (not supplied by the user) and is not visible in the form.
-8. **Given** the available-places list is displayed, **Then** places that are already attached to the current list (including soft-deleted ones) are excluded from the results.
+8. **Given** the available-places list is displayed, **Then** places that are already attached to the current list and not soft-deleted are excluded from the results (soft-deleted attachments remain available so they can be restored).
 
 ---
 
