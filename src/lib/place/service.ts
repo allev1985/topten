@@ -221,16 +221,30 @@ export async function createPlace(params: {
   );
 
   // Verify list ownership outside the transaction (cheap read first)
-  const ownerRows = await db
-    .select({ id: lists.id })
-    .from(lists)
-    .where(
-      and(
-        eq(lists.id, listId),
-        eq(lists.userId, userId),
-        isNull(lists.deletedAt)
-      )
+  let ownerRows;
+  try {
+    ownerRows = await db
+      .select({ id: lists.id })
+      .from(lists)
+      .where(
+        and(
+          eq(lists.id, listId),
+          eq(lists.userId, userId),
+          isNull(lists.deletedAt)
+        )
+      );
+  } catch (err) {
+    if (err instanceof PlaceServiceError) throw err;
+    console.error(
+      "[PlaceService:createPlace]",
+      "Ownership check failed:",
+      err instanceof Error ? err.message : "Unknown error"
     );
+    throw placeServiceError(
+      "Failed to create place. Please try again.",
+      err
+    );
+  }
 
   if (ownerRows.length === 0) {
     throw notFoundError();
