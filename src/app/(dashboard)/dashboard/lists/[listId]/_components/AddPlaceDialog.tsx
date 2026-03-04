@@ -35,12 +35,13 @@ const buildCreateInitial = (): ActionState<CreatePlaceSuccessData> => ({
   isSuccess: false,
 });
 
-const buildAddExistingInitial = (): ActionState<AddExistingPlaceSuccessData> => ({
-  data: null,
-  error: null,
-  fieldErrors: {},
-  isSuccess: false,
-});
+const buildAddExistingInitial =
+  (): ActionState<AddExistingPlaceSuccessData> => ({
+    data: null,
+    error: null,
+    fieldErrors: {},
+    isSuccess: false,
+  });
 
 // ── Path B inner form ─────────────────────────────────────────────────────────
 //
@@ -54,7 +55,11 @@ interface CreatePlaceFormProps {
   onCancel: () => void;
 }
 
-function CreatePlaceForm({ listId, onSuccess, onCancel }: CreatePlaceFormProps): JSX.Element {
+function CreatePlaceForm({
+  listId,
+  onSuccess,
+  onCancel,
+}: CreatePlaceFormProps): JSX.Element {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [state, formAction, isPending] = useActionState(
@@ -124,9 +129,7 @@ function CreatePlaceForm({ listId, onSuccess, onCancel }: CreatePlaceFormProps):
         <Button
           type="submit"
           disabled={
-            isPending ||
-            name.trim().length === 0 ||
-            address.trim().length === 0
+            isPending || name.trim().length === 0 || address.trim().length === 0
           }
         >
           {isPending ? "Creating…" : "Create place"}
@@ -166,9 +169,9 @@ export function AddPlaceDialog({
   const [selectedPlace, setSelectedPlace] = useState<PlaceSummary | null>(null);
   const [createFormKey, setCreateFormKey] = useState(0);
 
-  const [addState, setAddState] = useState<ActionState<AddExistingPlaceSuccessData>>(
-    buildAddExistingInitial()
-  );
+  const [addState, setAddState] = useState<
+    ActionState<AddExistingPlaceSuccessData>
+  >(buildAddExistingInitial());
   const [isAddPending, startAddTransition] = useTransition();
 
   const closeAndReset = () => {
@@ -285,8 +288,10 @@ export function AddPlaceDialog({
                         setSelectedPlace(place);
                         setSearchTerm(place.name);
                       }}
-                      className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
-                        selectedPlace?.id === place.id ? "bg-muted font-medium" : ""
+                      className={`hover:bg-muted w-full px-3 py-2 text-left text-sm transition-colors ${
+                        selectedPlace?.id === place.id
+                          ? "bg-muted font-medium"
+                          : ""
                       }`}
                     >
                       <span className="block font-medium">{place.name}</span>
