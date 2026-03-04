@@ -7,7 +7,7 @@ import { getListsByUser } from "@/lib/list/service";
 import { PlaceList } from "./_components/PlaceList";
 
 interface ListDetailPageProps {
-  params: { listId: string };
+  params: Promise<{ listId: string }>;
 }
 
 /**
@@ -22,7 +22,7 @@ interface ListDetailPageProps {
 export default async function ListDetailPage({
   params,
 }: ListDetailPageProps): Promise<JSX.Element> {
-  const { listId } = params;
+  const { listId } = await params;
 
   const sessionResult = await getSession();
   if (!sessionResult.authenticated || !sessionResult.user?.id) {

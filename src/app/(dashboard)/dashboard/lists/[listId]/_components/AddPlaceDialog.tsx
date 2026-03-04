@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX, FormEvent } from "react";
+import type { JSX } from "react";
 import { useState, useTransition } from "react";
 import {
   createPlaceAction,
@@ -90,14 +90,34 @@ export function AddPlaceDialog({
   // Reset state when dialog opens/closes
   const handleOpenChange = (next: boolean) => {
     if (!next) {
-      setSearchTerm("");
-      setSelectedPlace(null);
-      setCreateName("");
-      setCreateAddress("");
-      setPath(hasAvailable ? "search" : "create");
-      setCreateName("");
-      setCreateAddress("");
+      closeAndReset();
+    } else {
+      setOpen(true);
     }
+  };
+
+  const handleAddSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startAddTransition(async () => {
+      const result = await addExistingPlaceToListAction(addState, formData);
+      setAddState(result);
+      if (result.isSuccess) {
+        closeAndReset();
+      }
+    });
+  };
+
+  const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startCreateTransition(async () => {
+      const result = await createPlaceAction(createState, formData);
+      setCreateState(result);
+      if (result.isSuccess) {
+        closeAndReset();
+      }
+    });
   };
 
   const filteredPlaces = availablePlaces.filter((p) =>
