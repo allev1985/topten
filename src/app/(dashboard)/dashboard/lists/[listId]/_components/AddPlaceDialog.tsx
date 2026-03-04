@@ -1,7 +1,7 @@
 "use client";
 
-import type { JSX } from "react";
-import { useActionState, useLayoutEffect, useState } from "react";
+import type { JSX, FormEvent } from "react";
+import { useState, useTransition } from "react";
 import {
   createPlaceAction,
   addExistingPlaceToListAction,
@@ -67,32 +67,28 @@ export function AddPlaceDialog({
   const [createName, setCreateName] = useState("");
   const [createAddress, setCreateAddress] = useState("");
 
-  const [createState, createAction, isCreatePending] = useActionState(
-    createPlaceAction,
+  const [createState, setCreateState] = useState<ActionState<CreatePlaceSuccessData>>(
     buildCreateInitial()
   );
-
-  const [addState, addAction, isAddPending] = useActionState(
-    addExistingPlaceToListAction,
+  const [addState, setAddState] = useState<ActionState<AddExistingPlaceSuccessData>>(
     buildAddExistingInitial()
   );
+  const [isCreatePending, startCreateTransition] = useTransition();
+  const [isAddPending, startAddTransition] = useTransition();
 
-  // Close on success — useLayoutEffect fires before paint so there is no
-  // intermediate frame where the dialog re-renders with a re-enabled button
-  // and the just-added place still listed.
-  useLayoutEffect(() => {
-    if (createState.isSuccess || addState.isSuccess) {
-      setOpen(false);
-      setSearchTerm("");
-      setSelectedPlace(null);
-      setCreateName("");
-      setCreateAddress("");
-    }
-  }, [createState.isSuccess, addState.isSuccess]);
+  const closeAndReset = () => {
+    setOpen(false);
+    setSearchTerm("");
+    setSelectedPlace(null);
+    setCreateName("");
+    setCreateAddress("");
+    setCreateState(buildCreateInitial());
+    setAddState(buildAddExistingInitial());
+    setPath(hasAvailable ? "search" : "create");
+  };
 
   // Reset state when dialog opens/closes
   const handleOpenChange = (next: boolean) => {
-    setOpen(next);
     if (!next) {
       setSearchTerm("");
       setSelectedPlace(null);
@@ -151,7 +147,7 @@ export function AddPlaceDialog({
 
         {/* ── Path A: Search existing places ───────────────────────────────── */}
         {path === "search" && (
-          <form action={addAction} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-4">
             <input type="hidden" name="listId" value={listId} />
             {selectedPlace && (
               <input type="hidden" name="placeId" value={selectedPlace.id} />
@@ -225,7 +221,7 @@ export function AddPlaceDialog({
 
         {/* ── Path B: Create new place ──────────────────────────────────────── */}
         {path === "create" && (
-          <form action={createAction} className="space-y-4">
+          <form onSubmit={handleCreateSubmit} className="space-y-4">
             <input type="hidden" name="listId" value={listId} />
 
             {/* Form-level error */}
