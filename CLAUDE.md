@@ -26,7 +26,6 @@ pnpm test:e2e:ui        # Playwright interactive UI
 # Database
 pnpm db:generate  # Generate Drizzle migrations
 pnpm db:migrate   # Run migrations
-pnpm db:push      # Push schema without migration files
 pnpm db:seed      # Seed initial data
 pnpm db:studio    # Drizzle Studio GUI
 
