@@ -68,19 +68,19 @@ A user clicks on a place within their list. An edit form opens pre-filled with t
 
 ---
 
-### User Story 4 — Soft Delete a Place (Priority: P3)
+### User Story 4 — Remove a Place from a List (Priority: P3)
 
-A user removes a place from their list. The place is not permanently erased; `deletedAt` is set on the place record. The place is no longer shown in any list.
+A user removes a place from a specific list. The `Place` record itself is not deleted; only the `ListPlace` junction row is soft-deleted (`deletedAt` is set on the `ListPlace` row). The place is no longer shown in that list but remains available for other lists the user owns.
 
-**Why this priority**: Soft deletion preserves data integrity and supports future recovery or auditing. However, users' immediate need is creation and editing; deletion is lower-frequency.
+**Why this priority**: Removing a place from a list preserves data integrity (the `Place` record is retained for reuse on other lists) and supports future recovery. However, users' immediate need is creation and editing; deletion is lower-frequency.
 
-**Independent Test**: After soft-deleting a place, it no longer appears in the list detail page and is absent from any query that filters for non-deleted places.
+**Independent Test**: After calling `deletePlaceFromList`, the place no longer appears in the list detail page for that list but is still present in `getAvailablePlacesForList` results for any other list the user owns (since the `Place` record is not deleted).
 
 **Acceptance Scenarios**:
 
-1. **Given** a place exists in a list, **When** the user deletes it, **Then** `deletedAt` is set to the current UTC timestamp and the place no longer appears in the list.
-2. **Given** a user attempts to delete a place they do not own, **When** the service validates ownership, **Then** the operation is rejected.
-3. **Given** a place is already soft-deleted, **When** a delete is attempted again, **Then** the operation is a no-op or returns a not-found error (idempotent).
+1. **Given** a place is attached to a list, **When** the user removes it, **Then** `deletedAt` is set to the current UTC timestamp on the `ListPlace` row and the place no longer appears in that list.
+2. **Given** a user attempts to remove a place from a list they do not own, **When** the service validates ownership, **Then** the operation is rejected.
+3. **Given** the `ListPlace` row is already soft-deleted, **When** a remove is attempted again, **Then** the operation returns a not-found error (idempotent).
 
 ---
 
@@ -91,7 +91,7 @@ A user removes a place from their list. The place is not permanently erased; `de
 - What if the same place is added to the same list twice? → Before creating a `ListPlace` record, the service MUST verify that no non-deleted `ListPlace` already exists for `(listId, placeId)`. If a duplicate is detected, the operation is rejected with a user-friendly error before any database write. The `list_places_list_place_idx` unique index on `(listId, placeId)` acts as a hard backstop at the database level. The "Add a place" form's available-places list naturally prevents this in the happy path by filtering out already-attached places, but the service-level guard is still required.
 - What if a place with a matching `googlePlaceId` already exists in the system (relevant once Google Places integration is added)? → The service MUST check for an existing `Place` record with the same `googlePlaceId` before creating a new one. If a match is found, the existing record is reused and a `ListPlace` entry is created for it rather than inserting a duplicate `Place`. For the current iteration (UUID-assigned IDs), this path is not practically triggered, but the guard MUST be in place for forward compatibility.
 - What is the `position` value for a newly added place? → The system assigns `position` as one greater than the current maximum position in the list (append to end).
-- Does soft-deleting a place also remove its `ListPlace` entries? → The `ListPlace` record is not automatically removed but the place will not appear in list views since queries filter for `place.deletedAt IS NULL`. For this iteration, `ListPlace` orphan cleanup is out of scope.
+- Does removing a place from a list (`deletePlaceFromList`) affect other lists? → No. Only the `ListPlace` row for the specified `(listId, placeId)` pair has `deletedAt` set. The `Place` record is left intact, so it remains accessible on any other lists it belongs to and is discoverable via `getAvailablePlacesForList`.
 - What if the user edits the name field, then manually restores it to the original value? → The form compares current field values against the originally loaded values; if all fields match the saved state, the form is considered clean (no unsaved indicator, Save button disabled).
 - What if a save is in progress and the user tries to close the form? → The close affordance is disabled while a save is in progress to prevent partial-state confusion.
 
@@ -99,14 +99,14 @@ A user removes a place from their list. The place is not permanently erased; `de
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST provide a `PlaceService` module at `src/lib/services/place/` exposing: `createPlace`, `addExistingPlaceToList`, `updatePlace`, and `deletePlace`.
+- **FR-001**: The system MUST provide a `PlaceService` module at `src/lib/services/place/` exposing: `createPlace`, `addExistingPlaceToList`, `updatePlace`, and `deletePlaceFromList`.
 - **FR-002**: `createPlace` MUST accept `{ listId, name, address }`. The system MUST auto-generate a UUID for `googlePlaceId` at creation time. Users MUST NOT supply or see `googlePlaceId` via the form. Before inserting, the service MUST check for an existing `Place` with the same `googlePlaceId`; if found, it MUST reuse that record rather than creating a duplicate.
 - **FR-003**: `createPlace` MUST validate that `name` is non-empty and non-whitespace (max 255 chars) and `address` is non-empty and non-whitespace (max 500 chars) before any database interaction. If either check fails, the operation MUST be rejected with a validation error.
 - **FR-004**: `createPlace` MUST, after creating (or identifying an existing) `Place` record, create a corresponding `ListPlace` record linking the place to the specified list with `position` set to one greater than the current highest position in that list (i.e., appended to the end). Both writes MUST succeed atomically; if either fails, neither record is persisted.
 - **FR-004a**: `addExistingPlaceToList` MUST accept `{ listId, placeId }`. The service MUST verify that the authenticated user owns the list and that no non-deleted `ListPlace` already exists for `(listId, placeId)` before writing. On success, a `ListPlace` record is created with `position` appended to the end. No new `Place` record is created.
 - **FR-004b**: The system MUST provide a `getAvailablePlacesForList` query that accepts `{ listId, userId }` and returns all non-deleted `Place` records that belong to at least one of the user's lists but are NOT currently attached (via a non-deleted `ListPlace`) to the specified list. Results MUST be ordered by place name ascending.
 - **FR-005**: `updatePlace` MUST accept `{ placeId, listId, name?, description? }` — specifically `name` and `address` as optional update fields. `googlePlaceId` MUST NOT be an accepted parameter; any attempt to pass it MUST be silently ignored or rejected. The service MUST verify that the authenticated user owns the list containing this place before writing. Only provided fields are updated; `updatedAt` is always refreshed.
-- **FR-006**: `deletePlace` MUST set `deletedAt` to the current UTC timestamp on the `Place` record. The service MUST verify that the authenticated user owns the list containing this place before writing.
+- **FR-006**: `deletePlaceFromList` MUST set `deletedAt` to the current UTC timestamp on the `ListPlace` row for the given `(listId, placeId)` pair, leaving the `Place` record untouched. The service MUST verify that the authenticated user owns the list and that the `ListPlace` row is currently active (`deletedAt IS NULL`) before writing.
 - **FR-007**: The system MUST provide a `getPlacesByList` query that returns all non-deleted places attached to a given list (`deletedAt IS NULL` on the `Place` record), ordered by `ListPlace.position ASC`.
 - **FR-008**: The list detail page MUST display all places returned by `getPlacesByList` for the current list, showing each place's name and address.
 - **FR-009**: The list detail page MUST include an "Add a place" affordance that opens a two-path form:
@@ -133,8 +133,8 @@ A user removes a place from their list. The place is not permanently erased; `de
 
 - **SC-001**: A user can add a place (name + address) to a list and see it appear in the list in under 3 seconds (p95) on a standard connection.
 - **SC-002**: A user can update a place's name or address and see the updated value reflected in the list immediately on save.
-- **SC-003**: All three service operations (`createPlace`, `updatePlace`, `deletePlace`) have unit-test coverage ≥ 90% for happy-path and primary error branches.
-- **SC-004**: A soft-deleted place is absent from `getPlacesByList` results immediately after deletion, verifiable via an integration test.
+- **SC-003**: All three service operations (`createPlace`, `updatePlace`, `deletePlaceFromList`) have unit-test coverage ≥ 90% for happy-path and primary error branches.
+- **SC-004**: A soft-deleted `ListPlace` row causes the place to be absent from `getPlacesByList` results immediately after `deletePlaceFromList` is called, verifiable via an integration test.
 - **SC-005**: Two places created in the same list receive sequential `position` values (e.g., 1 and 2), verifiable via a unit test on the position-assignment logic.
 - **SC-006**: A place cannot be added to the same list twice — the duplicate attempt is rejected with a user-friendly error at the service layer, verifiable via an integration test.
 - **SC-007**: The available-places search filters results in real time as the user types; a list of 50 existing places is filtered to matching results without a full-page reload, verifiable via a component test.
