@@ -74,8 +74,8 @@ export async function createPlaceAction(
     googlePlaceId: formData.get("googlePlaceId") ?? "",
     name: formData.get("name") ?? "",
     address: formData.get("address") ?? "",
-    latitude: typeof rawLat === "string" ? Number(rawLat) : undefined,
-    longitude: typeof rawLng === "string" ? Number(rawLng) : undefined,
+    latitude: typeof rawLat === "string" ? rawLat : undefined,
+    longitude: typeof rawLng === "string" ? rawLng : undefined,
     description: formData.get("description") || undefined,
     heroImageUrl: formData.get("heroImageUrl") || undefined,
   });
