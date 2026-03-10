@@ -95,13 +95,16 @@ const placeSummaryRow = {
   id: PLACE_ID,
   name: "The Coffee House",
   address: "1 Main St",
+  description: null,
 };
 
 const fullPlaceRow = {
   ...placeSummaryRow,
-  googlePlaceId: "some-uuid",
-  latitude: "0",
-  longitude: "0",
+  userId: USER_ID,
+  googlePlaceId: "ChIJtest_place_id",
+  latitude: "51.5",
+  longitude: "-0.1",
+  heroImageUrl: null,
   createdAt: NOW,
   updatedAt: NOW,
   deletedAt: null,
@@ -249,8 +252,11 @@ describe("Place Service", () => {
       const result = await createPlace({
         listId: LIST_ID,
         userId: USER_ID,
+        googlePlaceId: "ChIJtest_place_id",
         name: "The Coffee House",
         address: "1 Main St",
+        latitude: "51.5",
+        longitude: "-0.1",
       });
 
       expect(result.place.id).toBe(PLACE_ID);
@@ -263,8 +269,11 @@ describe("Place Service", () => {
         createPlace({
           listId: LIST_ID,
           userId: USER_ID,
+          googlePlaceId: "ChIJtest_place_id",
           name: "Cafe",
           address: "1 Main St",
+          latitude: "51.5",
+          longitude: "-0.1",
         })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
@@ -277,69 +286,57 @@ describe("Place Service", () => {
         createPlace({
           listId: LIST_ID,
           userId: USER_ID,
+          googlePlaceId: "ChIJtest_place_id",
           name: "Cafe",
           address: "1 Main St",
+          latitude: "51.5",
+          longitude: "-0.1",
         })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
 
-    it("assigns a UUID as googlePlaceId (not a user-provided value)", async () => {
+    it("passes the provided googlePlaceId to the insert", async () => {
       mockSelectRows = [{ id: LIST_ID }];
       let capturedGooglePlaceId: string | undefined;
-      mockInsert.mockImplementation(() => {
-        return {
-          values: (vals: { googlePlaceId?: string }) => {
-            capturedGooglePlaceId = vals.googlePlaceId;
-            return { returning: vi.fn().mockResolvedValue([fullPlaceRow]) };
-          },
-        };
-      });
 
-      // Use transaction mock that runs the actual fn to capture googlePlaceId
       mockTransactionResult = null;
       mockTransaction.mockImplementation(
         async (fn: (tx: unknown) => Promise<unknown>) => {
+          let insertCallCount = 0;
           const tx = {
             select: vi.fn().mockReturnValue({
               from: vi.fn().mockReturnValue({
                 where: vi.fn().mockResolvedValue([{ maxPos: 0 }]),
               }),
             }),
-            insert: mockInsert,
+            insert: vi.fn().mockImplementation(() => ({
+              values: (vals: { googlePlaceId?: string; position?: number }) => {
+                insertCallCount++;
+                if (insertCallCount === 1) capturedGooglePlaceId = vals.googlePlaceId;
+                return {
+                  returning: vi.fn().mockResolvedValue(
+                    insertCallCount === 1 ? [fullPlaceRow] : [{ id: LIST_PLACE_ID }]
+                  ),
+                };
+              },
+            })),
             update: mockUpdate,
           };
           return fn(tx);
         }
       );
 
-      // Reset insert to also return a listPlace row
-      let insertCallCount = 0;
-      mockInsert.mockImplementation(() => ({
-        values: (vals: { googlePlaceId?: string; position?: number }) => {
-          insertCallCount++;
-          if (insertCallCount === 1 && vals.googlePlaceId) {
-            capturedGooglePlaceId = vals.googlePlaceId;
-            return {
-              returning: vi.fn().mockResolvedValue([fullPlaceRow]),
-            };
-          }
-          return {
-            returning: vi.fn().mockResolvedValue([{ id: LIST_PLACE_ID }]),
-          };
-        },
-      }));
-
       await createPlace({
         listId: LIST_ID,
         userId: USER_ID,
+        googlePlaceId: "ChIJprovided_by_api",
         name: "Cafe",
         address: "1 Main St",
+        latitude: "51.5",
+        longitude: "-0.1",
       });
 
-      // googlePlaceId should be a valid UUID format
-      expect(capturedGooglePlaceId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-      );
+      expect(capturedGooglePlaceId).toBe("ChIJprovided_by_api");
     });
   });
 
@@ -424,20 +421,20 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("updatePlace", () => {
-    it("updates a place's name and returns the updated record", async () => {
+    it("updates a place's description and returns the updated record", async () => {
       mockSelectRows = [{ placeId: PLACE_ID }]; // ownership check passes
       mockUpdateRows = [
-        { id: PLACE_ID, name: "New Name", address: "1 Main St", updatedAt: NOW },
+        { id: PLACE_ID, description: "Great coffee shop", updatedAt: NOW },
       ];
 
       const result = await updatePlace({
         placeId: PLACE_ID,
         listId: LIST_ID,
         userId: USER_ID,
-        name: "New Name",
+        description: "Great coffee shop",
       });
 
-      expect(result.place.name).toBe("New Name");
+      expect(result.place.description).toBe("Great coffee shop");
     });
 
     it("throws NOT_FOUND when ownership check fails", async () => {
@@ -447,7 +444,7 @@ describe("Place Service", () => {
           placeId: PLACE_ID,
           listId: LIST_ID,
           userId: USER_ID,
-          name: "New Name",
+          description: "Notes",
         })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
@@ -460,7 +457,7 @@ describe("Place Service", () => {
           placeId: PLACE_ID,
           listId: LIST_ID,
           userId: USER_ID,
-          name: "New Name",
+          description: "Notes",
         })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
@@ -485,7 +482,7 @@ describe("Place Service", () => {
           placeId: PLACE_ID,
           listId: LIST_ID,
           userId: USER_ID,
-          name: "New Name",
+          description: "Notes",
         })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
@@ -544,7 +541,7 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("getAllPlacesByUser", () => {
-    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", activeListCount: 2 };
+    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", description: null, activeListCount: 2 };
 
     it("returns places with active list counts", async () => {
       mockSelectRows = [placeWithCount];
@@ -579,14 +576,17 @@ describe("Place Service", () => {
       mockInsertRows = [fullPlaceRow];
       const result = await createPlace({
         userId: USER_ID,
+        googlePlaceId: "ChIJtest_place_id",
         name: "The Coffee House",
         address: "1 Main St",
+        latitude: "51.5",
+        longitude: "-0.1",
       });
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.place.name).toBe("The Coffee House");
     });
 
-    it("assigns a UUID as googlePlaceId", async () => {
+    it("passes the provided googlePlaceId to the insert", async () => {
       let capturedGooglePlaceId: string | undefined;
       mockInsert.mockImplementation(() => ({
         values: (vals: { googlePlaceId?: string }) => {
@@ -594,16 +594,28 @@ describe("Place Service", () => {
           return { returning: vi.fn().mockResolvedValue([fullPlaceRow]) };
         },
       }));
-      await createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" });
-      expect(capturedGooglePlaceId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-      );
+      await createPlace({
+        userId: USER_ID,
+        googlePlaceId: "ChIJprovided",
+        name: "Cafe",
+        address: "1 St",
+        latitude: "51.5",
+        longitude: "-0.1",
+      });
+      expect(capturedGooglePlaceId).toBe("ChIJprovided");
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
       mockInsertError = new Error("disk full");
       await expect(
-        createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" })
+        createPlace({
+          userId: USER_ID,
+          googlePlaceId: "ChIJtest_place_id",
+          name: "Cafe",
+          address: "1 St",
+          latitude: "51.5",
+          longitude: "-0.1",
+        })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
   });

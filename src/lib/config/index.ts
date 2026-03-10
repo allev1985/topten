@@ -80,6 +80,14 @@ export const DASHBOARD_ROUTES = {
 } as const;
 
 /**
+ * Google Places API configuration
+ * Key is read from process.env at module load.
+ */
+export const GOOGLE_PLACES_CONFIG = {
+  apiKey: process.env.GOOGLE_PLACES_API_KEY ?? "",
+} as const;
+
+/**
  * Get the application URL from environment or request origin
  * @param requestOrigin - Optional origin from request headers
  */

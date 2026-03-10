@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 /**
- * Schema for creating a new place and attaching it to a list.
- * googlePlaceId is system-assigned (crypto.randomUUID).
- * latitude/longitude are stored as "0" until Google Places integration.
+ * Schema for creating a new place via Google Places selection.
+ * All coordinate and ID fields come from the Google Places API response.
+ * description and heroImageUrl are optional — not all place types return them.
  */
 export const createPlaceSchema = z.object({
+  googlePlaceId: z.string().min(1, "Google Place ID is required"),
   name: z
     .string()
     .trim()
@@ -16,33 +17,38 @@ export const createPlaceSchema = z.object({
     .trim()
     .min(1, "Address is required")
     .max(500, "Address must be 500 characters or fewer"),
+  latitude: z
+    .string()
+    .regex(/^-?\d+(\.\d+)?$/, "Invalid latitude"),
+  longitude: z
+    .string()
+    .regex(/^-?\d+(\.\d+)?$/, "Invalid longitude"),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "Description must be 2000 characters or fewer")
+    .nullable()
+    .optional(),
+  heroImageUrl: z
+    .string()
+    .url("Invalid hero image URL")
+    .max(2048, "URL must be 2048 characters or fewer")
+    .nullable()
+    .optional(),
 });
 
 /**
  * Schema for updating an existing place.
- * At least one of name or address must be provided.
- * googlePlaceId is immutable and never accepted as input.
+ * Only description is editable — all other fields are immutable after creation.
  */
-export const updatePlaceSchema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Name is required")
-      .max(255, "Name must be 255 characters or fewer")
-      .optional(),
-    address: z
-      .string()
-      .trim()
-      .max(500, "Address must be 500 characters or fewer")
-      .optional(),
-  })
-  .refine(
-    (data) => data.name !== undefined || data.address !== undefined,
-    {
-      message: "At least one field (name or address) must be provided",
-    }
-  );
+export const updatePlaceSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .max(2000, "Description must be 2000 characters or fewer")
+    .nullable()
+    .optional(),
+});
 
 /** Inferred input type for createPlace */
 export type CreatePlaceInput = z.infer<typeof createPlaceSchema>;

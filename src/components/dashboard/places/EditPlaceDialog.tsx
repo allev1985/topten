@@ -6,8 +6,8 @@ import { updatePlaceAction } from "@/actions/place-actions";
 import type { UpdatePlaceSuccessData } from "@/actions/place-actions";
 import type { ActionState } from "@/types/forms";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/dialog";
 
 interface EditPlaceDialogProps {
-  place: { id: string; name: string; address: string };
+  place: {
+    id: string;
+    name: string;
+    address: string;
+    description?: string | null;
+  };
   /** When provided, ownership is verified via list membership and the list page
    *  is revalidated on save. Omit when editing from the My Places context. */
   listId?: string;
@@ -25,7 +30,7 @@ interface EditPlaceDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type FormValues = { name: string; address: string };
+type FormValues = { description: string };
 
 const buildInitialState = (): ActionState<UpdatePlaceSuccessData> => ({
   data: null,
@@ -41,13 +46,11 @@ export function EditPlaceDialog({
   onOpenChange,
 }: EditPlaceDialogProps): JSX.Element {
   const initialValues = useRef<FormValues>({
-    name: place.name,
-    address: place.address,
+    description: place.description ?? "",
   });
 
   const [formValues, setFormValues] = useState<FormValues>({
-    name: place.name,
-    address: place.address,
+    description: place.description ?? "",
   });
 
   const [state, formAction, isPending] = useActionState(
@@ -58,10 +61,10 @@ export function EditPlaceDialog({
   // Sync initial ref when the dialog opens for a (potentially) different place
   useEffect(() => {
     if (open) {
-      initialValues.current = { name: place.name, address: place.address };
-      setFormValues({ name: place.name, address: place.address });
+      initialValues.current = { description: place.description ?? "" };
+      setFormValues({ description: place.description ?? "" });
     }
-  }, [open, place.name, place.address]);
+  }, [open, place.description]);
 
   // Close on successful save
   useEffect(() => {
@@ -69,11 +72,7 @@ export function EditPlaceDialog({
   }, [state.isSuccess, onOpenChange]);
 
   const isDirty =
-    formValues.name.trim() !== initialValues.current.name.trim() ||
-    formValues.address.trim() !== initialValues.current.address.trim();
-
-  const isValid =
-    formValues.name.trim().length > 0 && formValues.address.trim().length > 0;
+    formValues.description.trim() !== initialValues.current.description.trim();
 
   const handleOpenChange = (next: boolean) => {
     if (!next && isDirty && !isPending) {
@@ -81,10 +80,7 @@ export function EditPlaceDialog({
       if (!ok) return;
     }
     if (!next) {
-      setFormValues({
-        name: initialValues.current.name,
-        address: initialValues.current.address,
-      });
+      setFormValues({ description: initialValues.current.description });
     }
     onOpenChange(next);
   };
@@ -121,40 +117,33 @@ export function EditPlaceDialog({
             </p>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-place-name">Name</Label>
-            <Input
-              id="edit-place-name"
-              name="name"
-              value={formValues.name}
-              onChange={(e) =>
-                setFormValues((v) => ({ ...v, name: e.target.value }))
-              }
-              maxLength={255}
-              disabled={isPending}
-            />
-            {state.fieldErrors["name"] && (
-              <p className="text-destructive text-xs">
-                {state.fieldErrors["name"]?.[0]}
-              </p>
-            )}
+          {/* Read-only place identity */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium">{place.name}</p>
+            <p className="text-muted-foreground text-sm">{place.address}</p>
           </div>
 
+          {/* Editable description */}
           <div className="space-y-2">
-            <Label htmlFor="edit-place-address">Address</Label>
-            <Input
-              id="edit-place-address"
-              name="address"
-              value={formValues.address}
-              onChange={(e) =>
-                setFormValues((v) => ({ ...v, address: e.target.value }))
-              }
-              maxLength={500}
+            <Label htmlFor="edit-place-description">
+              Notes{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Textarea
+              id="edit-place-description"
+              name="description"
+              placeholder="Add your notes about this place…"
+              maxLength={2000}
+              rows={4}
+              value={formValues.description}
+              onChange={(e) => setFormValues({ description: e.target.value })}
               disabled={isPending}
             />
-            {state.fieldErrors["address"] && (
+            {state.fieldErrors["description"] && (
               <p className="text-destructive text-xs">
-                {state.fieldErrors["address"]?.[0]}
+                {state.fieldErrors["description"]?.[0]}
               </p>
             )}
           </div>
@@ -168,10 +157,7 @@ export function EditPlaceDialog({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!isDirty || !isValid || isPending}
-            >
+            <Button type="submit" disabled={!isDirty || isPending}>
               {isPending ? "Saving…" : "Save changes"}
             </Button>
           </div>

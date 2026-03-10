@@ -40,7 +40,6 @@ import type {
   UpdatePlaceResult,
   RemovePlaceFromListResult,
   PlaceWithListCount,
-  CreateStandalonePlaceResult,
   DeletePlaceResult,
 } from "./service/types";
 
@@ -52,7 +51,6 @@ export type {
   UpdatePlaceResult,
   RemovePlaceFromListResult,
   PlaceWithListCount,
-  CreateStandalonePlaceResult,
   DeletePlaceResult,
 };
 
@@ -81,6 +79,7 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
       })
       .from(listPlaces)
       .innerJoin(places, eq(listPlaces.placeId, places.id))
@@ -154,6 +153,7 @@ export async function getAvailablePlacesForList(params: {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
       })
       .from(places)
       .where(
@@ -208,6 +208,7 @@ export async function getAllPlacesByUser(params: {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
         activeListCount: sql<number>`cast(count(${listPlaces.id}) as int)`,
       })
       .from(places)
@@ -219,7 +220,7 @@ export async function getAllPlacesByUser(params: {
         )
       )
       .where(and(eq(places.userId, userId), isNull(places.deletedAt)))
-      .groupBy(places.id, places.name, places.address)
+      .groupBy(places.id, places.name, places.address, places.description)
       .orderBy(asc(places.name));
 
     console.info(
@@ -240,19 +241,6 @@ export async function getAllPlacesByUser(params: {
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-// Overload signatures: callers that pass listId get CreatePlaceResult (includes listPlaceId);
-// callers that omit it get CreateStandalonePlaceResult (place only).
-export async function createPlace(params: {
-  listId: string;
-  userId: string;
-  name: string;
-  address: string;
-}): Promise<CreatePlaceResult>;
-export async function createPlace(params: {
-  userId: string;
-  name: string;
-  address: string;
-}): Promise<CreateStandalonePlaceResult>;
 /**
  * Create a new place.
  *
@@ -260,26 +248,35 @@ export async function createPlace(params: {
  * that list (ownership verified, position computed as MAX+1).
  * When `listId` is omitted, the place is created standalone with no list attachment.
  *
- * - googlePlaceId is assigned as crypto.randomUUID() (forward-compatible with
- *   Google Places integration; stored for deduplication when that lands).
- * - latitude and longitude are stored as "0" (schema is NOT NULL; no migration
- *   needed when real values are added later).
+ * All fields — googlePlaceId, latitude, longitude, description, heroImageUrl —
+ * come from the Google Places API response and are stored as-is.
+ * After creation, only `description` may be updated via updatePlace.
  *
- * @param params.listId  - Optional list to attach the new place to
- * @param params.userId  - Authenticated user (ownership check when listId provided)
- * @param params.name    - Place name (already validated)
- * @param params.address - Place address (already validated)
- * @returns CreatePlaceResult (with listPlaceId) when listId provided, CreateStandalonePlaceResult otherwise
+ * @param params.listId       - Optional list to attach the new place to
+ * @param params.userId       - Authenticated user (ownership check when listId provided)
+ * @param params.googlePlaceId - Real Google place ID from the API
+ * @param params.name         - Place name (from API displayName.text)
+ * @param params.address      - Formatted address (from API formattedAddress)
+ * @param params.latitude     - Latitude decimal string (from API location.latitude)
+ * @param params.longitude    - Longitude decimal string (from API location.longitude)
+ * @param params.description  - Editorial summary, nullable (from API editorialSummary.text)
+ * @param params.heroImageUrl - Resolved photo URI, nullable (from resolvePhotoUri)
+ * @returns CreatePlaceResult — listPlaceId is present when the place was attached to a list
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
 export async function createPlace(params: {
   listId?: string;
   userId: string;
+  googlePlaceId: string;
   name: string;
   address: string;
-}): Promise<CreatePlaceResult | CreateStandalonePlaceResult> {
-  const { listId, userId, name, address } = params;
+  latitude: string;
+  longitude: string;
+  description?: string | null;
+  heroImageUrl?: string | null;
+}): Promise<CreatePlaceResult> {
+  const { listId, userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl } = params;
 
   console.info(
     "[PlaceService:createPlace]",
@@ -292,7 +289,7 @@ export async function createPlace(params: {
     try {
       const rows = await db
         .insert(places)
-        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
+        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
       const place = rows[0];
       if (!place) throw placeServiceError("Place insert returned no row.");
@@ -340,7 +337,7 @@ export async function createPlace(params: {
     const result = await db.transaction(async (tx) => {
       const placeRows = await tx
         .insert(places)
-        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
+        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
       const place = placeRows[0];
       if (!place) throw placeServiceError("Place insert returned no row.");
@@ -510,20 +507,22 @@ export async function addExistingPlaceToList(params: {
 }
 
 /**
- * Update a place's name and/or address.
+ * Update a place's description.
+ *
+ * Only `description` may be updated — all other fields are immutable after creation.
+ * Attempts to update name, address, coordinates, or heroImageUrl are rejected at
+ * compile time (type signature) and would throw IMMUTABLE_FIELD if called directly.
  *
  * - Verifies ownership via list membership when `listId` is provided.
  * - Falls back to direct `places.userId` check when `listId` is omitted
  *   (used from the "My Places" context where no list context is available).
- * - Only updates the fields provided; updatedAt is always refreshed.
- * - googlePlaceId is immutable and never accepted as input.
+ * - updatedAt is always refreshed.
  *
- * @param params.placeId - The place's UUID
- * @param params.listId  - Optional: a list owned by the user (for ownership check by list)
- * @param params.userId  - Authenticated user's id
- * @param params.name    - Optional new name
- * @param params.address - Optional new address
- * @returns UpdatePlaceResult with the updated fields
+ * @param params.placeId      - The place's UUID
+ * @param params.listId       - Optional: a list owned by the user (for ownership check by list)
+ * @param params.userId       - Authenticated user's id
+ * @param params.description  - New description value (null to clear)
+ * @returns UpdatePlaceResult with the updated description and timestamp
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
@@ -531,10 +530,9 @@ export async function updatePlace(params: {
   placeId: string;
   listId?: string;
   userId: string;
-  name?: string;
-  address?: string;
+  description?: string | null;
 }): Promise<UpdatePlaceResult> {
-  const { placeId, listId, userId, name, address } = params;
+  const { placeId, listId, userId, description } = params;
 
   console.info(
     "[PlaceService:updatePlace]",
@@ -582,21 +580,18 @@ export async function updatePlace(params: {
     }
 
     const updateValues: Partial<{
-      name: string;
-      address: string;
+      description: string | null;
       updatedAt: Date;
     }> = { updatedAt: new Date() };
 
-    if (name !== undefined) updateValues.name = name;
-    if (address !== undefined) updateValues.address = address;
+    if (description !== undefined) updateValues.description = description;
     const rows = await db
       .update(places)
       .set(updateValues)
       .where(and(eq(places.id, placeId), isNull(places.deletedAt)))
       .returning({
         id: places.id,
-        name: places.name,
-        address: places.address,
+        description: places.description,
         updatedAt: places.updatedAt,
       });
 

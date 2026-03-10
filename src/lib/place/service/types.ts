@@ -18,6 +18,8 @@ export interface PlaceRecord {
   address: string;
   latitude: string;
   longitude: string;
+  description: string | null;
+  heroImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -26,7 +28,8 @@ export interface PlaceRecord {
 /** Result of a successful createPlace operation */
 export interface CreatePlaceResult {
   place: PlaceRecord;
-  listPlaceId: string;
+  /** Present when the place was attached to a list at creation time */
+  listPlaceId?: string;
 }
 
 /** Result of a successful addExistingPlaceToList operation */
@@ -36,7 +39,7 @@ export interface AddExistingPlaceResult {
 
 /** Result of a successful updatePlace operation */
 export interface UpdatePlaceResult {
-  place: Pick<PlaceRecord, "id" | "name" | "address" | "updatedAt">;
+  place: Pick<PlaceRecord, "id" | "description" | "updatedAt">;
 }
 
 /** Result of a successful deletePlaceFromList operation */
@@ -52,12 +55,10 @@ export interface PlaceWithListCount {
   id: string;
   name: string;
   address: string;
+  description: string | null;
   /** Number of active (non-deleted) ListPlace rows for this place */
   activeListCount: number;
 }
-
-/** Result of a successful createStandalonePlace operation */
-export type CreateStandalonePlaceResult = Pick<CreatePlaceResult, "place">;
 
 /** Result of a successful deletePlace operation */
 export interface DeletePlaceResult {
