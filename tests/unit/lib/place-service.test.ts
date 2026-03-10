@@ -96,6 +96,7 @@ const placeSummaryRow = {
   name: "The Coffee House",
   address: "1 Main St",
   description: null,
+  heroImageUrl: null,
 };
 
 const fullPlaceRow = {
@@ -541,7 +542,7 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("getAllPlacesByUser", () => {
-    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", description: null, activeListCount: 2 };
+    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", description: null, heroImageUrl: null, activeListCount: 2 };
 
     it("returns places with active list counts", async () => {
       mockSelectRows = [placeWithCount];

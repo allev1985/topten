@@ -80,6 +80,7 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
         name: places.name,
         address: places.address,
         description: places.description,
+        heroImageUrl: places.heroImageUrl,
       })
       .from(listPlaces)
       .innerJoin(places, eq(listPlaces.placeId, places.id))
@@ -154,6 +155,7 @@ export async function getAvailablePlacesForList(params: {
         name: places.name,
         address: places.address,
         description: places.description,
+        heroImageUrl: places.heroImageUrl,
       })
       .from(places)
       .where(
@@ -209,6 +211,7 @@ export async function getAllPlacesByUser(params: {
         name: places.name,
         address: places.address,
         description: places.description,
+        heroImageUrl: places.heroImageUrl,
         activeListCount: sql<number>`cast(count(${listPlaces.id}) as int)`,
       })
       .from(places)
@@ -220,7 +223,7 @@ export async function getAllPlacesByUser(params: {
         )
       )
       .where(and(eq(places.userId, userId), isNull(places.deletedAt)))
-      .groupBy(places.id, places.name, places.address, places.description)
+      .groupBy(places.id, places.name, places.address, places.description, places.heroImageUrl)
       .orderBy(asc(places.name));
 
     console.info(

@@ -56,6 +56,7 @@ export interface PlaceWithListCount {
   name: string;
   address: string;
   description: string | null;
+  heroImageUrl: string | null;
   /** Number of active (non-deleted) ListPlace rows for this place */
   activeListCount: number;
 }

@@ -47,6 +47,7 @@ const place: PlaceWithListCount = {
   name: "The Coffee House",
   address: "1 Main St",
   description: null,
+  heroImageUrl: null,
   activeListCount: 2,
 };
 
