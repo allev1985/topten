@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createPlaceSchema, updatePlaceSchema, createStandalonePlaceSchema } from "@/schemas/place";
+import { createPlaceSchema, updatePlaceSchema } from "@/schemas/place";
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import {
   createPlace,
-  createStandalonePlace,
   addExistingPlaceToList,
   updatePlace,
   deletePlaceFromList,
@@ -335,7 +334,7 @@ export async function createStandalonePlaceAction(
   const rawName = formData.get("name");
   const rawAddress = formData.get("address");
 
-  const result = createStandalonePlaceSchema.safeParse({
+  const result = createPlaceSchema.safeParse({
     name: typeof rawName === "string" && rawName.trim() ? rawName : undefined,
     address:
       typeof rawAddress === "string" && rawAddress.trim()
@@ -353,7 +352,7 @@ export async function createStandalonePlaceAction(
   }
 
   try {
-    const { place } = await createStandalonePlace({
+    const { place } = await createPlace({
       userId: auth.userId,
       name: result.data.name,
       address: result.data.address,

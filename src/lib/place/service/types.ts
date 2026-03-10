@@ -57,9 +57,7 @@ export interface PlaceWithListCount {
 }
 
 /** Result of a successful createStandalonePlace operation */
-export interface CreateStandalonePlaceResult {
-  place: PlaceRecord;
-}
+export type CreateStandalonePlaceResult = Pick<CreatePlaceResult, "place">;
 
 /** Result of a successful deletePlace operation */
 export interface DeletePlaceResult {

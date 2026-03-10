@@ -9,8 +9,7 @@
  *   - getPlacesByList          — fetch all active places for a list, in position order
  *   - getAvailablePlacesForList — places the user owns that are NOT yet in the target list
  *   - getAllPlacesByUser        — all active places for a user with active-list counts
- *   - createPlace              — create a new place and attach it to a list (atomic transaction)
- *   - createStandalonePlace    — create a new place without attaching to any list
+ *   - createPlace              — create a new place; if listId is provided, atomically attach it to that list
  *   - addExistingPlaceToList   — attach an existing place to a list
  *   - updatePlace              — update a place's name and/or address
  *   - deletePlaceFromList      — remove a place from a specific list (soft-deletes the ListPlace row)
@@ -241,36 +240,74 @@ export async function getAllPlacesByUser(params: {
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-/**
- * Create a new place and atomically attach it to the given list.
- *
- * - Verifies list ownership before writing.
- * - googlePlaceId is assigned as crypto.randomUUID() (forward-compatible with
- *   Google Places integration; stored for deduplication when that lands).
- * - latitude and longitude are stored as "0" (schema is NOT NULL; no migration
- *   needed when real values are added later).
- * - position is MAX(current positions) + 1, computed inside the transaction.
- *
- * @param params.listId  - The list to attach the new place to
- * @param params.userId  - Authenticated user (ownership check)
- * @param params.name    - Place name (already validated)
- * @param params.address - Place address (already validated)
- * @returns CreatePlaceResult containing the new place record and listPlaceId
- * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
- * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
- */
+// Overload signatures: callers that pass listId get CreatePlaceResult (includes listPlaceId);
+// callers that omit it get CreateStandalonePlaceResult (place only).
 export async function createPlace(params: {
   listId: string;
   userId: string;
   name: string;
   address: string;
-}): Promise<CreatePlaceResult> {
+}): Promise<CreatePlaceResult>;
+export async function createPlace(params: {
+  userId: string;
+  name: string;
+  address: string;
+}): Promise<CreateStandalonePlaceResult>;
+/**
+ * Create a new place.
+ *
+ * When `listId` is provided, the place is atomically inserted and attached to
+ * that list (ownership verified, position computed as MAX+1).
+ * When `listId` is omitted, the place is created standalone with no list attachment.
+ *
+ * - googlePlaceId is assigned as crypto.randomUUID() (forward-compatible with
+ *   Google Places integration; stored for deduplication when that lands).
+ * - latitude and longitude are stored as "0" (schema is NOT NULL; no migration
+ *   needed when real values are added later).
+ *
+ * @param params.listId  - Optional list to attach the new place to
+ * @param params.userId  - Authenticated user (ownership check when listId provided)
+ * @param params.name    - Place name (already validated)
+ * @param params.address - Place address (already validated)
+ * @returns CreatePlaceResult (with listPlaceId) when listId provided, CreateStandalonePlaceResult otherwise
+ * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
+ * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
+ */
+export async function createPlace(params: {
+  listId?: string;
+  userId: string;
+  name: string;
+  address: string;
+}): Promise<CreatePlaceResult | CreateStandalonePlaceResult> {
   const { listId, userId, name, address } = params;
 
   console.info(
     "[PlaceService:createPlace]",
-    `Creating place "${name}" in list ${listId} for user ${userId}`
+    listId
+      ? `Creating place "${name}" in list ${listId} for user ${userId}`
+      : `Creating standalone place "${name}" for user ${userId}`
   );
+
+  if (!listId) {
+    try {
+      const rows = await db
+        .insert(places)
+        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
+        .returning();
+      const place = rows[0];
+      if (!place) throw placeServiceError("Place insert returned no row.");
+      console.info("[PlaceService:createPlace]", `Created standalone place ${place.id}`);
+      return { place };
+    } catch (err) {
+      if (err instanceof PlaceServiceError) throw err;
+      console.error(
+        "[PlaceService:createPlace]",
+        "DB error:",
+        err instanceof Error ? err.message : "Unknown error"
+      );
+      throw placeServiceError("Failed to create place. Please try again.", err);
+    }
+  }
 
   // Verify list ownership outside the transaction (cheap read first)
   let ownerRows;
@@ -292,10 +329,7 @@ export async function createPlace(params: {
       "Ownership check failed:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    throw placeServiceError(
-      "Failed to create place. Please try again.",
-      err
-    );
+    throw placeServiceError("Failed to create place. Please try again.", err);
   }
 
   if (ownerRows.length === 0) {
@@ -304,19 +338,10 @@ export async function createPlace(params: {
 
   try {
     const result = await db.transaction(async (tx) => {
-      // Insert the new Place
       const placeRows = await tx
         .insert(places)
-        .values({
-          userId,
-          googlePlaceId: crypto.randomUUID(),
-          name,
-          address,
-          latitude: "0",
-          longitude: "0",
-        })
+        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
         .returning();
-
       const place = placeRows[0];
       if (!place) throw placeServiceError("Place insert returned no row.");
 
@@ -359,10 +384,7 @@ export async function createPlace(params: {
       "DB error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    throw placeServiceError(
-      "Failed to create place. Please try again.",
-      err
-    );
+    throw placeServiceError("Failed to create place. Please try again.", err);
   }
 }
 
@@ -687,62 +709,6 @@ export async function deletePlaceFromList(params: {
   }
 }
 
-/**
- * Create a standalone place not attached to any list.
- *
- * Useful for pre-populating a user's place library before assigning to lists.
- *
- * @param params.userId  - Authenticated user (stored as owner)
- * @param params.name    - Place name (already validated)
- * @param params.address - Place address (already validated)
- * @returns CreateStandalonePlaceResult containing the new place record
- * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
- */
-export async function createStandalonePlace(params: {
-  userId: string;
-  name: string;
-  address: string;
-}): Promise<CreateStandalonePlaceResult> {
-  const { userId, name, address } = params;
-
-  console.info(
-    "[PlaceService:createStandalonePlace]",
-    `Creating standalone place "${name}" for user ${userId}`
-  );
-
-  try {
-    const [place] = await db
-      .insert(places)
-      .values({
-        userId,
-        name,
-        address,
-        googlePlaceId: crypto.randomUUID(),
-        latitude: "0",
-        longitude: "0",
-      })
-      .returning();
-
-    if (!place) {
-      throw placeServiceError("Failed to create place. Please try again.", null);
-    }
-
-    console.info(
-      "[PlaceService:createStandalonePlace]",
-      `Created standalone place ${place.id}`
-    );
-
-    return { place };
-  } catch (err) {
-    if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:createStandalonePlace]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
-    throw placeServiceError("Failed to create place. Please try again.", err);
-  }
-}
 
 /**
  * Permanently soft-delete a place and cascade to all its active list attachments.

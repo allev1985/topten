@@ -4,7 +4,6 @@ import {
   getAvailablePlacesForList,
   getAllPlacesByUser,
   createPlace,
-  createStandalonePlace,
   addExistingPlaceToList,
   updatePlace,
   deletePlaceFromList,
@@ -563,7 +562,7 @@ describe("Place Service", () => {
     it("includes places with activeListCount = 0", async () => {
       mockSelectRows = [{ ...placeWithCount, activeListCount: 0 }];
       const result = await getAllPlacesByUser({ userId: USER_ID });
-      expect(result[0].activeListCount).toBe(0);
+      expect(result[0]!.activeListCount).toBe(0);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
@@ -575,10 +574,10 @@ describe("Place Service", () => {
   });
 
   // ───────────────────────────────────────────────────────────────────────────
-  describe("createStandalonePlace", () => {
+  describe("createPlace (standalone — no listId)", () => {
     it("inserts a place and returns it", async () => {
       mockInsertRows = [fullPlaceRow];
-      const result = await createStandalonePlace({
+      const result = await createPlace({
         userId: USER_ID,
         name: "The Coffee House",
         address: "1 Main St",
@@ -595,7 +594,7 @@ describe("Place Service", () => {
           return { returning: vi.fn().mockResolvedValue([fullPlaceRow]) };
         },
       }));
-      await createStandalonePlace({ userId: USER_ID, name: "Cafe", address: "1 St" });
+      await createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" });
       expect(capturedGooglePlaceId).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
@@ -604,7 +603,7 @@ describe("Place Service", () => {
     it("throws SERVICE_ERROR on DB failure", async () => {
       mockInsertError = new Error("disk full");
       await expect(
-        createStandalonePlace({ userId: USER_ID, name: "Cafe", address: "1 St" })
+        createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
   });
