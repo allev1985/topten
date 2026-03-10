@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { searchPlaces, resolvePhotoUri } from "@/lib/services/google-places/service";
 import { GooglePlacesServiceError } from "@/lib/services/google-places/errors";
 
+// Stable mutable object — the mock always exposes the same reference so tests
+// can safely mutate `.apiKey` without reassigning a module namespace export.
+const googlePlacesConfig = vi.hoisted(() => ({ apiKey: "test-api-key-12345" }));
+
 vi.mock("@/lib/config", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/config")>()),
-  GOOGLE_PLACES_CONFIG: { apiKey: "test-api-key-12345" },
+  GOOGLE_PLACES_CONFIG: googlePlacesConfig,
 }));
-
-import * as config from "@/lib/config";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ const VALID_TEXT_SEARCH_RESPONSE = {
 // ─── Environment setup ────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.mocked(config).GOOGLE_PLACES_CONFIG = { apiKey: "test-api-key-12345" };
+  googlePlacesConfig.apiKey = "test-api-key-12345";
 });
 
 afterEach(() => {
@@ -93,14 +95,14 @@ describe("searchPlaces", () => {
 
   describe("CONFIGURATION_ERROR", () => {
     it("throws CONFIGURATION_ERROR when API key env var is missing", async () => {
-      vi.mocked(config).GOOGLE_PLACES_CONFIG = { apiKey: "" };
+      googlePlacesConfig.apiKey = "";
       await expect(searchPlaces("Nobu")).rejects.toMatchObject({
         code: "CONFIGURATION_ERROR",
       });
     });
 
     it("is a GooglePlacesServiceError instance", async () => {
-      vi.mocked(config).GOOGLE_PLACES_CONFIG = { apiKey: "" };
+      googlePlacesConfig.apiKey = "";
       await expect(searchPlaces("Nobu")).rejects.toBeInstanceOf(
         GooglePlacesServiceError
       );
@@ -264,7 +266,7 @@ describe("resolvePhotoUri", () => {
 
   describe("CONFIGURATION_ERROR", () => {
     it("throws CONFIGURATION_ERROR when API key is missing", async () => {
-      vi.mocked(config).GOOGLE_PLACES_CONFIG = { apiKey: "" };
+      googlePlacesConfig.apiKey = "";
       await expect(resolvePhotoUri(PHOTO_RESOURCE_NAME)).rejects.toMatchObject({
         code: "CONFIGURATION_ERROR",
       });
