@@ -64,7 +64,7 @@ export function EditPlaceDialog({
       initialValues.current = { description: place.description ?? "" };
       setFormValues({ description: place.description ?? "" });
     }
-  }, [open, place.description]);
+  }, [open, place.id]);
 
   // Close on successful save
   useEffect(() => {
