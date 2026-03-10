@@ -27,7 +27,7 @@ import {
 const BASE_URL = "https://places.googleapis.com/v1";
 const TEXT_SEARCH_URL = `${BASE_URL}/places:searchText`;
 const FIELD_MASK =
-  "places.id,places.displayName,places.formattedAddress,places.location,places.editorialSummary,places.photos";
+  "places.id,places.displayName,places.formattedAddress,places.location,places.photos";
 const PAGE_SIZE = 5;
 const TIMEOUT_MS = 5_000;
 
@@ -38,7 +38,6 @@ interface RawPlace {
   displayName?: { text?: string };
   formattedAddress?: string;
   location?: { latitude?: number; longitude?: number };
-  editorialSummary?: { text?: string };
   photos?: Array<{ name?: string }>;
 }
 
@@ -69,7 +68,6 @@ function mapPlace(raw: RawPlace): GooglePlaceResult {
     formattedAddress: raw.formattedAddress ?? "",
     latitude: raw.location?.latitude ?? 0,
     longitude: raw.location?.longitude ?? 0,
-    description: raw.editorialSummary?.text ?? null,
     photoResourceName: raw.photos?.[0]?.name ?? null,
   };
 }

@@ -19,11 +19,6 @@ export interface GooglePlaceResult {
   /** Longitude coordinate */
   longitude: number;
   /**
-   * Editorial summary / description from Google Places (editorialSummary.text).
-   * Null when not returned — not all place types include an editorial summary.
-   */
-  description: string | null;
-  /**
    * Resource name of the first photo for this place.
    * Format: "places/{placeId}/photos/{photoId}"
    * Used to resolve heroImageUrl via resolvePhotoUri() — NOT stored in the database.

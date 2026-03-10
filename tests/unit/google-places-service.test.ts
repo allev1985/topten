@@ -38,7 +38,6 @@ const VALID_TEXT_SEARCH_RESPONSE = {
       displayName: { text: "Nobu" },
       formattedAddress: "19 Old Park Lane, London W1K 1LB, UK",
       location: { latitude: 51.5074, longitude: -0.1488 },
-      editorialSummary: { text: "Upscale Japanese restaurant" },
       photos: [{ name: "places/ChIJdd4hrwug2EcRmSrV3Vo6llI/photos/AbcDef123" }],
     },
     {
@@ -46,7 +45,6 @@ const VALID_TEXT_SEARCH_RESPONSE = {
       displayName: { text: "Nobu Hotel" },
       formattedAddress: "6 Upper St Martin's Lane, London WC2H 9NY, UK",
       location: { latitude: 51.5126, longitude: -0.1275 },
-      // no editorialSummary
       // no photos
     },
   ],
@@ -139,18 +137,6 @@ describe("searchPlaces", () => {
       const [first] = await searchPlaces("Nobu");
       expect(first?.latitude).toBe(51.5074);
       expect(first?.longitude).toBe(-0.1488);
-    });
-
-    it("maps description from editorialSummary.text", async () => {
-      mockFetch({ ok: true, body: VALID_TEXT_SEARCH_RESPONSE });
-      const [first] = await searchPlaces("Nobu");
-      expect(first?.description).toBe("Upscale Japanese restaurant");
-    });
-
-    it("sets description to null when editorialSummary is absent", async () => {
-      mockFetch({ ok: true, body: VALID_TEXT_SEARCH_RESPONSE });
-      const results = await searchPlaces("Nobu");
-      expect(results[1]?.description).toBeNull();
     });
 
     it("maps photoResourceName from photos[0].name", async () => {
@@ -250,7 +236,7 @@ describe("searchPlaces", () => {
     const headers = options.headers as Record<string, string>;
     expect(headers["X-Goog-FieldMask"]).toContain("places.id");
     expect(headers["X-Goog-FieldMask"]).toContain("places.displayName");
-    expect(headers["X-Goog-FieldMask"]).toContain("places.editorialSummary");
+    expect(headers["X-Goog-FieldMask"]).not.toContain("places.editorialSummary");
     expect(headers["X-Goog-FieldMask"]).toContain("places.photos");
   });
 });
