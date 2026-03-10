@@ -57,6 +57,15 @@ export function CreatePlaceForm({
   const [isResolvingPhoto, setIsResolvingPhoto] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  // ── Unmount cleanup ───────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   // ── Form action ───────────────────────────────────────────────────
   const [state, formAction, isPending] = useActionState(
@@ -93,8 +102,10 @@ export function CreatePlaceForm({
       }
 
       debounceRef.current = setTimeout(async () => {
+        if (!mountedRef.current) return;
         setIsSearching(true);
         const result = await searchPlacesAction(value);
+        if (!mountedRef.current) return;
         setIsSearching(false);
         if (result.isSuccess && result.data) {
           setSuggestions(result.data.results);
@@ -121,6 +132,7 @@ export function CreatePlaceForm({
       const photoResult = await resolveGooglePlacePhotoAction(
         place.photoResourceName
       );
+      if (!mountedRef.current) return;
       setIsResolvingPhoto(false);
       if (photoResult.isSuccess && photoResult.data) {
         setHeroImageUrl(photoResult.data.photoUri);
