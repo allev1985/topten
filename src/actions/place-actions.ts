@@ -83,6 +83,7 @@ export async function createPlaceAction(
 
     const created = await createPlace({ userId: auth.userId, name: result.data.name, address: result.data.address });
     revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath("/dashboard/lists", "layout");
     return { data: { placeId: created.place.id }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     const message =
@@ -225,6 +226,7 @@ export async function updatePlaceAction(
       revalidatePath(DASHBOARD_ROUTES.listDetail(resolvedListId));
     }
     revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath("/dashboard/lists", "layout");
     return {
       data: { placeId: place.id },
       error: null,
@@ -339,6 +341,7 @@ export async function deletePlaceGlobalAction(
     });
 
     revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath("/dashboard/lists", "layout");
     return {
       data: { deletedListPlaceCount },
       error: null,
