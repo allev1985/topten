@@ -80,7 +80,7 @@ export function CreateListForm({
         )}
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending || !title.trim()} className="w-full">
         {isPending ? "Creating…" : "Create List"}
       </Button>
     </form>
