@@ -28,6 +28,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - PostgreSQL via Supabase; Drizzle schemas at `src/db/schema/place.ts` and `src/db/schema/listPlace.ts` — tables already exist, no migration needed (006-places-service)
 - TypeScript 5 / Node 20 + Next.js 15 App Router, Drizzle ORM, Supabase Postgres, shadcn/ui, Tailwind CSS v4, Zod, Vitest, Playwright (007-places-management)
 - PostgreSQL via Supabase — `places` table (with `userId` ownership column, confirmed in schema) and `list_places` junction table (007-places-management)
+- TypeScript 5 / Node.js 20 (Next.js 15, App Router) + Next.js 15, Drizzle ORM, Supabase Postgres, Zod, shadcn/ui, Tailwind CSS v4 (008-google-places-integration)
+- Supabase Postgres — `places` table extended with 3 new columns; 1 new Drizzle migration (008-google-places-integration)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -64,9 +66,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 008-google-places-integration: Added TypeScript 5 / Node.js 20 (Next.js 15, App Router) + Next.js 15, Drizzle ORM, Supabase Postgres, Zod, shadcn/ui, Tailwind CSS v4
 - 007-places-management: Added TypeScript 5 / Node 20 + Next.js 15 App Router, Drizzle ORM, Supabase Postgres, shadcn/ui, Tailwind CSS v4, Zod, Vitest, Playwright
 - 006-places-service: Added TypeScript 5 / Node.js 20 (Next.js 15, App Router) + Next.js 15, Drizzle ORM, Supabase (Postgres), Zod, shadcn/ui, Tailwind CSS v4
-- 005-lists-service: Added TypeScript 5 / Node.js 20 (Next.js 15, App Router) + Next.js 15, Drizzle ORM, Supabase (Postgres), Zod, shadcn/ui, Tailwind CSS v4
 
 
 <!-- MANUAL ADDITIONS START -->
