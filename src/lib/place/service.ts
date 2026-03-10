@@ -246,27 +246,31 @@ export async function getAllPlacesByUser(params: {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Create a new place.
+ * Create a new place, or reuse / restore an existing one.
  *
- * When `listId` is provided, the place is atomically inserted and attached to
- * that list (ownership verified, position computed as MAX+1).
- * When `listId` is omitted, the place is created standalone with no list attachment.
+ * Lookup-first strategy — queries (userId, googlePlaceId) before inserting:
+ *   - Active record found   → reuse it as-is (no insert)
+ *   - Soft-deleted record   → restore it (clear deletedAt) then continue
+ *   - Not found             → insert a fresh row
  *
- * All fields — googlePlaceId, latitude, longitude, description, heroImageUrl —
- * come from the Google Places API response and are stored as-is.
- * After creation, only `description` may be updated via updatePlace.
+ * In all three cases, when `listId` is provided the place is attached via
+ * addExistingPlaceToList, which handles ownership verification, ALREADY_IN_LIST,
+ * and ListPlace restore/insert. This avoids hitting the unique index on
+ * (userId, googlePlaceId) and gives users a clear ALREADY_IN_LIST error
+ * instead of a generic DB failure.
  *
- * @param params.listId       - Optional list to attach the new place to
- * @param params.userId       - Authenticated user (ownership check when listId provided)
- * @param params.googlePlaceId - Real Google place ID from the API
- * @param params.name         - Place name (from API displayName.text)
- * @param params.address      - Formatted address (from API formattedAddress)
- * @param params.latitude     - Latitude decimal string (from API location.latitude)
- * @param params.longitude    - Longitude decimal string (from API location.longitude)
- * @param params.description  - Editorial summary, nullable (from API editorialSummary.text)
- * @param params.heroImageUrl - Resolved photo URI, nullable (from resolvePhotoUri)
+ * @param params.listId        - Optional list to attach the place to
+ * @param params.userId        - Authenticated user
+ * @param params.googlePlaceId - Google place ID from the API
+ * @param params.name          - Place name (from API displayName.text)
+ * @param params.address       - Formatted address (from API formattedAddress)
+ * @param params.latitude      - Latitude decimal string (from API location.latitude)
+ * @param params.longitude     - Longitude decimal string (from API location.longitude)
+ * @param params.description   - Optional description, nullable
+ * @param params.heroImageUrl  - Resolved photo URI, nullable
  * @returns CreatePlaceResult — listPlaceId is present when the place was attached to a list
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
+ * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached to the list
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
 export async function createPlace(params: {
@@ -289,13 +293,73 @@ export async function createPlace(params: {
       : `Creating standalone place "${name}" for user ${userId}`
   );
 
+  // ── Step 1: look up any existing (userId, googlePlaceId) row ────────────────
+  // Includes soft-deleted rows so we can restore rather than re-insert and hit
+  // the unique index constraint.
+  let existingPlace: PlaceRecord | null;
+  try {
+    const rows = await db
+      .select()
+      .from(places)
+      .where(and(eq(places.userId, userId), eq(places.googlePlaceId, googlePlaceId)));
+    existingPlace = (rows[0] as PlaceRecord) ?? null;
+  } catch (err) {
+    console.error(
+      "[PlaceService:createPlace]",
+      "Lookup failed:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw placeServiceError("Failed to create place. Please try again.", err);
+  }
+
+  // ── Step 2: resolve the Place record ────────────────────────────────────────
+  let place: PlaceRecord;
+
+  if (existingPlace) {
+    if (existingPlace.deletedAt !== null) {
+      // Restore soft-deleted place
+      try {
+        const rows = await db
+          .update(places)
+          .set({ deletedAt: null, updatedAt: new Date() })
+          .where(eq(places.id, existingPlace.id))
+          .returning();
+        place = rows[0] as PlaceRecord;
+        console.info("[PlaceService:createPlace]", `Restored soft-deleted place ${place.id}`);
+      } catch (err) {
+        console.error(
+          "[PlaceService:createPlace]",
+          "Restore failed:",
+          err instanceof Error ? err.message : "Unknown error"
+        );
+        throw placeServiceError("Failed to create place. Please try again.", err);
+      }
+    } else {
+      // Reuse active place as-is
+      place = existingPlace;
+      console.info("[PlaceService:createPlace]", `Reusing existing place ${place.id}`);
+    }
+
+    // Attach to list if requested — delegates to addExistingPlaceToList which
+    // handles ownership verification, ALREADY_IN_LIST, and ListPlace restore/insert.
+    if (listId) {
+      const { listPlaceId } = await addExistingPlaceToList({ listId, placeId: place.id, userId });
+      return { place, listPlaceId };
+    }
+
+    return { place };
+  }
+
+  // ── Step 3: no existing place — insert new ──────────────────────────────────
+
   if (!listId) {
+    // Standalone: simple insert
     try {
       const rows = await db
         .insert(places)
         .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
-      const place = rows[0];
+      place = rows[0] as PlaceRecord;
       if (!place) throw placeServiceError("Place insert returned no row.");
       console.info("[PlaceService:createPlace]", `Created standalone place ${place.id}`);
       return { place };
@@ -310,7 +374,7 @@ export async function createPlace(params: {
     }
   }
 
-  // Verify list ownership outside the transaction (cheap read first)
+  // New place with list: verify ownership then atomically insert place + attach
   let ownerRows;
   try {
     ownerRows = await db
@@ -324,7 +388,6 @@ export async function createPlace(params: {
         )
       );
   } catch (err) {
-    if (err instanceof PlaceServiceError) throw err;
     console.error(
       "[PlaceService:createPlace]",
       "Ownership check failed:",
@@ -343,8 +406,8 @@ export async function createPlace(params: {
         .insert(places)
         .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
-      const place = placeRows[0];
-      if (!place) throw placeServiceError("Place insert returned no row.");
+      const newPlace = placeRows[0] as PlaceRecord;
+      if (!newPlace) throw placeServiceError("Place insert returned no row.");
 
       // Compute next position (MAX + 1, or 1 if list is empty)
       const posResult = await tx
@@ -356,20 +419,15 @@ export async function createPlace(params: {
 
       const nextPosition = (posResult[0]?.maxPos ?? 0) + 1;
 
-      // Attach Place to the List
       const lpRows = await tx
         .insert(listPlaces)
-        .values({
-          listId,
-          placeId: place.id,
-          position: nextPosition,
-        })
+        .values({ listId, placeId: newPlace.id, position: nextPosition })
         .returning({ id: listPlaces.id });
 
       const lp = lpRows[0];
       if (!lp) throw placeServiceError("ListPlace insert returned no row.");
 
-      return { place, listPlaceId: lp.id };
+      return { place: newPlace, listPlaceId: lp.id };
     });
 
     console.info(

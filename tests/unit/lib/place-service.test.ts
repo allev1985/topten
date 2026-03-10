@@ -239,65 +239,43 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("createPlace", () => {
+    const newPlaceParams = {
+      listId: LIST_ID,
+      userId: USER_ID,
+      googlePlaceId: "ChIJtest_place_id",
+      name: "The Coffee House",
+      address: "1 Main St",
+      latitude: "51.5",
+      longitude: "-0.1",
+    };
+
+    // ── new place (no existing row) ──────────────────────────────────────────
+
     it("creates a place and list_place row atomically, returns both ids", async () => {
-      // Ownership check returns a row
-      mockSelectRows = [{ id: LIST_ID }];
-      const txPlaceRow = { ...fullPlaceRow, id: PLACE_ID };
+      // lookup → nothing; ownership → found; transaction returns fixed result
+      mockSelectRowsSequence = [[], [{ id: LIST_ID }]];
+      mockTransactionResult = { place: { ...fullPlaceRow, id: PLACE_ID }, listPlaceId: LIST_PLACE_ID };
 
-      // Override transaction to return a fixed result
-      mockTransactionResult = {
-        place: txPlaceRow,
-        listPlaceId: LIST_PLACE_ID,
-      };
-
-      const result = await createPlace({
-        listId: LIST_ID,
-        userId: USER_ID,
-        googlePlaceId: "ChIJtest_place_id",
-        name: "The Coffee House",
-        address: "1 Main St",
-        latitude: "51.5",
-        longitude: "-0.1",
-      });
+      const result = await createPlace(newPlaceParams);
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockSelectRows = []; // ownership check fails
-      await expect(
-        createPlace({
-          listId: LIST_ID,
-          userId: USER_ID,
-          googlePlaceId: "ChIJtest_place_id",
-          name: "Cafe",
-          address: "1 Main St",
-          latitude: "51.5",
-          longitude: "-0.1",
-        })
-      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      mockSelectRowsSequence = [[], []]; // lookup → nothing; ownership → fails
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
     it("throws SERVICE_ERROR when transaction insert fails", async () => {
-      mockSelectRows = [{ id: LIST_ID }]; // ownership passes
+      mockSelectRowsSequence = [[], [{ id: LIST_ID }]]; // lookup → nothing; ownership → passes
       mockTransactionResult = null;
       mockInsertError = new Error("constraint violation");
-      await expect(
-        createPlace({
-          listId: LIST_ID,
-          userId: USER_ID,
-          googlePlaceId: "ChIJtest_place_id",
-          name: "Cafe",
-          address: "1 Main St",
-          latitude: "51.5",
-          longitude: "-0.1",
-        })
-      ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
 
     it("passes the provided googlePlaceId to the insert", async () => {
-      mockSelectRows = [{ id: LIST_ID }];
+      mockSelectRowsSequence = [[], [{ id: LIST_ID }]];
       let capturedGooglePlaceId: string | undefined;
 
       mockTransactionResult = null;
@@ -327,17 +305,79 @@ describe("Place Service", () => {
         }
       );
 
-      await createPlace({
-        listId: LIST_ID,
-        userId: USER_ID,
-        googlePlaceId: "ChIJprovided_by_api",
-        name: "Cafe",
-        address: "1 Main St",
-        latitude: "51.5",
-        longitude: "-0.1",
-      });
+      await createPlace({ ...newPlaceParams, googlePlaceId: "ChIJprovided_by_api" });
 
       expect(capturedGooglePlaceId).toBe("ChIJprovided_by_api");
+    });
+
+    // ── existing active place ────────────────────────────────────────────────
+
+    it("reuses an active place (standalone) without inserting", async () => {
+      mockSelectRowsSequence = [[fullPlaceRow]]; // lookup → active place found
+      const result = await createPlace({ userId: USER_ID, googlePlaceId: "ChIJtest_place_id", name: "The Coffee House", address: "1 Main St", latitude: "51.5", longitude: "-0.1" });
+      expect(result.place.id).toBe(PLACE_ID);
+      expect(mockInsert).not.toHaveBeenCalled();
+    });
+
+    it("reuses an active place and attaches it to a list", async () => {
+      // lookup → active; then addExistingPlaceToList: ownership, no existing lp, position, insert lp
+      mockSelectRowsSequence = [
+        [fullPlaceRow],          // lookup → active place
+        [{ id: LIST_ID }],       // addExistingPlaceToList: ownership
+        [],                      // addExistingPlaceToList: no existing listPlace
+        [{ maxPos: 0 }],         // addExistingPlaceToList: position
+      ];
+      mockInsertRows = [{ id: LIST_PLACE_ID }];
+
+      const result = await createPlace(newPlaceParams);
+
+      expect(result.place.id).toBe(PLACE_ID);
+      expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+    });
+
+    it("propagates ALREADY_IN_LIST when reusing a place already attached to the list", async () => {
+      mockSelectRowsSequence = [
+        [fullPlaceRow],                            // lookup → active place
+        [{ id: LIST_ID }],                         // addExistingPlaceToList: ownership
+        [{ id: LIST_PLACE_ID, deletedAt: null }],  // addExistingPlaceToList: already active
+      ];
+
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "ALREADY_IN_LIST" });
+    });
+
+    // ── soft-deleted place ───────────────────────────────────────────────────
+
+    it("restores a soft-deleted place (standalone) without inserting", async () => {
+      const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
+      const restoredPlace = { ...fullPlaceRow, deletedAt: null };
+      mockSelectRowsSequence = [[deletedPlace]]; // lookup → soft-deleted
+      mockUpdateRows = [restoredPlace];
+
+      const result = await createPlace({ userId: USER_ID, googlePlaceId: "ChIJtest_place_id", name: "The Coffee House", address: "1 Main St", latitude: "51.5", longitude: "-0.1" });
+
+      expect(result.place.id).toBe(PLACE_ID);
+      expect(result.place.deletedAt).toBeNull();
+      expect(mockInsert).not.toHaveBeenCalled();
+    });
+
+    it("restores a soft-deleted place and attaches it to a list", async () => {
+      const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
+      const restoredPlace = { ...fullPlaceRow, deletedAt: null };
+      mockUpdateRows = [restoredPlace];
+      mockSelectRowsSequence = [
+        [deletedPlace],          // lookup → soft-deleted
+        // addExistingPlaceToList sequences:
+        [{ id: LIST_ID }],       // ownership
+        [],                      // no existing listPlace
+        [{ maxPos: 2 }],         // position
+      ];
+      mockInsertRows = [{ id: LIST_PLACE_ID }];
+
+      const result = await createPlace(newPlaceParams);
+
+      expect(result.place.id).toBe(PLACE_ID);
+      expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(mockInsert).toHaveBeenCalledTimes(1); // only listPlace insert, not place insert
     });
   });
 
