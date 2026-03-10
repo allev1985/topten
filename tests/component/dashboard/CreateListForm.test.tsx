@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { CreateListForm } from "@/components/dashboard/CreateListForm";
 
 // ─── Mock server action ───────────────────────────────────────────────────────
@@ -52,12 +52,22 @@ describe("CreateListForm", () => {
     mockIsPending = false;
   });
 
-  it("renders in idle state with enabled submit button", () => {
+  it("renders in idle state with submit button disabled when title is empty", () => {
     render(<CreateListForm />);
 
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     const btn = screen.getByRole("button", { name: /create list/i });
     expect(btn).toBeInTheDocument();
+    expect(btn).toBeDisabled();
+  });
+
+  it("enables submit button when title is non-empty", () => {
+    render(<CreateListForm />);
+
+    const input = screen.getByLabelText(/title/i);
+    fireEvent.change(input, { target: { value: "My favourite cafés" } });
+
+    const btn = screen.getByRole("button", { name: /create list/i });
     expect(btn).not.toBeDisabled();
   });
 

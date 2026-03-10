@@ -27,8 +27,11 @@ const mockLimit = vi.fn();
 const mockThen = vi.fn();
 const mockSet = vi.fn();
 const mockFrom = vi.fn();
-const mockSelect = vi.fn();
-const mockUpdate = vi.fn();
+
+const { mockSelect, mockUpdate } = vi.hoisted(() => ({
+  mockSelect: vi.fn(),
+  mockUpdate: vi.fn(),
+}));
 
 vi.mock("@/db", () => ({
   db: {
