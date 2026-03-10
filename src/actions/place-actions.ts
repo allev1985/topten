@@ -219,9 +219,10 @@ export async function updatePlaceAction(
   const rawDescription = formData.get("description");
 
   const result = updatePlaceSchema.safeParse({
+    // Empty/whitespace → null (clears description); absent field → undefined (no-op)
     description:
-      typeof rawDescription === "string" && rawDescription.trim()
-        ? rawDescription
+      typeof rawDescription === "string"
+        ? rawDescription.trim() || null
         : undefined,
   });
 
