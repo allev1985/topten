@@ -31,6 +31,7 @@ import {
   notFoundError,
   alreadyInListError,
   placeServiceError,
+  immutableFieldError,
 } from "./service/errors";
 import type {
   PlaceSummary,
@@ -529,12 +530,25 @@ export async function addExistingPlaceToList(params: {
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
+const UPDATE_PLACE_ALLOWED_KEYS = new Set([
+  "placeId",
+  "listId",
+  "userId",
+  "description",
+]);
+
 export async function updatePlace(params: {
   placeId: string;
   listId?: string;
   userId: string;
   description?: string | null;
 }): Promise<UpdatePlaceResult> {
+  for (const key of Object.keys(params)) {
+    if (!UPDATE_PLACE_ALLOWED_KEYS.has(key)) {
+      throw immutableFieldError(key);
+    }
+  }
+
   const { placeId, listId, userId, description } = params;
 
   console.info(

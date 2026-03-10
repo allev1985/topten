@@ -141,6 +141,22 @@ describe("updatePlace — description-only mutability rules", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it.each([
+    "name",
+    "address",
+    "googlePlaceId",
+    "latitude",
+    "longitude",
+    "heroImageUrl",
+  ])(
+    'throws IMMUTABLE_FIELD with field name when "%s" is passed at runtime',
+    async (field) => {
+      await expect(
+        updatePlace({ placeId: PLACE_ID, userId: USER_ID, [field]: "any" } as Parameters<typeof updatePlace>[0])
+      ).rejects.toMatchObject({ code: "IMMUTABLE_FIELD", message: expect.stringContaining(field) });
+    }
+  );
+
   it("immutability is enforced by TypeScript — name/address/googlePlaceId not in parameter type", () => {
     // Compile-time contract verification
     type UpdatePlaceParams = Parameters<typeof updatePlace>[0];
