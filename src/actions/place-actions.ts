@@ -296,11 +296,25 @@ export async function searchPlacesAction(
     const results = await searchPlaces(query);
     return { data: { results }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
-    const message =
-      err instanceof GooglePlacesServiceError
-        ? mapGooglePlacesError(err.code)
-        : "Place search unavailable — please try again.";
-    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
+    if (err instanceof GooglePlacesServiceError) {
+      console.error(
+        `[searchPlacesAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
+        err.cause ?? ""
+      );
+      return {
+        data: null,
+        error: mapGooglePlacesError(err.code),
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+    console.error("[searchPlacesAction] unexpected error:", err);
+    return {
+      data: null,
+      error: "Place search unavailable — please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
   }
 }
 
@@ -337,11 +351,25 @@ export async function resolveGooglePlacePhotoAction(
     const photoUri = await resolvePhotoUri(photoResourceName);
     return { data: { photoUri }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
-    const message =
-      err instanceof GooglePlacesServiceError
-        ? mapGooglePlacesError(err.code)
-        : "Could not resolve photo — please try again.";
-    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
+    if (err instanceof GooglePlacesServiceError) {
+      console.error(
+        `[resolveGooglePlacePhotoAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
+        err.cause ?? ""
+      );
+      return {
+        data: null,
+        error: mapGooglePlacesError(err.code),
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+    console.error("[resolveGooglePlacePhotoAction] unexpected error:", err);
+    return {
+      data: null,
+      error: "Could not resolve photo — please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
   }
 }
 

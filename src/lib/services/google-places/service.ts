@@ -94,6 +94,10 @@ export async function searchPlaces(
   }
 
   const apiKey = getApiKey();
+  const t0 = Date.now();
+  console.info(
+    `[GooglePlaces:searchText] query_len=${query.trim().length} starting request`
+  );
 
   let response: Response;
   try {
@@ -115,12 +119,22 @@ export async function searchPlaces(
       err instanceof DOMException &&
       (err.name === "TimeoutError" || err.name === "AbortError")
     ) {
+      console.error(
+        `[GooglePlaces:searchText] timeout after ${Date.now() - t0}ms`
+      );
       throw timeoutError(err);
     }
     // Fallback for environments where DOMException is not an instance of itself
     if (err instanceof Error && err.name === "AbortError") {
+      console.error(
+        `[GooglePlaces:searchText] timeout after ${Date.now() - t0}ms`
+      );
       throw timeoutError(err);
     }
+    console.error(
+      `[GooglePlaces:searchText] network error after ${Date.now() - t0}ms:`,
+      err
+    );
     throw apiError(0, "Network request failed", err);
   }
 
@@ -128,15 +142,26 @@ export async function searchPlaces(
   try {
     body = (await response.json()) as TextSearchResponse;
   } catch (err) {
+    console.error(
+      `[GooglePlaces:searchText] failed to parse response JSON status=${response.status} after ${Date.now() - t0}ms:`,
+      err
+    );
     throw apiError(response.status, "Failed to parse response JSON", err);
   }
 
   if (!response.ok || body.error) {
     const message = body.error?.message ?? response.statusText;
     const status = body.error?.code ?? response.status;
+    console.error(
+      `[GooglePlaces:searchText] API error status=${status} message="${message}" http_status=${response.status} after ${Date.now() - t0}ms`
+    );
     throw apiError(status, message);
   }
 
+  const resultCount = (body.places ?? []).length;
+  console.info(
+    `[GooglePlaces:searchText] success status=${response.status} results=${resultCount} duration=${Date.now() - t0}ms`
+  );
   return (body.places ?? []).map(mapPlace);
 }
 
@@ -164,6 +189,9 @@ export async function resolvePhotoUri(
   // key as query param for GET (header auth not supported for photo media endpoint)
   url.searchParams.set("key", apiKey);
 
+  const t0 = Date.now();
+  console.info(`[GooglePlaces:photoMedia] starting request`);
+
   let response: Response;
   try {
     response = await fetch(url.toString(), {
@@ -175,11 +203,21 @@ export async function resolvePhotoUri(
       err instanceof DOMException &&
       (err.name === "TimeoutError" || err.name === "AbortError")
     ) {
+      console.error(
+        `[GooglePlaces:photoMedia] timeout after ${Date.now() - t0}ms`
+      );
       throw timeoutError(err);
     }
     if (err instanceof Error && err.name === "AbortError") {
+      console.error(
+        `[GooglePlaces:photoMedia] timeout after ${Date.now() - t0}ms`
+      );
       throw timeoutError(err);
     }
+    console.error(
+      `[GooglePlaces:photoMedia] network error after ${Date.now() - t0}ms:`,
+      err
+    );
     throw apiError(0, "Network request failed", err);
   }
 
@@ -187,18 +225,31 @@ export async function resolvePhotoUri(
   try {
     body = (await response.json()) as PhotoMediaResponse;
   } catch (err) {
+    console.error(
+      `[GooglePlaces:photoMedia] failed to parse response JSON status=${response.status} after ${Date.now() - t0}ms:`,
+      err
+    );
     throw apiError(response.status, "Failed to parse response JSON", err);
   }
 
   if (!response.ok || body.error) {
     const message = body.error?.message ?? response.statusText;
     const status = body.error?.code ?? response.status;
+    console.error(
+      `[GooglePlaces:photoMedia] API error status=${status} message="${message}" http_status=${response.status} after ${Date.now() - t0}ms`
+    );
     throw apiError(status, message);
   }
 
   if (!body.photoUri) {
+    console.error(
+      `[GooglePlaces:photoMedia] response missing photoUri status=${response.status} after ${Date.now() - t0}ms`
+    );
     throw apiError(response.status, "Response did not include photoUri");
   }
 
+  console.info(
+    `[GooglePlaces:photoMedia] success status=${response.status} duration=${Date.now() - t0}ms`
+  );
   return body.photoUri;
 }
