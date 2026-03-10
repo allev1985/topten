@@ -58,6 +58,7 @@ export function CreatePlaceForm({
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const searchIdRef = useRef(0);
 
   // ── Unmount cleanup ───────────────────────────────────────────────
   useEffect(() => {
@@ -103,9 +104,10 @@ export function CreatePlaceForm({
 
       debounceRef.current = setTimeout(async () => {
         if (!mountedRef.current) return;
+        const id = ++searchIdRef.current;
         setIsSearching(true);
         const result = await searchPlacesAction(value);
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || searchIdRef.current !== id) return;
         setIsSearching(false);
         if (result.isSuccess && result.data) {
           setSuggestions(result.data.results);
