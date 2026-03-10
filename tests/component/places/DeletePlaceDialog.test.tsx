@@ -46,6 +46,8 @@ const makePlace = (override: Partial<PlaceWithListCount> = {}): PlaceWithListCou
   id: "place-1",
   name: "The Coffee House",
   address: "1 Main St",
+  description: null,
+  heroImageUrl: null,
   activeListCount: 0,
   ...override,
 });

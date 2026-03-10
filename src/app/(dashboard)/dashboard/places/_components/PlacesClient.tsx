@@ -4,8 +4,8 @@ import type { JSX } from "react";
 import { useState } from "react";
 import type { PlaceWithListCount } from "@/lib/place/service";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus } from "lucide-react";
-import { PlaceCard } from "./PlaceCard";
+import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { PlaceCard } from "@/components/dashboard/places/PlaceCard";
 import { AddPlaceDialog } from "./AddPlaceDialog";
 import { EditPlaceDialog } from "./EditPlaceDialog";
 import { DeletePlaceDialog } from "./DeletePlaceDialog";
@@ -73,8 +73,26 @@ export function PlacesClient({
             <PlaceCard
               key={place.id}
               place={place}
-              onEdit={setEditTarget}
-              onDelete={setDeleteTarget}
+              actions={
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Edit ${place.name}`}
+                    onClick={() => setEditTarget(place)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Delete ${place.name}`}
+                    onClick={() => setDeleteTarget(place)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              }
             />
           ))}
         </div>

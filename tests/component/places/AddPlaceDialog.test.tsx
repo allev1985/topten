@@ -3,10 +3,22 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AddPlaceDialog } from "@/app/(dashboard)/dashboard/places/_components/AddPlaceDialog";
 
-// ─── Mock server action ───────────────────────────────────────────────────────
+// ─── Mock server actions ──────────────────────────────────────────────────────
 
 vi.mock("@/actions/place-actions", () => ({
   createPlaceAction: vi.fn(),
+  searchPlacesAction: vi.fn().mockResolvedValue({
+    data: null,
+    error: null,
+    fieldErrors: {},
+    isSuccess: false,
+  }),
+  resolveGooglePlacePhotoAction: vi.fn().mockResolvedValue({
+    data: null,
+    error: null,
+    fieldErrors: {},
+    isSuccess: false,
+  }),
 }));
 
 // ─── Control useActionState via React mock ────────────────────────────────────
@@ -59,48 +71,20 @@ describe("AddPlaceDialog (standalone)", () => {
     expect(screen.getByRole("heading", { name: /new place/i })).toBeTruthy();
   });
 
-  it("submit button disabled when both fields are empty", () => {
+  it("renders the Google Places search input", () => {
     renderDialog();
-    expect(screen.getByRole("button", { name: /add place/i })).toBeDisabled();
+    expect(screen.getByLabelText(/search for a place/i)).toBeTruthy();
   });
 
-  it("submit button disabled when only name is filled", async () => {
-    const user = userEvent.setup();
+  it("submit button disabled initially (no place selected)", () => {
     renderDialog();
-    await user.type(screen.getByLabelText(/name/i), "Cafe");
     expect(screen.getByRole("button", { name: /add place/i })).toBeDisabled();
-  });
-
-  it("submit button disabled when only address is filled", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-    await user.type(screen.getByLabelText(/address/i), "1 Main St");
-    expect(screen.getByRole("button", { name: /add place/i })).toBeDisabled();
-  });
-
-  it("submit button enabled when both fields have content", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-    await user.type(screen.getByLabelText(/name/i), "Cafe");
-    await user.type(screen.getByLabelText(/address/i), "1 Main St");
-    expect(screen.getByRole("button", { name: /add place/i })).not.toBeDisabled();
   });
 
   it("submit button disabled while pending", () => {
     mockIsPending = true;
     renderDialog();
     expect(screen.getByRole("button", { name: /creating/i })).toBeDisabled();
-  });
-
-  it("shows field error for name", () => {
-    mockState = {
-      data: null,
-      error: null,
-      fieldErrors: { name: ["Name is required"] },
-      isSuccess: false,
-    };
-    renderDialog();
-    expect(screen.getByText("Name is required")).toBeTruthy();
   });
 
   it("shows form-level error", () => {

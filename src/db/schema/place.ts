@@ -3,6 +3,7 @@ import {
   uuid,
   varchar,
   decimal,
+  text,
   timestamp,
   index,
   uniqueIndex,
@@ -21,6 +22,8 @@ export const places = pgTable(
     address: varchar("address", { length: 500 }).notNull(),
     latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
     longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+    description: text("description"),
+    heroImageUrl: varchar("hero_image_url", { length: 2048 }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

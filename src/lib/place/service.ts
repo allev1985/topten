@@ -31,6 +31,7 @@ import {
   notFoundError,
   alreadyInListError,
   placeServiceError,
+  immutableFieldError,
 } from "./service/errors";
 import type {
   PlaceSummary,
@@ -40,7 +41,6 @@ import type {
   UpdatePlaceResult,
   RemovePlaceFromListResult,
   PlaceWithListCount,
-  CreateStandalonePlaceResult,
   DeletePlaceResult,
 } from "./service/types";
 
@@ -52,7 +52,6 @@ export type {
   UpdatePlaceResult,
   RemovePlaceFromListResult,
   PlaceWithListCount,
-  CreateStandalonePlaceResult,
   DeletePlaceResult,
 };
 
@@ -81,6 +80,8 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
+        heroImageUrl: places.heroImageUrl,
       })
       .from(listPlaces)
       .innerJoin(places, eq(listPlaces.placeId, places.id))
@@ -154,6 +155,8 @@ export async function getAvailablePlacesForList(params: {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
+        heroImageUrl: places.heroImageUrl,
       })
       .from(places)
       .where(
@@ -208,6 +211,8 @@ export async function getAllPlacesByUser(params: {
         id: places.id,
         name: places.name,
         address: places.address,
+        description: places.description,
+        heroImageUrl: places.heroImageUrl,
         activeListCount: sql<number>`cast(count(${listPlaces.id}) as int)`,
       })
       .from(places)
@@ -219,7 +224,7 @@ export async function getAllPlacesByUser(params: {
         )
       )
       .where(and(eq(places.userId, userId), isNull(places.deletedAt)))
-      .groupBy(places.id, places.name, places.address)
+      .groupBy(places.id, places.name, places.address, places.description, places.heroImageUrl)
       .orderBy(asc(places.name));
 
     console.info(
@@ -240,46 +245,46 @@ export async function getAllPlacesByUser(params: {
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-// Overload signatures: callers that pass listId get CreatePlaceResult (includes listPlaceId);
-// callers that omit it get CreateStandalonePlaceResult (place only).
-export async function createPlace(params: {
-  listId: string;
-  userId: string;
-  name: string;
-  address: string;
-}): Promise<CreatePlaceResult>;
-export async function createPlace(params: {
-  userId: string;
-  name: string;
-  address: string;
-}): Promise<CreateStandalonePlaceResult>;
 /**
- * Create a new place.
+ * Create a new place, or reuse / restore an existing one.
  *
- * When `listId` is provided, the place is atomically inserted and attached to
- * that list (ownership verified, position computed as MAX+1).
- * When `listId` is omitted, the place is created standalone with no list attachment.
+ * Lookup-first strategy — queries (userId, googlePlaceId) before inserting:
+ *   - Active record found   → reuse it as-is (no insert)
+ *   - Soft-deleted record   → restore it (clear deletedAt) then continue
+ *   - Not found             → insert a fresh row
  *
- * - googlePlaceId is assigned as crypto.randomUUID() (forward-compatible with
- *   Google Places integration; stored for deduplication when that lands).
- * - latitude and longitude are stored as "0" (schema is NOT NULL; no migration
- *   needed when real values are added later).
+ * In all three cases, when `listId` is provided the place is attached via
+ * addExistingPlaceToList, which handles ownership verification, ALREADY_IN_LIST,
+ * and ListPlace restore/insert. This avoids hitting the unique index on
+ * (userId, googlePlaceId) and gives users a clear ALREADY_IN_LIST error
+ * instead of a generic DB failure.
  *
- * @param params.listId  - Optional list to attach the new place to
- * @param params.userId  - Authenticated user (ownership check when listId provided)
- * @param params.name    - Place name (already validated)
- * @param params.address - Place address (already validated)
- * @returns CreatePlaceResult (with listPlaceId) when listId provided, CreateStandalonePlaceResult otherwise
+ * @param params.listId        - Optional list to attach the place to
+ * @param params.userId        - Authenticated user
+ * @param params.googlePlaceId - Google place ID from the API
+ * @param params.name          - Place name (from API displayName.text)
+ * @param params.address       - Formatted address (from API formattedAddress)
+ * @param params.latitude      - Latitude decimal string (from API location.latitude)
+ * @param params.longitude     - Longitude decimal string (from API location.longitude)
+ * @param params.description   - Optional description, nullable
+ * @param params.heroImageUrl  - Resolved photo URI, nullable
+ * @returns CreatePlaceResult — listPlaceId is present when the place was attached to a list
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
+ * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached to the list
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
 export async function createPlace(params: {
   listId?: string;
   userId: string;
+  googlePlaceId: string;
   name: string;
   address: string;
-}): Promise<CreatePlaceResult | CreateStandalonePlaceResult> {
-  const { listId, userId, name, address } = params;
+  latitude: string;
+  longitude: string;
+  description?: string | null;
+  heroImageUrl?: string | null;
+}): Promise<CreatePlaceResult> {
+  const { listId, userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl } = params;
 
   console.info(
     "[PlaceService:createPlace]",
@@ -288,13 +293,73 @@ export async function createPlace(params: {
       : `Creating standalone place "${name}" for user ${userId}`
   );
 
+  // ── Step 1: look up any existing (userId, googlePlaceId) row ────────────────
+  // Includes soft-deleted rows so we can restore rather than re-insert and hit
+  // the unique index constraint.
+  let existingPlace: PlaceRecord | null;
+  try {
+    const rows = await db
+      .select()
+      .from(places)
+      .where(and(eq(places.userId, userId), eq(places.googlePlaceId, googlePlaceId)));
+    existingPlace = (rows[0] as PlaceRecord) ?? null;
+  } catch (err) {
+    console.error(
+      "[PlaceService:createPlace]",
+      "Lookup failed:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw placeServiceError("Failed to create place. Please try again.", err);
+  }
+
+  // ── Step 2: resolve the Place record ────────────────────────────────────────
+  let place: PlaceRecord;
+
+  if (existingPlace) {
+    if (existingPlace.deletedAt !== null) {
+      // Restore soft-deleted place
+      try {
+        const rows = await db
+          .update(places)
+          .set({ deletedAt: null, updatedAt: new Date() })
+          .where(eq(places.id, existingPlace.id))
+          .returning();
+        place = rows[0] as PlaceRecord;
+        console.info("[PlaceService:createPlace]", `Restored soft-deleted place ${place.id}`);
+      } catch (err) {
+        console.error(
+          "[PlaceService:createPlace]",
+          "Restore failed:",
+          err instanceof Error ? err.message : "Unknown error"
+        );
+        throw placeServiceError("Failed to create place. Please try again.", err);
+      }
+    } else {
+      // Reuse active place as-is
+      place = existingPlace;
+      console.info("[PlaceService:createPlace]", `Reusing existing place ${place.id}`);
+    }
+
+    // Attach to list if requested — delegates to addExistingPlaceToList which
+    // handles ownership verification, ALREADY_IN_LIST, and ListPlace restore/insert.
+    if (listId) {
+      const { listPlaceId } = await addExistingPlaceToList({ listId, placeId: place.id, userId });
+      return { place, listPlaceId };
+    }
+
+    return { place };
+  }
+
+  // ── Step 3: no existing place — insert new ──────────────────────────────────
+
   if (!listId) {
+    // Standalone: simple insert
     try {
       const rows = await db
         .insert(places)
-        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
+        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
-      const place = rows[0];
+      place = rows[0] as PlaceRecord;
       if (!place) throw placeServiceError("Place insert returned no row.");
       console.info("[PlaceService:createPlace]", `Created standalone place ${place.id}`);
       return { place };
@@ -309,7 +374,7 @@ export async function createPlace(params: {
     }
   }
 
-  // Verify list ownership outside the transaction (cheap read first)
+  // New place with list: verify ownership then atomically insert place + attach
   let ownerRows;
   try {
     ownerRows = await db
@@ -323,7 +388,6 @@ export async function createPlace(params: {
         )
       );
   } catch (err) {
-    if (err instanceof PlaceServiceError) throw err;
     console.error(
       "[PlaceService:createPlace]",
       "Ownership check failed:",
@@ -340,10 +404,10 @@ export async function createPlace(params: {
     const result = await db.transaction(async (tx) => {
       const placeRows = await tx
         .insert(places)
-        .values({ userId, googlePlaceId: crypto.randomUUID(), name, address, latitude: "0", longitude: "0" })
+        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
         .returning();
-      const place = placeRows[0];
-      if (!place) throw placeServiceError("Place insert returned no row.");
+      const newPlace = placeRows[0] as PlaceRecord;
+      if (!newPlace) throw placeServiceError("Place insert returned no row.");
 
       // Compute next position (MAX + 1, or 1 if list is empty)
       const posResult = await tx
@@ -355,20 +419,15 @@ export async function createPlace(params: {
 
       const nextPosition = (posResult[0]?.maxPos ?? 0) + 1;
 
-      // Attach Place to the List
       const lpRows = await tx
         .insert(listPlaces)
-        .values({
-          listId,
-          placeId: place.id,
-          position: nextPosition,
-        })
+        .values({ listId, placeId: newPlace.id, position: nextPosition })
         .returning({ id: listPlaces.id });
 
       const lp = lpRows[0];
       if (!lp) throw placeServiceError("ListPlace insert returned no row.");
 
-      return { place, listPlaceId: lp.id };
+      return { place: newPlace, listPlaceId: lp.id };
     });
 
     console.info(
@@ -510,31 +569,45 @@ export async function addExistingPlaceToList(params: {
 }
 
 /**
- * Update a place's name and/or address.
+ * Update a place's description.
+ *
+ * Only `description` may be updated — all other fields are immutable after creation.
+ * Attempts to update name, address, coordinates, or heroImageUrl are rejected at
+ * compile time (type signature) and would throw IMMUTABLE_FIELD if called directly.
  *
  * - Verifies ownership via list membership when `listId` is provided.
  * - Falls back to direct `places.userId` check when `listId` is omitted
  *   (used from the "My Places" context where no list context is available).
- * - Only updates the fields provided; updatedAt is always refreshed.
- * - googlePlaceId is immutable and never accepted as input.
+ * - updatedAt is always refreshed.
  *
- * @param params.placeId - The place's UUID
- * @param params.listId  - Optional: a list owned by the user (for ownership check by list)
- * @param params.userId  - Authenticated user's id
- * @param params.name    - Optional new name
- * @param params.address - Optional new address
- * @returns UpdatePlaceResult with the updated fields
+ * @param params.placeId      - The place's UUID
+ * @param params.listId       - Optional: a list owned by the user (for ownership check by list)
+ * @param params.userId       - Authenticated user's id
+ * @param params.description  - New description value (null to clear)
+ * @returns UpdatePlaceResult with the updated description and timestamp
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
+const UPDATE_PLACE_ALLOWED_KEYS = new Set([
+  "placeId",
+  "listId",
+  "userId",
+  "description",
+]);
+
 export async function updatePlace(params: {
   placeId: string;
   listId?: string;
   userId: string;
-  name?: string;
-  address?: string;
+  description?: string | null;
 }): Promise<UpdatePlaceResult> {
-  const { placeId, listId, userId, name, address } = params;
+  for (const key of Object.keys(params)) {
+    if (!UPDATE_PLACE_ALLOWED_KEYS.has(key)) {
+      throw immutableFieldError(key);
+    }
+  }
+
+  const { placeId, listId, userId, description } = params;
 
   console.info(
     "[PlaceService:updatePlace]",
@@ -582,21 +655,18 @@ export async function updatePlace(params: {
     }
 
     const updateValues: Partial<{
-      name: string;
-      address: string;
+      description: string | null;
       updatedAt: Date;
     }> = { updatedAt: new Date() };
 
-    if (name !== undefined) updateValues.name = name;
-    if (address !== undefined) updateValues.address = address;
+    if (description !== undefined) updateValues.description = description;
     const rows = await db
       .update(places)
       .set(updateValues)
       .where(and(eq(places.id, placeId), isNull(places.deletedAt)))
       .returning({
         id: places.id,
-        name: places.name,
-        address: places.address,
+        description: places.description,
         updatedAt: places.updatedAt,
       });
 

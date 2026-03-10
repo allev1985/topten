@@ -10,7 +10,8 @@ export type PlaceServiceErrorCode =
   | "NOT_FOUND"
   | "ALREADY_IN_LIST"
   | "VALIDATION_ERROR"
-  | "SERVICE_ERROR";
+  | "SERVICE_ERROR"
+  | "IMMUTABLE_FIELD";
 
 /**
  * Place service error class.
@@ -79,6 +80,22 @@ export function placeServiceError(
   return new PlaceServiceError(
     "SERVICE_ERROR",
     message ?? "An unexpected error occurred",
+    originalError
+  );
+}
+
+/**
+ * Factory: attempt to update a field that is immutable after creation.
+ */
+export function immutableFieldError(
+  field?: string,
+  originalError?: unknown
+): PlaceServiceError {
+  return new PlaceServiceError(
+    "IMMUTABLE_FIELD",
+    field
+      ? `"${field}" cannot be changed after a place is created.`
+      : "One or more fields cannot be changed after a place is created.",
     originalError
   );
 }

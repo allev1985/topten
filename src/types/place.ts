@@ -10,4 +10,6 @@ export interface PlaceSummary {
   id: string;
   name: string;
   address: string;
+  description: string | null;
+  heroImageUrl: string | null;
 }

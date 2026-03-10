@@ -8,122 +8,61 @@ import { AddPlaceDialog } from "@/app/(dashboard)/dashboard/lists/[listId]/_comp
 vi.mock("@/actions/place-actions", () => ({
   createPlaceAction: vi.fn(),
   addExistingPlaceToListAction: vi.fn(),
+  searchPlacesAction: vi.fn().mockResolvedValue({
+    data: null,
+    error: null,
+    fieldErrors: {},
+    isSuccess: false,
+  }),
+  resolveGooglePlacePhotoAction: vi.fn().mockResolvedValue({
+    data: null,
+    error: null,
+    fieldErrors: {},
+    isSuccess: false,
+  }),
 }));
 
 // ─── Control useActionState via React mock ────────────────────────────────────
 
-type ActionState = {
-  data: null;
-  error: string | null;
-  fieldErrors: Record<string, string[]>;
-  isSuccess: boolean;
-};
-
-const idleState: ActionState = {
-  data: null,
-  error: null,
-  fieldErrors: {},
-  isSuccess: false,
-};
-
-let mockIsCreatePending = false;
 const mockFormAction = vi.fn();
+let mockIsCreatePending = false;
 
 vi.mock("react", async (importOriginal) => {
   const react = await importOriginal<typeof import("react")>();
   return {
     ...react,
     useActionState: (_action: unknown, _initial: unknown) => [
-      idleState,
+      { data: null, error: null, fieldErrors: {}, isSuccess: false },
       mockFormAction,
       mockIsCreatePending,
     ],
   };
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-async function openDialog(user: ReturnType<typeof userEvent.setup>) {
-  const trigger = screen.getByRole("button", { name: /add a place/i });
-  await user.click(trigger);
-}
-
-function getCreateButton() {
-  return screen.getByRole("button", { name: /create place/i });
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe("AddPlaceDialog — create form controlled inputs (FR-012)", () => {
+describe("AddPlaceDialog (list context)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsCreatePending = false;
   });
 
-  it("submit button is disabled when both fields are empty", async () => {
-    const user = userEvent.setup();
+  it("renders the trigger button", () => {
     render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    expect(getCreateButton()).toBeDisabled();
+    expect(screen.getByRole("button", { name: /add a place/i })).toBeTruthy();
   });
 
-  it("submit button is disabled when name has content but address is empty", async () => {
+  it("opens the dialog with the create form after clicking trigger", async () => {
     const user = userEvent.setup();
     render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/name/i), "The Coffee House");
-    expect(getCreateButton()).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /add a place/i }));
+    expect(screen.getByLabelText(/search for a place/i)).toBeTruthy();
   });
 
-  it("submit button is disabled when address has content but name is empty", async () => {
+  it("shows create button disabled initially (no place selected)", async () => {
     const user = userEvent.setup();
     render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/address/i), "1 Main St, London");
-    expect(getCreateButton()).toBeDisabled();
-  });
-
-  it("submit button is disabled when name is whitespace-only", async () => {
-    const user = userEvent.setup();
-    render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/name/i), "   ");
-    await user.type(screen.getByLabelText(/address/i), "1 Main St, London");
-    expect(getCreateButton()).toBeDisabled();
-  });
-
-  it("submit button is disabled when address is whitespace-only", async () => {
-    const user = userEvent.setup();
-    render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/name/i), "The Coffee House");
-    await user.type(screen.getByLabelText(/address/i), "   ");
-    expect(getCreateButton()).toBeDisabled();
-  });
-
-  it("submit button is enabled when both fields have valid content", async () => {
-    const user = userEvent.setup();
-    render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/name/i), "The Coffee House");
-    await user.type(screen.getByLabelText(/address/i), "1 Main St, London");
-    expect(getCreateButton()).not.toBeDisabled();
-  });
-
-  it("submit button is disabled while pending even with valid content", async () => {
-    mockIsCreatePending = true;
-    const user = userEvent.setup();
-    render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
-    await openDialog(user);
-
-    await user.type(screen.getByLabelText(/name/i), "The Coffee House");
-    await user.type(screen.getByLabelText(/address/i), "1 Main St, London");
-    expect(screen.getByRole("button", { name: /creating/i })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /add a place/i }));
+    expect(screen.getByRole("button", { name: /create place/i })).toBeDisabled();
   });
 });

@@ -14,6 +14,12 @@ import {
 } from "@/lib/place/service";
 import { PlaceServiceError } from "@/lib/place/service/errors";
 import { DASHBOARD_ROUTES } from "@/lib/config";
+import {
+  searchPlaces,
+  resolvePhotoUri,
+  GooglePlacesServiceError,
+} from "@/lib/services/google-places";
+import type { GooglePlaceResult } from "@/lib/services/google-places";
 
 // ─── Success data types ───────────────────────────────────────────────────────
 
@@ -37,14 +43,16 @@ export interface DeletePlaceSuccessData {
 // ─── createPlaceAction ────────────────────────────────────────────────────────
 
 /**
- * Create a new place and attach it to a list.
+ * Create a new place from a Google Places selection and optionally attach it to a list.
  *
- * Validates: name (required, max 255), address (required, max 500).
- * googlePlaceId, latitude, and longitude are system-assigned.
+ * All required Google fields (googlePlaceId, name, address, latitude, longitude)
+ * must come from a prior searchPlacesAction selection — there is no manual entry path.
+ * Optional metadata: description, heroImageUrl.
  * Ownership is verified in the service layer.
  *
  * @param _prevState - Previous action state (required by useActionState)
- * @param formData   - FormData containing `listId`, `name`, `address`
+ * @param formData   - FormData containing `listId?`, `googlePlaceId`, `name`, `address`,
+ *                     `latitude`, `longitude`, `description?`, `heroImageUrl?`
  */
 export async function createPlaceAction(
   _prevState: ActionState<CreatePlaceSuccessData>,
@@ -59,9 +67,17 @@ export async function createPlaceAction(
   const listId =
     typeof rawListId === "string" && rawListId.trim() ? rawListId : undefined;
 
+  const rawLat = formData.get("latitude");
+  const rawLng = formData.get("longitude");
+
   const result = createPlaceSchema.safeParse({
+    googlePlaceId: formData.get("googlePlaceId") ?? "",
     name: formData.get("name") ?? "",
     address: formData.get("address") ?? "",
+    latitude: typeof rawLat === "string" ? rawLat : undefined,
+    longitude: typeof rawLng === "string" ? rawLng : undefined,
+    description: formData.get("description") || undefined,
+    heroImageUrl: formData.get("heroImageUrl") || undefined,
   });
 
   if (!result.success) {
@@ -74,17 +90,24 @@ export async function createPlaceAction(
   }
 
   try {
-    if (listId) {
-      const created = await createPlace({ listId, userId: auth.userId, name: result.data.name, address: result.data.address });
-      revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
-      revalidatePath(DASHBOARD_ROUTES.places, "page");
-      return { data: { placeId: created.place.id, listPlaceId: created.listPlaceId }, error: null, fieldErrors: {}, isSuccess: true };
-    }
+    const created = await createPlace({
+      listId: listId ?? undefined,
+      userId: auth.userId,
+      googlePlaceId: result.data.googlePlaceId,
+      name: result.data.name,
+      address: result.data.address,
+      latitude: result.data.latitude,
+      longitude: result.data.longitude,
+      description: result.data.description,
+      heroImageUrl: result.data.heroImageUrl,
+    });
 
-    const created = await createPlace({ userId: auth.userId, name: result.data.name, address: result.data.address });
+    if (listId) {
+      revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+    }
     revalidatePath(DASHBOARD_ROUTES.places, "page");
     revalidatePath("/dashboard/lists", "layout");
-    return { data: { placeId: created.place.id }, error: null, fieldErrors: {}, isSuccess: true };
+    return { data: { placeId: created.place.id, listPlaceId: created.listPlaceId }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     const message =
       err instanceof PlaceServiceError
@@ -160,14 +183,14 @@ export async function addExistingPlaceToListAction(
 // ─── updatePlaceAction ────────────────────────────────────────────────────────
 
 /**
- * Update a place's name and/or address.
+ * Update a place's description (the only editable field after creation).
  *
- * Validates: at least one of name or address must be provided.
+ * All other fields (name, address, googlePlaceId, latitude, longitude, heroImageUrl)
+ * are immutable and must not be submitted — they are ignored even if present.
  * Ownership is verified in the service layer.
- * googlePlaceId is immutable and never accepted.
  *
  * @param _prevState - Previous action state
- * @param formData   - FormData containing `placeId`, `listId`, optionally `name` and `address`
+ * @param formData   - FormData containing `placeId`, `listId?`, `description?`
  */
 export async function updatePlaceAction(
   _prevState: ActionState<UpdatePlaceSuccessData>,
@@ -193,14 +216,13 @@ export async function updatePlaceAction(
   const resolvedListId =
     typeof listId === "string" && listId.trim() ? listId : undefined;
 
-  const rawName = formData.get("name");
-  const rawAddress = formData.get("address");
+  const rawDescription = formData.get("description");
 
   const result = updatePlaceSchema.safeParse({
-    name: typeof rawName === "string" && rawName.trim() ? rawName : undefined,
-    address:
-      typeof rawAddress === "string" && rawAddress.trim()
-        ? rawAddress
+    // Empty/whitespace → null (clears description); absent field → undefined (no-op)
+    description:
+      typeof rawDescription === "string"
+        ? rawDescription.trim() || null
         : undefined,
   });
 
@@ -218,8 +240,7 @@ export async function updatePlaceAction(
       placeId,
       listId: resolvedListId,
       userId: auth.userId,
-      name: result.data.name,
-      address: result.data.address,
+      description: result.data.description,
     });
 
     if (resolvedListId) {
@@ -239,6 +260,133 @@ export async function updatePlaceAction(
         ? err.message
         : "Failed to update place. Please try again.";
     return { data: null, error: message, fieldErrors: {}, isSuccess: false };
+  }
+}
+
+// ─── searchPlacesAction ──────────────────────────────────────────────────────
+
+export interface SearchPlacesSuccessData {
+  results: GooglePlaceResult[];
+}
+
+/**
+ * Search Google Places and return up to 5 suggestions.
+ * Requires at least 3 characters in the query.
+ * Results are ephemeral — photoResourceName is transient and must not be stored directly.
+ *
+ * @param query - The search string typed by the user.
+ */
+export async function searchPlacesAction(
+  query: string
+): Promise<ActionState<SearchPlacesSuccessData>> {
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+  }
+
+  if (query.trim().length < 3) {
+    return {
+      data: null,
+      error: "Enter at least 3 characters to search.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
+  try {
+    const results = await searchPlaces(query);
+    return { data: { results }, error: null, fieldErrors: {}, isSuccess: true };
+  } catch (err) {
+    if (err instanceof GooglePlacesServiceError) {
+      console.error(
+        `[searchPlacesAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
+        err.cause ?? ""
+      );
+      return {
+        data: null,
+        error: mapGooglePlacesError(err.code),
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+    console.error("[searchPlacesAction] unexpected error:", err);
+    return {
+      data: null,
+      error: "Place search unavailable — please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+}
+
+// ─── resolveGooglePlacePhotoAction ───────────────────────────────────────────
+
+export interface ResolvePhotoSuccessData {
+  photoUri: string;
+}
+
+/**
+ * Resolve a transient Google Place photo resource name to a storable photo URI.
+ * The returned URI is suitable for persisting in heroImageUrl.
+ *
+ * @param photoResourceName - Transient resource name from a searchPlacesAction result.
+ */
+export async function resolveGooglePlacePhotoAction(
+  photoResourceName: string
+): Promise<ActionState<ResolvePhotoSuccessData>> {
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+  }
+
+  if (!photoResourceName.trim()) {
+    return {
+      data: null,
+      error: "Photo resource name is required.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
+  try {
+    const photoUri = await resolvePhotoUri(photoResourceName);
+    return { data: { photoUri }, error: null, fieldErrors: {}, isSuccess: true };
+  } catch (err) {
+    if (err instanceof GooglePlacesServiceError) {
+      console.error(
+        `[resolveGooglePlacePhotoAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
+        err.cause ?? ""
+      );
+      return {
+        data: null,
+        error: mapGooglePlacesError(err.code),
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+    console.error("[resolveGooglePlacePhotoAction] unexpected error:", err);
+    return {
+      data: null,
+      error: "Could not resolve photo — please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+function mapGooglePlacesError(code: string): string {
+  switch (code) {
+    case "INVALID_QUERY":
+      return "Query is too short or invalid.";
+    case "CONFIGURATION_ERROR":
+      return "Place search is not configured — contact support.";
+    case "TIMEOUT":
+      return "Place search timed out — please try again.";
+    case "API_ERROR":
+    default:
+      return "Place search unavailable — please try again.";
   }
 }
 

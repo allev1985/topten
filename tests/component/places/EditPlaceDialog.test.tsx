@@ -46,6 +46,8 @@ const place: PlaceWithListCount = {
   id: "place-1",
   name: "The Coffee House",
   address: "1 Main St",
+  description: null,
+  heroImageUrl: null,
   activeListCount: 2,
 };
 
@@ -64,10 +66,22 @@ describe("EditPlaceDialog (places page)", () => {
     mockIsPending = false;
   });
 
-  it("prefills name and address from the place prop", () => {
+  it("shows place name and address as read-only text", () => {
     renderDialog();
-    expect(screen.getByLabelText<HTMLInputElement>(/name/i).value).toBe("The Coffee House");
-    expect(screen.getByLabelText<HTMLInputElement>(/address/i).value).toBe("1 Main St");
+    expect(screen.getByText("The Coffee House")).toBeTruthy();
+    expect(screen.getByText("1 Main St")).toBeTruthy();
+  });
+
+  it("shows description textarea empty when description is null", () => {
+    renderDialog();
+    const textarea = screen.getByLabelText<HTMLTextAreaElement>(/notes/i);
+    expect(textarea.value).toBe("");
+  });
+
+  it("prefills description textarea when description is set", () => {
+    renderDialog({ ...place, description: "Great coffee" });
+    const textarea = screen.getByLabelText<HTMLTextAreaElement>(/notes/i);
+    expect(textarea.value).toBe("Great coffee");
   });
 
   it("Save button disabled when form is clean (no changes)", () => {
@@ -75,21 +89,19 @@ describe("EditPlaceDialog (places page)", () => {
     expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
   });
 
-  it("Save button enabled after changing name", async () => {
+  it("Save button enabled after changing description", async () => {
     const user = userEvent.setup();
     renderDialog();
-    const nameInput = screen.getByLabelText<HTMLInputElement>(/name/i);
-    await user.clear(nameInput);
-    await user.type(nameInput, "New Name");
+    const textarea = screen.getByLabelText<HTMLTextAreaElement>(/notes/i);
+    await user.type(textarea, "Great coffee");
     expect(screen.getByRole("button", { name: /save changes/i })).not.toBeDisabled();
   });
 
   it("shows Unsaved changes badge when form is dirty", async () => {
     const user = userEvent.setup();
     renderDialog();
-    const nameInput = screen.getByLabelText<HTMLInputElement>(/name/i);
-    await user.clear(nameInput);
-    await user.type(nameInput, "x");
+    const textarea = screen.getByLabelText<HTMLTextAreaElement>(/notes/i);
+    await user.type(textarea, "x");
     expect(screen.getByText(/unsaved changes/i)).toBeTruthy();
   });
 
@@ -97,14 +109,6 @@ describe("EditPlaceDialog (places page)", () => {
     mockIsPending = true;
     renderDialog();
     expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
-  });
-
-  it("Save button disabled when name is empty", async () => {
-    const user = userEvent.setup();
-    renderDialog();
-    const nameInput = screen.getByLabelText<HTMLInputElement>(/name/i);
-    await user.clear(nameInput);
-    expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
   });
 
   it("shows form-level error", () => {

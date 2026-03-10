@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deletePlaceAction } from "@/actions/place-actions";
-import { PlaceCard } from "./PlaceCard";
+import { PlaceCard } from "@/components/dashboard/places/PlaceCard";
 import { AddPlaceDialog } from "./AddPlaceDialog";
 import { EditPlaceDialog } from "./EditPlaceDialog";
 
@@ -91,7 +91,6 @@ export function PlaceList({
             <li key={place.id}>
               <PlaceCard
                 place={place}
-                listId={listId}
                 actions={
                   <>
                     <Button
