@@ -715,7 +715,7 @@ export async function deletePlaceFromList(params: {
  *
  * Both operations run in a single transaction to guarantee consistency.
  * After this call:
- *   - places.deletedAt is set
+ *   - places.deletedAt and places.updatedAt are set to the same timestamp
  *   - All active ListPlace rows for this place have deletedAt set
  *
  * @param params.placeId - Place to delete
@@ -753,16 +753,17 @@ export async function deletePlace(params: {
         throw notFoundError();
       }
 
-      // Soft-delete the place
+      // Soft-delete the place — share a single timestamp for both columns
+      const now = new Date();
       await tx
         .update(places)
-        .set({ deletedAt: new Date() })
+        .set({ deletedAt: now, updatedAt: now })
         .where(eq(places.id, placeId));
 
       // Cascade soft-delete to all active ListPlace rows
       const cascadedRows = await tx
         .update(listPlaces)
-        .set({ deletedAt: new Date() })
+        .set({ deletedAt: now })
         .where(
           and(eq(listPlaces.placeId, placeId), isNull(listPlaces.deletedAt))
         )
