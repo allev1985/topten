@@ -4,15 +4,26 @@
 
 ---
 
-## Decision 1: `createStandalonePlace` — new function vs. extending `createPlace`
+## Decision 1: Standalone place creation — unified `createPlace` with optional `listId` overload
 
-**Decision**: Add a dedicated `createStandalonePlace(params: { userId, name, address })` function to `src/lib/place/service.ts` rather than making `listId` optional on the existing `createPlace`.
+**Decision**: Extend the existing `createPlace` function in `src/lib/place/service.ts` with an optional `listId` parameter, using TypeScript overload signatures to preserve precise return types at each call site. No separate `createStandalonePlace` function exists.
 
-**Rationale**: `createPlace` has a specific contract — it creates a `Place` and atomically creates a `ListPlace` in the same transaction. Overloading it with an optional `listId` would require branching logic inside the transaction, making both paths harder to test and reason about. A separate function keeps each function single-purpose (Constitution I) and makes the intent explicit at the call site.
+**Overload signatures**:
+```typescript
+// With listId — returns place + listPlaceId (transaction path)
+export async function createPlace(params: { listId: string; userId: string; name: string; address: string }): Promise<CreatePlaceResult>;
+
+// Without listId — returns place only (standalone path)
+export async function createPlace(params: { userId: string; name: string; address: string }): Promise<CreateStandalonePlaceResult>;
+```
+
+**Rationale**: A dedicated `createStandalonePlace` function was initially built but contained an almost-complete duplication of the `INSERT INTO places` logic from `createPlace`. The refactor merges them into a single function with branching on `listId`: the transaction path (creates `Place` + `ListPlace` atomically) and the standalone path (creates `Place` only, no `ListPlace` row). TypeScript overloads give callers the precise return type without a union, so call sites stay clean and type-safe. Constitution I (no duplication) is better served by the unified function.
+
+`CreateStandalonePlaceResult` is defined as `Pick<CreatePlaceResult, "place">` — it shares the same `place` shape without duplicating the interface definition.
 
 **Alternatives considered**:
-- *Overload `createPlace` with optional `listId`*: Rejected — adds conditional branching to an already-transactional function; harder to unit test each path.
-- *Extract a `createPlaceRecord` helper and call it from both*: Valid, but adds an extra internal layer without clear benefit at this scale. Can be refactored later if the logic grows.
+- *Dedicated `createStandalonePlace` function*: Initially built; rejected during PR review because it duplicated the `INSERT INTO places` logic verbatim. Keeping it would require any future changes to place creation (e.g., new columns, audit logging) to be applied in two places.
+- *Extract a `createPlaceRecord` private helper called by both*: Valid, but was rendered unnecessary once both call sites were merged into a single function body. No extra internal layer needed.
 
 ---
 

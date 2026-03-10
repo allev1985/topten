@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add a "My Places" page at `/dashboard/places` giving users a unified view of all their places with the ability to: (1) delete a place and automatically cascade-soft-delete all its `ListPlace` rows in one atomic transaction; (2) create a standalone place with no list attached; (3) edit a place's name or address with changes immediately reflected across every list. The implementation extends the existing `PlaceService` with three new functions (`getAllPlacesByUser`, `deletePlace`, `createStandalonePlace`), adds matching Server Actions, and wires them to a new Server + Client component pair at the already-scaffolded `/dashboard/places` route.
+Add a "My Places" page at `/dashboard/places` giving users a unified view of all their places with the ability to: (1) delete a place and automatically cascade-soft-delete all its `ListPlace` rows in one atomic transaction; (2) create a standalone place with no list attached; (3) edit a place's name or address with changes immediately reflected across every list. The implementation extends the existing `PlaceService` with two new functions (`getAllPlacesByUser`, `deletePlace`) and extends the existing `createPlace` with an optional `listId` overload for standalone creation, adds matching Server Actions, and wires them to a new Server + Client component pair at the already-scaffolded `/dashboard/places` route. Shared `CreatePlaceForm` and `EditPlaceDialog` components are extracted to `src/components/dashboard/places/` for reuse across both the My Places and list-detail contexts.
 
 ## Technical Context
 
@@ -25,7 +25,7 @@ Add a "My Places" page at `/dashboard/places` giving users a unified view of all
 
 | Principle | Check | Notes |
 |-----------|-------|-------|
-| I — Code Quality | ✅ PASS | New functions extend `src/lib/place/service.ts`; no logic duplication with existing functions |
+| I — Code Quality | ✅ PASS | `createPlace` extended with optional `listId` overload; shared `CreatePlaceForm` and `EditPlaceDialog` eliminate component duplication across list-detail and My Places contexts |
 | II — Testing Discipline | ✅ PASS | Unit + integration tests planned for all three new service functions; component tests for dialogs; E2E for P1 journeys |
 | III — UX Consistency | ✅ PASS | "My Places" edit form reuses the same dirty-state pattern as the list-detail edit form (spec 006 FR-013/014) |
 | IV — Performance | ✅ PASS | `getAllPlacesByUser` uses a single join query with a `count()` subquery; `deletePlace` uses a single transaction |
@@ -55,15 +55,20 @@ specs/007-places-management/
 src/
 ├── lib/
 │   ├── place/
-│   │   ├── service.ts                          # MODIFY — add getAllPlacesByUser, deletePlace, createStandalonePlace
+│   │   ├── service.ts                          # MODIFY — add getAllPlacesByUser, deletePlace; extend createPlace with optional listId overload
 │   │   └── service/
-│   │       └── types.ts                        # MODIFY — add PlaceWithListCount, DeletePlaceResult, CreateStandalonePlaceResult
+│   │       └── types.ts                        # MODIFY — add PlaceWithListCount, DeletePlaceResult; CreateStandalonePlaceResult = Pick<CreatePlaceResult, "place">
 │   └── config/
 │       └── index.ts                            # MODIFY — add DASHBOARD_ROUTES.places
 ├── schemas/
-│   └── place.ts                                # MODIFY — add createStandalonePlaceSchema
+│   └── place.ts                                # MODIFY — no new schema needed; standalone creation reuses createPlaceSchema
 ├── actions/
-│   └── place-actions.ts                        # MODIFY — add getAllPlacesAction, deletePlaceAction, createStandalonePlaceAction
+│   └── place-actions.ts                        # MODIFY — add deletePlaceAction; extend createPlaceAction to handle optional listId (standalone + list-attach paths)
+├── components/
+│   └── dashboard/
+│       └── places/
+│           ├── CreatePlaceForm.tsx             # NEW — shared form (name + address); used by both AddPlaceDialog contexts
+│           └── EditPlaceDialog.tsx             # NEW — shared edit dialog; re-exported by both list-detail and My Places contexts
 └── app/
     └── (dashboard)/
         └── dashboard/
@@ -72,14 +77,14 @@ src/
                 └── _components/
                     ├── PlacesClient.tsx         # NEW — Client Component; orchestrates list, dialogs, optimistic state
                     ├── PlaceCard.tsx            # NEW — displays name, address, list count, edit/delete affordances
-                    ├── AddPlaceDialog.tsx       # NEW — standalone create form (name + address only)
-                    ├── EditPlaceDialog.tsx      # NEW — pre-filled edit form with dirty-state tracking
+                    ├── AddPlaceDialog.tsx       # NEW — wraps CreatePlaceForm (no listId = standalone path)
+                    ├── EditPlaceDialog.tsx      # NEW — thin re-export of shared EditPlaceDialog
                     └── DeletePlaceDialog.tsx    # NEW — confirmation dialog showing affected list count
 
 tests/
 ├── unit/
 │   └── place/
-│       └── service.test.ts                     # MODIFY — add tests for getAllPlacesByUser, deletePlace, createStandalonePlace
+│       └── service.test.ts                     # MODIFY — add tests for getAllPlacesByUser, deletePlace, and createPlace (standalone path)
 ├── integration/
 │   └── place/
 │       └── deletePlace.cascade.test.ts         # NEW — verifies all ListPlace rows are soft-deleted atomically
