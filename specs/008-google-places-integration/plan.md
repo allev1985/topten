@@ -17,7 +17,7 @@ Integrate the **Google Places API (New)** into the "Add a place" and "My Places"
 **Testing**: Vitest (unit + integration), Playwright (E2E), React Testing Library (component)  
 **Target Platform**: Vercel (server-side only for API key usage)  
 **Performance Goals**: Google Places suggestions visible within 1 second of debounce firing; photo URI resolved within 1 second on user selection  
-**Constraints**: `GOOGLE_PLACES_API_KEY` must never reach the client bundle; all API calls are server-side only (Server Actions); Text Search billed at Enterprise + Atmosphere SKU due to `editorialSummary` field  
+**Constraints**: `GOOGLE_PLACES_API_KEY` must never reach the client bundle; all API calls are server-side only (Server Actions)
 **Scale/Scope**: Single-tenant feature on top of existing place domain; no new routes required
 
 ---

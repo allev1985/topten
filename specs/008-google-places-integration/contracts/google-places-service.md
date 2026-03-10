@@ -31,7 +31,7 @@ Searches Google Places API (New) Text Search for places matching the query strin
 POST https://places.googleapis.com/v1/places:searchText
 Content-Type: application/json
 X-Goog-Api-Key: {GOOGLE_PLACES_API_KEY}
-X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.location,places.editorialSummary,places.photos
+X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.location,places.photos
 
 {
   "textQuery": "{query}",
@@ -47,7 +47,6 @@ X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.lo
 | `places[n].formattedAddress` | `formattedAddress` |
 | `places[n].location.latitude` | `latitude` |
 | `places[n].location.longitude` | `longitude` |
-| `places[n].editorialSummary.text` | `description` (null if absent) |
 | `places[n].photos[0].name` | `photoResourceName` (null if absent) |
 
 ---
