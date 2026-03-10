@@ -1,15 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createPlaceSchema, updatePlaceSchema } from "@/schemas/place";
+import { createPlaceSchema, updatePlaceSchema, createStandalonePlaceSchema } from "@/schemas/place";
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import {
   createPlace,
+  createStandalonePlace,
   addExistingPlaceToList,
   updatePlace,
   deletePlaceFromList,
+  deletePlace,
 } from "@/lib/place/service";
 import { PlaceServiceError } from "@/lib/place/service/errors";
 import { DASHBOARD_ROUTES } from "@/lib/config";
@@ -197,14 +199,9 @@ export async function updatePlaceAction(
       isSuccess: false,
     };
   }
-  if (typeof listId !== "string" || !listId.trim()) {
-    return {
-      data: null,
-      error: "List ID is required.",
-      fieldErrors: {},
-      isSuccess: false,
-    };
-  }
+  // listId is optional — if absent, ownership is verified via places.userId
+  const resolvedListId =
+    typeof listId === "string" && listId.trim() ? listId : undefined;
 
   const rawName = formData.get("name");
   const rawAddress = formData.get("address");
@@ -229,13 +226,16 @@ export async function updatePlaceAction(
   try {
     const { place } = await updatePlace({
       placeId,
-      listId,
+      listId: resolvedListId,
       userId: auth.userId,
       name: result.data.name,
       address: result.data.address,
     });
 
-    revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+    if (resolvedListId) {
+      revalidatePath(DASHBOARD_ROUTES.listDetail(resolvedListId));
+    }
+    revalidatePath(DASHBOARD_ROUTES.places, "page");
     return {
       data: { placeId: place.id },
       error: null,
@@ -298,6 +298,123 @@ export async function deletePlaceAction(
     revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
     return {
       data: { success: true },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
+  } catch (err) {
+    const message =
+      err instanceof PlaceServiceError
+        ? err.message
+        : "Failed to delete place. Please try again.";
+    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
+  }
+}
+
+// ─── createStandalonePlaceAction ─────────────────────────────────────────────
+
+export interface CreateStandalonePlaceSuccessData {
+  placeId: string;
+}
+
+/**
+ * Create a standalone place not attached to any list.
+ *
+ * @param _prevState - Previous action state
+ * @param formData   - FormData containing `name`, `address`
+ */
+export async function createStandalonePlaceAction(
+  _prevState: ActionState<CreateStandalonePlaceSuccessData>,
+  formData: FormData
+): Promise<ActionState<CreateStandalonePlaceSuccessData>> {
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+  }
+
+  const rawName = formData.get("name");
+  const rawAddress = formData.get("address");
+
+  const result = createStandalonePlaceSchema.safeParse({
+    name: typeof rawName === "string" && rawName.trim() ? rawName : undefined,
+    address:
+      typeof rawAddress === "string" && rawAddress.trim()
+        ? rawAddress
+        : undefined,
+  });
+
+  if (!result.success) {
+    return {
+      data: null,
+      error: null,
+      fieldErrors: mapZodErrors(result.error.issues),
+      isSuccess: false,
+    };
+  }
+
+  try {
+    const { place } = await createStandalonePlace({
+      userId: auth.userId,
+      name: result.data.name,
+      address: result.data.address,
+    });
+
+    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    return {
+      data: { placeId: place.id },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
+  } catch (err) {
+    const message =
+      err instanceof PlaceServiceError
+        ? err.message
+        : "Failed to create place. Please try again.";
+    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
+  }
+}
+
+// ─── deletePlaceGlobalAction ──────────────────────────────────────────────────
+
+export interface DeletePlaceGlobalSuccessData {
+  deletedListPlaceCount: number;
+}
+
+/**
+ * Permanently soft-delete a place and cascade to all list attachments.
+ *
+ * @param _prevState - Previous action state
+ * @param formData   - FormData containing `placeId`
+ */
+export async function deletePlaceGlobalAction(
+  _prevState: ActionState<DeletePlaceGlobalSuccessData>,
+  formData: FormData
+): Promise<ActionState<DeletePlaceGlobalSuccessData>> {
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+  }
+
+  const placeId = formData.get("placeId");
+  if (typeof placeId !== "string" || !placeId.trim()) {
+    return {
+      data: null,
+      error: "Place ID is required.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
+  try {
+    const { deletedListPlaceCount } = await deletePlace({
+      placeId,
+      userId: auth.userId,
+    });
+
+    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    return {
+      data: { deletedListPlaceCount },
       error: null,
       fieldErrors: {},
       isSuccess: true,

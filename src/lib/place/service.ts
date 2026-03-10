@@ -8,10 +8,13 @@
  * Public API:
  *   - getPlacesByList          — fetch all active places for a list, in position order
  *   - getAvailablePlacesForList — places the user owns that are NOT yet in the target list
+ *   - getAllPlacesByUser        — all active places for a user with active-list counts
  *   - createPlace              — create a new place and attach it to a list (atomic transaction)
+ *   - createStandalonePlace    — create a new place without attaching to any list
  *   - addExistingPlaceToList   — attach an existing place to a list
  *   - updatePlace              — update a place's name and/or address
  *   - deletePlaceFromList      — remove a place from a specific list (soft-deletes the ListPlace row)
+ *   - deletePlace              — soft-delete a place and cascade to all list attachments
  *
  * Architecture: src/lib/place/service.ts → src/actions/place-actions.ts → client
  * Spec: specs/006-places-service/
@@ -19,7 +22,7 @@
  * @module place/service
  */
 
-import { eq, and, isNull, asc, max, not, inArray } from "drizzle-orm";
+import { eq, and, isNull, asc, max, not, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { places } from "@/db/schema/place";
 import { listPlaces } from "@/db/schema/listPlace";
@@ -37,6 +40,9 @@ import type {
   AddExistingPlaceResult,
   UpdatePlaceResult,
   RemovePlaceFromListResult,
+  PlaceWithListCount,
+  CreateStandalonePlaceResult,
+  DeletePlaceResult,
 } from "./service/types";
 
 export type {
@@ -46,6 +52,9 @@ export type {
   AddExistingPlaceResult,
   UpdatePlaceResult,
   RemovePlaceFromListResult,
+  PlaceWithListCount,
+  CreateStandalonePlaceResult,
+  DeletePlaceResult,
 };
 
 export { PlaceServiceError };
@@ -173,6 +182,60 @@ export async function getAvailablePlacesForList(params: {
       "Failed to load available places. Please try again.",
       err
     );
+  }
+}
+
+/**
+ * Fetch all active places belonging to a user, annotated with the count of
+ * active lists they currently appear in.
+ *
+ * @param params.userId - Authenticated user whose places are fetched
+ * @returns Array of PlaceWithListCount ordered by name ASC
+ * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
+ */
+export async function getAllPlacesByUser(params: {
+  userId: string;
+}): Promise<PlaceWithListCount[]> {
+  const { userId } = params;
+
+  console.info(
+    "[PlaceService:getAllPlacesByUser]",
+    `Fetching all places for user ${userId}`
+  );
+
+  try {
+    const rows = await db
+      .select({
+        id: places.id,
+        name: places.name,
+        address: places.address,
+        activeListCount: sql<number>`cast(count(${listPlaces.id}) as int)`,
+      })
+      .from(places)
+      .leftJoin(
+        listPlaces,
+        and(
+          eq(listPlaces.placeId, places.id),
+          isNull(listPlaces.deletedAt)
+        )
+      )
+      .where(and(eq(places.userId, userId), isNull(places.deletedAt)))
+      .groupBy(places.id, places.name, places.address)
+      .orderBy(asc(places.name));
+
+    console.info(
+      "[PlaceService:getAllPlacesByUser]",
+      `Found ${rows.length} places for user ${userId}`
+    );
+
+    return rows;
+  } catch (err) {
+    console.error(
+      "[PlaceService:getAllPlacesByUser]",
+      "DB error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw placeServiceError("Failed to load places. Please try again.", err);
   }
 }
 
@@ -427,22 +490,24 @@ export async function addExistingPlaceToList(params: {
 /**
  * Update a place's name and/or address.
  *
- * - Verifies list ownership and that the place is active.
+ * - Verifies ownership via list membership when `listId` is provided.
+ * - Falls back to direct `places.userId` check when `listId` is omitted
+ *   (used from the "My Places" context where no list context is available).
  * - Only updates the fields provided; updatedAt is always refreshed.
  * - googlePlaceId is immutable and never accepted as input.
  *
  * @param params.placeId - The place's UUID
- * @param params.listId  - A list that is owned by the user (used for ownership check)
+ * @param params.listId  - Optional: a list owned by the user (for ownership check by list)
  * @param params.userId  - Authenticated user's id
  * @param params.name    - Optional new name
  * @param params.address - Optional new address
  * @returns UpdatePlaceResult with the updated fields
- * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not in user's list
+ * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
 export async function updatePlace(params: {
   placeId: string;
-  listId: string;
+  listId?: string;
   userId: string;
   name?: string;
   address?: string;
@@ -455,25 +520,43 @@ export async function updatePlace(params: {
   );
 
   try {
-    // Verify list ownership and that the place is attached to this list
-    const ownerRows = await db
-      .select({ placeId: listPlaces.placeId })
-      .from(listPlaces)
-      .innerJoin(lists, eq(listPlaces.listId, lists.id))
-      .innerJoin(places, eq(listPlaces.placeId, places.id))
-      .where(
-        and(
-          eq(listPlaces.placeId, placeId),
-          eq(listPlaces.listId, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt),
-          isNull(listPlaces.deletedAt),
-          isNull(places.deletedAt)
-        )
-      );
+    // Ownership check: use list membership when listId is provided,
+    // otherwise verify directly via places.userId
+    if (listId) {
+      const ownerRows = await db
+        .select({ placeId: listPlaces.placeId })
+        .from(listPlaces)
+        .innerJoin(lists, eq(listPlaces.listId, lists.id))
+        .innerJoin(places, eq(listPlaces.placeId, places.id))
+        .where(
+          and(
+            eq(listPlaces.placeId, placeId),
+            eq(listPlaces.listId, listId),
+            eq(lists.userId, userId),
+            isNull(lists.deletedAt),
+            isNull(listPlaces.deletedAt),
+            isNull(places.deletedAt)
+          )
+        );
 
-    if (ownerRows.length === 0) {
-      throw notFoundError();
+      if (ownerRows.length === 0) {
+        throw notFoundError();
+      }
+    } else {
+      const ownerRows = await db
+        .select({ id: places.id })
+        .from(places)
+        .where(
+          and(
+            eq(places.id, placeId),
+            eq(places.userId, userId),
+            isNull(places.deletedAt)
+          )
+        );
+
+      if (ownerRows.length === 0) {
+        throw notFoundError();
+      }
     }
 
     const updateValues: Partial<{
@@ -601,5 +684,140 @@ export async function deletePlaceFromList(params: {
       "Failed to remove place from list. Please try again.",
       err
     );
+  }
+}
+
+/**
+ * Create a standalone place not attached to any list.
+ *
+ * Useful for pre-populating a user's place library before assigning to lists.
+ *
+ * @param params.userId  - Authenticated user (stored as owner)
+ * @param params.name    - Place name (already validated)
+ * @param params.address - Place address (already validated)
+ * @returns CreateStandalonePlaceResult containing the new place record
+ * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
+ */
+export async function createStandalonePlace(params: {
+  userId: string;
+  name: string;
+  address: string;
+}): Promise<CreateStandalonePlaceResult> {
+  const { userId, name, address } = params;
+
+  console.info(
+    "[PlaceService:createStandalonePlace]",
+    `Creating standalone place "${name}" for user ${userId}`
+  );
+
+  try {
+    const [place] = await db
+      .insert(places)
+      .values({
+        userId,
+        name,
+        address,
+        googlePlaceId: crypto.randomUUID(),
+        latitude: "0",
+        longitude: "0",
+      })
+      .returning();
+
+    if (!place) {
+      throw placeServiceError("Failed to create place. Please try again.", null);
+    }
+
+    console.info(
+      "[PlaceService:createStandalonePlace]",
+      `Created standalone place ${place.id}`
+    );
+
+    return { place };
+  } catch (err) {
+    if (err instanceof PlaceServiceError) throw err;
+    console.error(
+      "[PlaceService:createStandalonePlace]",
+      "DB error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw placeServiceError("Failed to create place. Please try again.", err);
+  }
+}
+
+/**
+ * Permanently soft-delete a place and cascade to all its active list attachments.
+ *
+ * Both operations run in a single transaction to guarantee consistency.
+ * After this call:
+ *   - places.deletedAt is set
+ *   - All active ListPlace rows for this place have deletedAt set
+ *
+ * @param params.placeId - Place to delete
+ * @param params.userId  - Authenticated user (ownership check)
+ * @returns DeletePlaceResult with count of ListPlace rows cascaded
+ * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or wrong owner
+ * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
+ */
+export async function deletePlace(params: {
+  placeId: string;
+  userId: string;
+}): Promise<DeletePlaceResult> {
+  const { placeId, userId } = params;
+
+  console.info(
+    "[PlaceService:deletePlace]",
+    `Deleting place ${placeId} for user ${userId}`
+  );
+
+  try {
+    return await db.transaction(async (tx) => {
+      // Verify ownership
+      const ownerRows = await tx
+        .select({ id: places.id })
+        .from(places)
+        .where(
+          and(
+            eq(places.id, placeId),
+            eq(places.userId, userId),
+            isNull(places.deletedAt)
+          )
+        );
+
+      if (ownerRows.length === 0) {
+        throw notFoundError();
+      }
+
+      // Soft-delete the place
+      await tx
+        .update(places)
+        .set({ deletedAt: new Date() })
+        .where(eq(places.id, placeId));
+
+      // Cascade soft-delete to all active ListPlace rows
+      const cascadedRows = await tx
+        .update(listPlaces)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(eq(listPlaces.placeId, placeId), isNull(listPlaces.deletedAt))
+        )
+        .returning({ id: listPlaces.id });
+
+      const deletedListPlaceCount = cascadedRows.length;
+
+      console.info(
+        "[PlaceService:deletePlace]",
+        `Place ${placeId} deleted, cascaded to ${deletedListPlaceCount} list attachment(s)`
+      );
+
+      return { deletedListPlaceCount };
+    });
+  } catch (err) {
+    if (err instanceof PlaceServiceError) throw err;
+    console.error(
+      "[PlaceService:deletePlace]",
+      "DB error:",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    throw placeServiceError("Failed to delete place. Please try again.", err);
   }
 }

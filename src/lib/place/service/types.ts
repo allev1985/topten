@@ -43,3 +43,26 @@ export interface UpdatePlaceResult {
 export interface RemovePlaceFromListResult {
   success: true;
 }
+
+/**
+ * A place record annotated with the count of active lists it currently belongs to.
+ * Returned by getAllPlacesByUser.
+ */
+export interface PlaceWithListCount {
+  id: string;
+  name: string;
+  address: string;
+  /** Number of active (non-deleted) ListPlace rows for this place */
+  activeListCount: number;
+}
+
+/** Result of a successful createStandalonePlace operation */
+export interface CreateStandalonePlaceResult {
+  place: PlaceRecord;
+}
+
+/** Result of a successful deletePlace operation */
+export interface DeletePlaceResult {
+  /** Number of ListPlace rows that were cascade-soft-deleted */
+  deletedListPlaceCount: number;
+}

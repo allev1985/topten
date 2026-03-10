@@ -49,3 +49,23 @@ export type CreatePlaceInput = z.infer<typeof createPlaceSchema>;
 
 /** Inferred input type for updatePlace */
 export type UpdatePlaceInput = z.infer<typeof updatePlaceSchema>;
+
+/**
+ * Schema for creating a standalone place with no list attachment.
+ * Identical field validation to createPlaceSchema but without listId.
+ */
+export const createStandalonePlaceSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(255, "Name must be 255 characters or fewer"),
+  address: z
+    .string()
+    .trim()
+    .min(1, "Address is required")
+    .max(500, "Address must be 500 characters or fewer"),
+});
+
+/** Inferred input type for createStandalonePlace */
+export type CreateStandalonePlaceInput = z.infer<typeof createStandalonePlaceSchema>;
