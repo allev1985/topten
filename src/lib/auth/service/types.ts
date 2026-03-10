@@ -88,7 +88,7 @@ export interface SessionResult {
    */
   user: {
     id: string;
-    email: string | undefined;
+    email?: string;
   } | null;
   /**
    * Session expiry information if authenticated

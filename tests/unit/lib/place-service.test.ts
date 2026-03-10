@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getPlacesByList,
   getAvailablePlacesForList,
+  getAllPlacesByUser,
   createPlace,
   addExistingPlaceToList,
   updatePlace,
   deletePlaceFromList,
+  deletePlace,
   PlaceServiceError,
 } from "@/lib/place/service";
 import {
@@ -68,6 +70,7 @@ function makeThenableChain(resolveWith: () => unknown): Record<string, unknown> 
       asPromise().finally(onFinally),
     where: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
     orderBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
+    groupBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
     returning: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
     innerJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
     leftJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
@@ -535,6 +538,140 @@ describe("Place Service", () => {
           listId: LIST_ID,
           userId: USER_ID,
         })
+      ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("getAllPlacesByUser", () => {
+    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", activeListCount: 2 };
+
+    it("returns places with active list counts", async () => {
+      mockSelectRows = [placeWithCount];
+      const result = await getAllPlacesByUser({ userId: USER_ID });
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(placeWithCount);
+    });
+
+    it("returns empty array when user has no places", async () => {
+      mockSelectRows = [];
+      const result = await getAllPlacesByUser({ userId: USER_ID });
+      expect(result).toEqual([]);
+    });
+
+    it("includes places with activeListCount = 0", async () => {
+      mockSelectRows = [{ ...placeWithCount, activeListCount: 0 }];
+      const result = await getAllPlacesByUser({ userId: USER_ID });
+      expect(result[0]!.activeListCount).toBe(0);
+    });
+
+    it("throws SERVICE_ERROR on DB failure", async () => {
+      mockSelectError = new Error("connection timeout");
+      await expect(getAllPlacesByUser({ userId: USER_ID })).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+      });
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("createPlace (standalone — no listId)", () => {
+    it("inserts a place and returns it", async () => {
+      mockInsertRows = [fullPlaceRow];
+      const result = await createPlace({
+        userId: USER_ID,
+        name: "The Coffee House",
+        address: "1 Main St",
+      });
+      expect(result.place.id).toBe(PLACE_ID);
+      expect(result.place.name).toBe("The Coffee House");
+    });
+
+    it("assigns a UUID as googlePlaceId", async () => {
+      let capturedGooglePlaceId: string | undefined;
+      mockInsert.mockImplementation(() => ({
+        values: (vals: { googlePlaceId?: string }) => {
+          capturedGooglePlaceId = vals.googlePlaceId;
+          return { returning: vi.fn().mockResolvedValue([fullPlaceRow]) };
+        },
+      }));
+      await createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" });
+      expect(capturedGooglePlaceId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+    });
+
+    it("throws SERVICE_ERROR on DB failure", async () => {
+      mockInsertError = new Error("disk full");
+      await expect(
+        createPlace({ userId: USER_ID, name: "Cafe", address: "1 St" })
+      ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("deletePlace", () => {
+    it("soft-deletes the place and cascades to list attachments", async () => {
+      let updateCallCount = 0;
+      mockUpdate.mockImplementation(() => {
+        const callIndex = ++updateCallCount;
+        const where = vi.fn().mockReturnValue(
+          callIndex === 2
+            ? { returning: vi.fn().mockResolvedValue([{ id: "lp1" }, { id: "lp2" }]) }
+            : Promise.resolve({})
+        );
+        return { set: vi.fn().mockReturnValue({ where }) };
+      });
+      mockSelectRows = [{ id: PLACE_ID }]; // ownership check
+
+      const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
+      expect(result.deletedListPlaceCount).toBe(2);
+    });
+
+    it("returns 0 cascaded rows when place is not attached to any list", async () => {
+      let updateCallCount = 0;
+      mockUpdate.mockImplementation(() => {
+        const callIndex = ++updateCallCount;
+        const where = vi.fn().mockReturnValue(
+          callIndex === 2
+            ? { returning: vi.fn().mockResolvedValue([]) }
+            : Promise.resolve({})
+        );
+        return { set: vi.fn().mockReturnValue({ where }) };
+      });
+      mockSelectRows = [{ id: PLACE_ID }];
+
+      const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
+      expect(result.deletedListPlaceCount).toBe(0);
+    });
+
+    it("throws NOT_FOUND when place does not belong to user", async () => {
+      mockSelectRows = []; // ownership check fails
+      await expect(
+        deletePlace({ placeId: PLACE_ID, userId: USER_ID })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws NOT_FOUND when place is already deleted", async () => {
+      mockSelectRows = []; // isNull(deletedAt) excludes deleted place
+      await expect(
+        deletePlace({ placeId: PLACE_ID, userId: USER_ID })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws SERVICE_ERROR on DB failure during cascade", async () => {
+      let updateCallCount = 0;
+      mockUpdate.mockImplementation(() => {
+        const callIndex = ++updateCallCount;
+        const where = vi.fn().mockReturnValue(
+          callIndex === 2
+            ? { returning: vi.fn().mockRejectedValue(new Error("connection lost")) }
+            : Promise.resolve({})
+        );
+        return { set: vi.fn().mockReturnValue({ where }) };
+      });
+      mockSelectRows = [{ id: PLACE_ID }];
+      await expect(
+        deletePlace({ placeId: PLACE_ID, userId: USER_ID })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
   });

@@ -75,6 +75,8 @@ export const DASHBOARD_ROUTES = {
   home: "/dashboard",
   /** Individual list detail page */
   listDetail: (listId: string) => `/dashboard/lists/${listId}`,
+  /** My Places management page */
+  places: "/dashboard/places",
 } as const;
 
 /**

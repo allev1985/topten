@@ -11,6 +11,7 @@ import {
   ChevronDown,
   LogOut,
   Settings,
+  MapPin,
 } from "lucide-react";
 import { signOutAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,15 @@ export function DashboardSidebar(): JSX.Element {
             </div>
           )}
         </div>
+
+        {/* My Places Link */}
+        <Link
+          href="/dashboard/places"
+          className="hover:bg-accent flex items-center gap-2 rounded px-3 py-2 text-sm"
+        >
+          <MapPin className="h-4 w-4" />
+          My Places
+        </Link>
 
         {/* Settings Link */}
         <Link
