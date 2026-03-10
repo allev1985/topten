@@ -5,7 +5,7 @@
  * and validation patterns.
  */
 
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import type { Mock } from "vitest";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 

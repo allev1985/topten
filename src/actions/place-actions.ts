@@ -19,7 +19,7 @@ import { DASHBOARD_ROUTES } from "@/lib/config";
 
 export interface CreatePlaceSuccessData {
   placeId: string;
-  listPlaceId: string;
+  listPlaceId?: string;
 }
 
 export interface AddExistingPlaceSuccessData {
@@ -55,15 +55,9 @@ export async function createPlaceAction(
     return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
   }
 
-  const listId = formData.get("listId");
-  if (typeof listId !== "string" || !listId.trim()) {
-    return {
-      data: null,
-      error: "List ID is required.",
-      fieldErrors: {},
-      isSuccess: false,
-    };
-  }
+  const rawListId = formData.get("listId");
+  const listId =
+    typeof rawListId === "string" && rawListId.trim() ? rawListId : undefined;
 
   const result = createPlaceSchema.safeParse({
     name: formData.get("name") ?? "",
@@ -80,20 +74,16 @@ export async function createPlaceAction(
   }
 
   try {
-    const { place, listPlaceId } = await createPlace({
-      listId,
-      userId: auth.userId,
-      name: result.data.name,
-      address: result.data.address,
-    });
+    if (listId) {
+      const created = await createPlace({ listId, userId: auth.userId, name: result.data.name, address: result.data.address });
+      revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+      revalidatePath(DASHBOARD_ROUTES.places, "page");
+      return { data: { placeId: created.place.id, listPlaceId: created.listPlaceId }, error: null, fieldErrors: {}, isSuccess: true };
+    }
 
-    revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
-    return {
-      data: { placeId: place.id, listPlaceId },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
+    const created = await createPlace({ userId: auth.userId, name: result.data.name, address: result.data.address });
+    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    return { data: { placeId: created.place.id }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     const message =
       err instanceof PlaceServiceError
@@ -310,69 +300,6 @@ export async function deletePlaceAction(
   }
 }
 
-// ─── createStandalonePlaceAction ─────────────────────────────────────────────
-
-export interface CreateStandalonePlaceSuccessData {
-  placeId: string;
-}
-
-/**
- * Create a standalone place not attached to any list.
- *
- * @param _prevState - Previous action state
- * @param formData   - FormData containing `name`, `address`
- */
-export async function createStandalonePlaceAction(
-  _prevState: ActionState<CreateStandalonePlaceSuccessData>,
-  formData: FormData
-): Promise<ActionState<CreateStandalonePlaceSuccessData>> {
-  const auth = await requireAuth();
-  if ("error" in auth) {
-    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
-  }
-
-  const rawName = formData.get("name");
-  const rawAddress = formData.get("address");
-
-  const result = createPlaceSchema.safeParse({
-    name: typeof rawName === "string" && rawName.trim() ? rawName : undefined,
-    address:
-      typeof rawAddress === "string" && rawAddress.trim()
-        ? rawAddress
-        : undefined,
-  });
-
-  if (!result.success) {
-    return {
-      data: null,
-      error: null,
-      fieldErrors: mapZodErrors(result.error.issues),
-      isSuccess: false,
-    };
-  }
-
-  try {
-    const { place } = await createPlace({
-      userId: auth.userId,
-      name: result.data.name,
-      address: result.data.address,
-    });
-
-    revalidatePath(DASHBOARD_ROUTES.places, "page");
-    return {
-      data: { placeId: place.id },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
-  } catch (err) {
-    const message =
-      err instanceof PlaceServiceError
-        ? err.message
-        : "Failed to create place. Please try again.";
-    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
-  }
-}
 
 // ─── deletePlaceGlobalAction ──────────────────────────────────────────────────
 

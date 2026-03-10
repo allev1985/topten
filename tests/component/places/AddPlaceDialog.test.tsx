@@ -6,7 +6,7 @@ import { AddPlaceDialog } from "@/app/(dashboard)/dashboard/places/_components/A
 // ─── Mock server action ───────────────────────────────────────────────────────
 
 vi.mock("@/actions/place-actions", () => ({
-  createStandalonePlaceAction: vi.fn(),
+  createPlaceAction: vi.fn(),
 }));
 
 // ─── Control useActionState via React mock ────────────────────────────────────
@@ -89,7 +89,7 @@ describe("AddPlaceDialog (standalone)", () => {
   it("submit button disabled while pending", () => {
     mockIsPending = true;
     renderDialog();
-    expect(screen.getByRole("button", { name: /adding/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /creating/i })).toBeDisabled();
   });
 
   it("shows field error for name", () => {

@@ -6,7 +6,7 @@
  */
 
 import type { User, Session } from "@supabase/supabase-js";
-import type { Mock } from "vitest";
+import { vi } from "vitest";
 
 /**
  * Creates a mock user object for testing

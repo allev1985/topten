@@ -94,7 +94,7 @@ describe("DashboardSidebar", () => {
       render(<DashboardSidebar />);
 
       // Find the Lists header button (containing "Lists" text but not the navigation links)
-      const listsHeader = screen.getAllByText("Lists")[0].closest("button");
+      const listsHeader = screen.getAllByText("Lists")[0]!.closest("button");
       expect(listsHeader).toBeInTheDocument();
 
       // Click the header to collapse
@@ -110,7 +110,7 @@ describe("DashboardSidebar", () => {
       const user = userEvent.setup();
       render(<DashboardSidebar />);
 
-      const listsHeader = screen.getAllByText("Lists")[0].closest("button");
+      const listsHeader = screen.getAllByText("Lists")[0]!.closest("button");
 
       // Collapse first
       await user.click(listsHeader!);
