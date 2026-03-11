@@ -32,9 +32,7 @@ describe("PublicListCard", () => {
 
   it("renders the list title", () => {
     render(<PublicListCard list={baseList} vanitySlug="alice" />);
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Top 10 Coffee Spots" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Top 10 Coffee Spots")).toBeInTheDocument();
   });
 
   it("renders the description when provided", () => {

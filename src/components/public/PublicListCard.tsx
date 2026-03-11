@@ -24,7 +24,7 @@ export function PublicListCard({
   list,
   vanitySlug,
 }: PublicListCardProps): JSX.Element {
-  const href = `/@${vanitySlug}/${list.slug}`;
+  const href = `/@${vanitySlug}/lists/${list.slug}`;
   const updatedDate = list.updatedAt.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",

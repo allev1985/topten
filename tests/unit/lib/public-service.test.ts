@@ -3,6 +3,7 @@ import {
   getPublicProfile,
   getPublicListsForProfile,
   getPublicListDetail,
+  PublicServiceError,
 } from "@/lib/public/service";
 
 // ─── DB mock setup ────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ const listSummaryRow = {
   title: "Top 10 Coffee",
   slug: LIST_SLUG,
   description: "The best coffee",
-  publishedAt: NOW,
+  updatedAt: NOW,
   placeCount: 3,
 };
 
@@ -94,7 +95,7 @@ const listHeaderRow = {
   title: "Top 10 Coffee",
   slug: LIST_SLUG,
   description: "The best coffee",
-  publishedAt: NOW,
+  updatedAt: NOW,
 };
 
 const placeRow = {
@@ -153,11 +154,13 @@ describe("Public Service", () => {
       expect(result).toBeNull();
     });
 
-    it("propagates DB errors", async () => {
-      mockSelectError = new Error("connection reset");
-      await expect(getPublicProfile(VANITY_SLUG)).rejects.toThrow(
-        "connection reset"
-      );
+    it("wraps DB errors in PublicServiceError", async () => {
+      const cause = new Error("connection reset");
+      mockSelectError = cause;
+      const err = await getPublicProfile(VANITY_SLUG).catch((e) => e);
+      expect(err).toBeInstanceOf(PublicServiceError);
+      expect(err.code).toBe("SERVICE_ERROR");
+      expect(err.originalError).toBe(cause);
     });
   });
 
@@ -169,6 +172,7 @@ describe("Public Service", () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.title).toBe("Top 10 Coffee");
       expect(result[0]?.placeCount).toBe(3);
+      expect(result[0]?.updatedAt).toEqual(NOW);
     });
 
     it("returns empty array when user has no published lists", async () => {
@@ -177,19 +181,21 @@ describe("Public Service", () => {
       expect(result).toEqual([]);
     });
 
-    it("returns null publishedAt rows as-is (service filters IS NULL at query level)", async () => {
-      // An unpublished list would be excluded by the is_published = true filter at DB level.
+    it("returns empty array when user has no published lists (DB filters is_published = true)", async () => {
+      // Unpublished lists are excluded by the is_published = true filter at DB level.
       // The mock simulates the DB returning nothing for unpublished lists.
       mockSelectRows = [];
       const result = await getPublicListsForProfile(USER_ID);
       expect(result).toEqual([]);
     });
 
-    it("propagates DB errors", async () => {
-      mockSelectError = new Error("query timeout");
-      await expect(getPublicListsForProfile(USER_ID)).rejects.toThrow(
-        "query timeout"
-      );
+    it("wraps DB errors in PublicServiceError", async () => {
+      const cause = new Error("query timeout");
+      mockSelectError = cause;
+      const err = await getPublicListsForProfile(USER_ID).catch((e) => e);
+      expect(err).toBeInstanceOf(PublicServiceError);
+      expect(err.code).toBe("SERVICE_ERROR");
+      expect(err.originalError).toBe(cause);
     });
   });
 
@@ -249,11 +255,13 @@ describe("Public Service", () => {
       expect(result).toBeNull();
     });
 
-    it("propagates DB errors on the list header query", async () => {
-      mockSelectError = new Error("DB connection lost");
-      await expect(
-        getPublicListDetail({ userId: USER_ID, listSlug: LIST_SLUG })
-      ).rejects.toThrow("DB connection lost");
+    it("wraps DB errors in PublicServiceError", async () => {
+      const cause = new Error("DB connection lost");
+      mockSelectError = cause;
+      const err = await getPublicListDetail({ userId: USER_ID, listSlug: LIST_SLUG }).catch((e) => e);
+      expect(err).toBeInstanceOf(PublicServiceError);
+      expect(err.code).toBe("SERVICE_ERROR");
+      expect(err.originalError).toBe(cause);
     });
   });
 });
