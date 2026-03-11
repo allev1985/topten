@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 export const revalidate = 60;
 import {
@@ -61,15 +62,17 @@ export default async function ProfilePage({
 
   // Both are cache()-wrapped — layout call is deduplicated
   const profile = await getPublicProfile(vanitySlug);
-  const lists = await getPublicListsForProfile(profile!.id);
+  if (!profile) notFound();
+
+  const lists = await getPublicListsForProfile(profile.id);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <ProfileHeader
-        name={profile!.name}
-        bio={profile!.bio}
-        avatarUrl={profile!.avatarUrl}
-        vanitySlug={profile!.vanitySlug}
+        name={profile.name}
+        bio={profile.bio}
+        avatarUrl={profile.avatarUrl}
+        vanitySlug={profile.vanitySlug}
       />
       <section className="mt-8">
         <PublicListGrid lists={lists} vanitySlug={vanitySlug} />
