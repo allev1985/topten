@@ -41,7 +41,7 @@ The SSRF risk would materialise if the fix had been applied with a wildcard (e.g
 **Fix applied:**
 `remotePatterns` in `next.config.ts` now includes:
 - `maps.googleapis.com` scoped to `/maps/api/place/photo**`
-- `lh3.googleusercontent.com` scoped to `/photos/**`
+- `lh3.googleusercontent.com` scoped to `/**`
 - `streetviewpixels-pa.googleapis.com` scoped to `/**`
 
 ---
