@@ -23,6 +23,7 @@ import { eq, and, isNull, desc, count } from "drizzle-orm";
 import { db } from "@/db";
 import { lists } from "@/db/schema/list";
 import { listPlaces } from "@/db/schema/listPlace";
+import { users } from "@/db/schema/user";
 import {
   ListServiceError,
   notFoundError,
@@ -376,15 +377,22 @@ export async function publishList(params: {
         id: lists.id,
         isPublished: lists.isPublished,
         publishedAt: lists.publishedAt,
+        slug: lists.slug,
       });
 
     if (rows.length === 0) {
       throw notFoundError();
     }
 
+    const userRows = await db
+      .select({ vanitySlug: users.vanitySlug })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .limit(1);
+
     console.info("[ListService:publishList]", `List ${listId} published`);
 
-    return { list: rows[0]! };
+    return { list: { ...rows[0]!, vanitySlug: userRows[0]?.vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     console.error(
@@ -435,15 +443,22 @@ export async function unpublishList(params: {
         id: lists.id,
         isPublished: lists.isPublished,
         publishedAt: lists.publishedAt,
+        slug: lists.slug,
       });
 
     if (rows.length === 0) {
       throw notFoundError();
     }
 
+    const userRows = await db
+      .select({ vanitySlug: users.vanitySlug })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .limit(1);
+
     console.info("[ListService:unpublishList]", `List ${listId} unpublished`);
 
-    return { list: rows[0]! };
+    return { list: { ...rows[0]!, vanitySlug: userRows[0]?.vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     console.error(

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and, isNull } from "drizzle-orm";
 import { createListSchema, updateListSchema } from "@/schemas/list";
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
@@ -14,59 +13,6 @@ import {
   unpublishList,
 } from "@/lib/list/service";
 import { ListServiceError } from "@/lib/list/service/errors";
-import { db } from "@/db";
-import { lists } from "@/db/schema/list";
-import { users } from "@/db/schema/user";
-
-// ─── Internal helpers ─────────────────────────────────────────────────────────
-
-/**
- * Revalidate the public profile and list pages for a user after a
- * publish/unpublish operation.
- *
- * Fetches the user's vanitySlug and the list's slug in parallel,
- * then calls revalidatePath for the App Router paths (/profiles/...) so Next.js
- * cache invalidation targets the actual route segments, not the rewrite sources.
- * Failures are silently swallowed so they never block the action response.
- *
- * See: docs/decisions/ — public page revalidation strategy
- */
-async function revalidatePublicPaths(
-  userId: string,
-  listId: string
-): Promise<void> {
-  try {
-    const [userRows, listRows] = await Promise.all([
-      db
-        .select({ vanitySlug: users.vanitySlug })
-        .from(users)
-        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-        .limit(1),
-      db
-        .select({ slug: lists.slug })
-        .from(lists)
-        .where(and(eq(lists.id, listId), isNull(lists.deletedAt)))
-        .limit(1),
-    ]);
-
-    const vanitySlug = userRows[0]?.vanitySlug;
-    const listSlug = listRows[0]?.slug;
-
-    if (vanitySlug) {
-      revalidatePath(`/profiles/${vanitySlug}`);
-      if (listSlug) {
-        revalidatePath(`/profiles/${vanitySlug}/lists/${listSlug}`);
-      }
-    }
-  } catch (err) {
-    // Revalidation is best-effort; do not block the action response
-    console.warn(
-      "[list-actions:revalidatePublicPaths]",
-      "Failed to revalidate public paths:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
-  }
-}
 
 // ─── Success data types ───────────────────────────────────────────────────────
 
@@ -294,7 +240,10 @@ export async function publishListAction(
   try {
     const { list } = await publishList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
-    await revalidatePublicPaths(auth.userId, list.id);
+    if (list.vanitySlug) {
+      revalidatePath(`/profiles/${list.vanitySlug}`);
+      revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
+    }
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,
@@ -342,7 +291,10 @@ export async function unpublishListAction(
   try {
     const { list } = await unpublishList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
-    await revalidatePublicPaths(auth.userId, list.id);
+    if (list.vanitySlug) {
+      revalidatePath(`/profiles/${list.vanitySlug}`);
+      revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
+    }
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,
