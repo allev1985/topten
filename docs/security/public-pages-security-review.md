@@ -80,18 +80,18 @@ Alternatively, adopt structured logging (`JSON.stringify({ slug: vanitySlug })`)
 ### Finding 3 — ISR `revalidate` Export Not Configured on Public Pages
 
 **Severity:** Low
-**Status:** Open — not yet fixed
+**Status:** Closed — fixed in implementation
 **Domain:** Cache Behaviour / DoS Risk
 
 **Description:**
-The feature brief states that the pages should use ISR (`revalidate = 60`), and this is mentioned as a DoS mitigation (cached pages do not hit the DB on every request). However, neither `src/app/profiles/[vanitySlug]/page.tsx` nor `src/app/profiles/[vanitySlug]/[listSlug]/page.tsx` exports a `revalidate` constant.
+The feature brief states that the pages should use ISR (`revalidate = 60`), and this is mentioned as a DoS mitigation (cached pages do not hit the DB on every request). This finding originally noted that neither `src/app/profiles/[vanitySlug]/page.tsx` nor `src/app/profiles/[vanitySlug]/[listSlug]/page.tsx` exported a `revalidate` constant, which caused these public pages to be rendered dynamically on every request.
 
-Without `export const revalidate = 60`, Next.js defaults to **dynamic rendering** for these Server Components (because they call `notFound()` and read params). Every request to a public profile or list page will trigger a fresh DB query. For an unauthenticated public endpoint, this means a sustained burst of requests to `/@popular-creator` will produce an equivalent burst of `SELECT` queries against Postgres.
+This has now been addressed: both public profile and public list page components export `export const revalidate = 60;`, so Next.js serves them via ISR as intended. Requests to popular public pages are therefore shielded from hitting the database on every request, reducing the DoS amplification surface on the backing Postgres database.
 
-This is not a security vulnerability in itself, but it removes the DB-shielding that ISR is expected to provide and is a required pre-production correctness issue.
+This was not a direct security vulnerability, but it removed the DB-shielding that ISR is expected to provide and was treated as a pre-production correctness issue. With the current implementation, the intended caching behaviour is in place.
 
 **Recommendation:**
-Add `export const revalidate = 60;` to both page files. The `revalidatePublicPaths()` helper in `list-actions.ts` already calls `revalidatePath()` on publish/unpublish, which correctly busts the ISR cache on content changes.
+No further action required for this finding. Ensure that any future public pages that expose unauthenticated profile or list data continue to use ISR with an appropriate `revalidate` interval (currently `60` seconds). The `revalidatePublicPaths()` helper in `list-actions.ts` already calls `revalidatePath()` on publish/unpublish, which correctly busts the ISR cache on content changes.
 
 ---
 
