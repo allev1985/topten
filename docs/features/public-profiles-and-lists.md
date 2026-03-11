@@ -15,7 +15,7 @@ YourFavs allows creators to build and publish lists of their favourite places, b
 This feature introduces two new public routes:
 
 - `/@{vanity_slug}` — A creator's public profile page listing all their published lists
-- `/@{vanity_slug}/{list-slug}` — A public page displaying all places within a specific published list
+- `/@{vanity_slug}/lists/{list-slug}` — A public page displaying all places within a specific published list
 
 These routes require no authentication to access. They are the primary surfaces through which the platform's content is consumed and shared.
 

@@ -3,7 +3,7 @@
 **Feature branch:** `feature/public-profile-list-pages`
 **Review date:** 2026-03-11
 **Reviewer role:** Security Architect (DevSecOps review)
-**Scope:** Public profile pages (`/@{vanitySlug}`) and public list pages (`/@{vanitySlug}/{listSlug}`)
+**Scope:** Public profile pages (`/@{vanitySlug}`) and public list pages (`/@{vanitySlug}/lists/{listSlug}`)
 
 ---
 
@@ -41,7 +41,7 @@ The SSRF risk would materialise if the fix had been applied with a wildcard (e.g
 **Fix applied:**
 `remotePatterns` in `next.config.ts` now includes:
 - `maps.googleapis.com` scoped to `/maps/api/place/photo**`
-- `lh3.googleusercontent.com` scoped to `/photos/**`
+- `lh3.googleusercontent.com` scoped to `/**`
 - `streetviewpixels-pa.googleapis.com` scoped to `/**`
 
 ---
