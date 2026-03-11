@@ -25,7 +25,8 @@ import { users } from "@/db/schema/user";
  * publish/unpublish operation.
  *
  * Fetches the user's vanitySlug and the list's slug in parallel,
- * then calls revalidatePath for both the profile page and the list page.
+ * then calls revalidatePath for the App Router paths (/profiles/...) so Next.js
+ * cache invalidation targets the actual route segments, not the rewrite sources.
  * Failures are silently swallowed so they never block the action response.
  *
  * See: docs/decisions/ — public page revalidation strategy
@@ -52,9 +53,9 @@ async function revalidatePublicPaths(
     const listSlug = listRows[0]?.slug;
 
     if (vanitySlug) {
-      revalidatePath(`/@${vanitySlug}`);
+      revalidatePath(`/profiles/${vanitySlug}`);
       if (listSlug) {
-        revalidatePath(`/@${vanitySlug}/lists/${listSlug}`);
+        revalidatePath(`/profiles/${vanitySlug}/lists/${listSlug}`);
       }
     }
   } catch (err) {
