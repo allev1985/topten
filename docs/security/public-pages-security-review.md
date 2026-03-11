@@ -3,7 +3,7 @@
 **Feature branch:** `feature/public-profile-list-pages`
 **Review date:** 2026-03-11
 **Reviewer role:** Security Architect (DevSecOps review)
-**Scope:** Public profile pages (`/@{vanitySlug}`) and public list pages (`/@{vanitySlug}/{listSlug}`)
+**Scope:** Public profile pages (`/@{vanitySlug}`) and public list pages (`/@{vanitySlug}/lists/{listSlug}`)
 
 ---
 
