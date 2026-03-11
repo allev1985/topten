@@ -23,6 +23,8 @@ import type {
   PublicListDetail,
   PublicPlaceEntry,
 } from "./service/types";
+import { publicServiceError } from "./service/errors";
+export { PublicServiceError } from "./service/errors";
 
 export type { PublicProfile, PublicListSummary, PublicListDetail, PublicPlaceEntry };
 
@@ -79,7 +81,7 @@ export const getPublicProfile = cache(
         "DB error:",
         err instanceof Error ? err.message : "Unknown error"
       );
-      throw err;
+      throw publicServiceError("Failed to load profile.", err);
     }
   }
 );
@@ -137,7 +139,7 @@ export const getPublicListsForProfile = cache(
         "DB error:",
         err instanceof Error ? err.message : "Unknown error"
       );
-      throw err;
+      throw publicServiceError("Failed to load lists.", err);
     }
   }
 );
@@ -245,7 +247,7 @@ export const getPublicListDetail = cache(
         "DB error:",
         err instanceof Error ? err.message : "Unknown error"
       );
-      throw err;
+      throw publicServiceError("Failed to load list.", err);
     }
   }
 );
