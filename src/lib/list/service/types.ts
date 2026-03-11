@@ -50,10 +50,14 @@ export interface DeleteListResult {
 
 /** Result of a successful publishList operation */
 export interface PublishListResult {
-  list: Pick<ListRecord, "id" | "isPublished" | "publishedAt">;
+  list: Pick<ListRecord, "id" | "isPublished" | "publishedAt" | "slug"> & {
+    vanitySlug: string | null;
+  };
 }
 
 /** Result of a successful unpublishList operation */
 export interface UnpublishListResult {
-  list: Pick<ListRecord, "id" | "isPublished" | "publishedAt">;
+  list: Pick<ListRecord, "id" | "isPublished" | "publishedAt" | "slug"> & {
+    vanitySlug: string | null;
+  };
 }

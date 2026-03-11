@@ -101,9 +101,13 @@ beforeEach(() => {
     return Promise.resolve(mockSelectRows);
   });
   mockGroupBy.mockReturnValue({ orderBy: mockOrderBy });
-  mockSelectWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy });
+  const mockLimit = vi.fn().mockImplementation(() => {
+    if (mockSelectError) return Promise.reject(mockSelectError);
+    return Promise.resolve(mockSelectRows);
+  });
+  mockSelectWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy, limit: mockLimit });
   mockLeftJoin.mockReturnValue({ where: mockSelectWhere });
-  mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, where: mockSelectWhere });
+  mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, where: mockSelectWhere, limit: mockLimit });
   mockSelect.mockReturnValue({ from: mockFrom });
 
   // insert chain
@@ -286,12 +290,13 @@ describe("List Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("publishList", () => {
     it("publishes the list and returns updated status", async () => {
-      const row = { id: LIST_ID, isPublished: true, publishedAt: NOW };
+      const row = { id: LIST_ID, isPublished: true, publishedAt: NOW, slug: "a1b2" };
       setUpdateResult([row]);
 
       const result = await publishList({ listId: LIST_ID, userId: USER_ID });
       expect(result.list.isPublished).toBe(true);
       expect(result.list.publishedAt).toEqual(NOW);
+      expect(result.list.slug).toBe("a1b2");
     });
 
     it("throws NOT_FOUND when list is missing, deleted, or wrong owner", async () => {
@@ -312,12 +317,13 @@ describe("List Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("unpublishList", () => {
     it("unpublishes the list and clears publishedAt", async () => {
-      const row = { id: LIST_ID, isPublished: false, publishedAt: null };
+      const row = { id: LIST_ID, isPublished: false, publishedAt: null, slug: "a1b2" };
       setUpdateResult([row]);
 
       const result = await unpublishList({ listId: LIST_ID, userId: USER_ID });
       expect(result.list.isPublished).toBe(false);
       expect(result.list.publishedAt).toBeNull();
+      expect(result.list.slug).toBe("a1b2");
     });
 
     it("throws NOT_FOUND when list is missing, deleted, or wrong owner", async () => {

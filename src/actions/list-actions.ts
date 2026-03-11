@@ -240,6 +240,10 @@ export async function publishListAction(
   try {
     const { list } = await publishList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
+    if (list.vanitySlug) {
+      revalidatePath(`/profiles/${list.vanitySlug}`);
+      revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
+    }
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,
@@ -287,6 +291,10 @@ export async function unpublishListAction(
   try {
     const { list } = await unpublishList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
+    if (list.vanitySlug) {
+      revalidatePath(`/profiles/${list.vanitySlug}`);
+      revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
+    }
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,
