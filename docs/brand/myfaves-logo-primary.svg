@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 80" fill="none">
+  <text
+    font-family="'Georgia', 'Times New Roman', serif"
+    font-size="64"
+    font-weight="700"
+    font-style="normal"
+    letter-spacing="-2"
+    y="62"
+  >
+    <tspan x="0" fill="#111827">my</tspan><tspan fill="#8B5CF6">faves</tspan>
+  </text>
+</svg>
