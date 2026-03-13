@@ -57,11 +57,14 @@ export function CreatePlaceForm({
   const [isResolvingPhoto, setIsResolvingPhoto] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
+  const mountedRef = useRef(false);
   const searchIdRef = useRef(0);
 
-  // ── Unmount cleanup ───────────────────────────────────────────────
+  // ── Mount / unmount tracking ──────────────────────────────────────
+  // Re-set to true on every mount so React StrictMode's simulated
+  // unmount+remount cycle does not leave mountedRef permanently false.
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       if (debounceRef.current) clearTimeout(debounceRef.current);
