@@ -5,11 +5,10 @@ import { ImageIcon, ChevronDown } from "lucide-react";
 import type { JSX } from "react";
 import type { PublicPlaceEntry } from "@/lib/public/service/types";
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 
 interface PublicPlaceAccordionItemProps {
   place: PublicPlaceEntry;
@@ -18,10 +17,10 @@ interface PublicPlaceAccordionItemProps {
 /**
  * PublicPlaceAccordionItem — Client Component
  *
- * Renders a single place as an accordion item within a 2-column grid.
+ * Renders a single place as a disclosure card within a 2-column grid.
  * The trigger shows the hero image (or a placeholder) with the place
- * name and address overlaid via a gradient. The accordion content
- * reveals the description and any future additional properties.
+ * name and address overlaid via a gradient. When the place has a
+ * description, tapping expands to reveal it.
  * When no expandable content exists the card is rendered statically.
  */
 export function PublicPlaceAccordionItem({
@@ -74,18 +73,16 @@ export function PublicPlaceAccordionItem({
   }
 
   return (
-    <div className="group overflow-hidden rounded-xl border bg-card shadow-sm">
-      <Accordion type="single" collapsible>
-        <AccordionItem value={place.id} className="border-b-0">
-          <AccordionTrigger className="rounded-none p-0 hover:no-underline [&>svg]:hidden">
-            {heroImage}
-          </AccordionTrigger>
+    <Collapsible className="group overflow-hidden rounded-xl border bg-card shadow-sm">
+      <CollapsibleTrigger className="block w-full">
+        {heroImage}
+      </CollapsibleTrigger>
 
-          <AccordionContent className="px-4 py-3 text-sm text-muted-foreground">
-            {place.description}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </div>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+        <p className="px-4 py-3 text-sm text-muted-foreground">
+          {place.description}
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
