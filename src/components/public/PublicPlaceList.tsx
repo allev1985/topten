@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import type { PublicPlaceEntry } from "@/lib/public/service/types";
-import { PublicPlaceCard } from "./PublicPlaceCard";
+import { PublicPlaceAccordionItem } from "./PublicPlaceAccordionItem";
 
 interface PublicPlaceListProps {
   places: PublicPlaceEntry[];
@@ -9,9 +9,9 @@ interface PublicPlaceListProps {
 /**
  * PublicPlaceList — Server Component
  *
- * Renders an ordered list of PublicPlaceCard components.
- * Rank is derived from the array index (1-based) rather than
- * the stored position value, ensuring sequential display.
+ * Renders places in a 2-column accordion grid.
+ * Each place shows a hero image with overlaid name and address;
+ * tapping expands to reveal the description and any future properties.
  * Shows an empty state when the list has no places.
  */
 export function PublicPlaceList({ places }: PublicPlaceListProps): JSX.Element {
@@ -24,12 +24,10 @@ export function PublicPlaceList({ places }: PublicPlaceListProps): JSX.Element {
   }
 
   return (
-    <ol className="space-y-4">
-      {places.map((place, index) => (
-        <li key={place.id}>
-          <PublicPlaceCard place={place} rank={index + 1} />
-        </li>
+    <div className="grid items-start gap-4 sm:grid-cols-2">
+      {places.map((place) => (
+        <PublicPlaceAccordionItem key={place.id} place={place} />
       ))}
-    </ol>
+    </div>
   );
 }
