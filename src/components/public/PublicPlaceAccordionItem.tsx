@@ -58,7 +58,7 @@ export function PublicPlaceAccordionItem({
           </p>
         </div>
         {hasContent && (
-          <ChevronDown className="h-4 w-4 flex-shrink-0 text-white/70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <ChevronDown className="h-4 w-4 flex-shrink-0 text-white/70 transition-transform duration-200 group-data-[state=open]/card:rotate-180" />
         )}
       </div>
     </div>
@@ -73,7 +73,7 @@ export function PublicPlaceAccordionItem({
   }
 
   return (
-    <Collapsible className="group overflow-hidden rounded-xl border bg-card shadow-sm">
+    <Collapsible className="group/card overflow-hidden rounded-xl border bg-card shadow-sm">
       <CollapsibleTrigger className="block w-full">
         {heroImage}
       </CollapsibleTrigger>
