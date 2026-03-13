@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import Header from "@/components/shared/Header";
-import HeroImageGrid from "@/components/shared/HeroImageGrid";
 import LoginModal from "@/components/shared/LoginModal";
 import SignupModal from "@/components/shared/SignupModal";
 import { Button } from "@/components/ui/button";
@@ -35,36 +33,34 @@ export default function LandingPageClient() {
         onClose={() => setIsSignupModalOpen(false)}
       />
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-8 md:py-12 lg:py-16">
-        {/* Hero Section Container */}
-        <div className="w-full max-w-7xl">
-          <div className="grid grid-cols-1 items-center gap-6 md:gap-8 lg:grid-cols-5 lg:gap-12">
-            {/* Hero Text Column (40% on desktop) */}
-            <div className="col-span-1 flex flex-col justify-center space-y-4 md:space-y-6 lg:col-span-2">
-              {/* Tagline with Sparkles Icon */}
-              <div className="flex items-center gap-2">
-                <Sparkles
-                  className="h-4 w-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <p className="text-sm font-medium text-muted-foreground">
-                  Your personal guide to the world
-                </p>
-              </div>
+      <main className="flex flex-1 items-center px-4 py-8 md:px-8 lg:py-0">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            {/* Large Logo */}
+            <div className="flex items-center justify-center lg:justify-start">
+              <span
+                className="font-serif font-bold leading-none tracking-tight select-none text-[clamp(5rem,15vw,11rem)]"
+                aria-label="myfaves"
+              >
+                <span className="text-foreground">my</span>
+                <span className="text-violet-500 dark:text-violet-300">
+                  faves
+                </span>
+              </span>
+            </div>
 
-              {/* Headline */}
-              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
+            {/* Text + CTA */}
+            <div className="flex flex-col space-y-6">
+              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl">
                 Curate and share your favourite places
               </h1>
 
-              {/* Subheading */}
-              <p className="max-w-prose text-lg text-muted-foreground md:text-xl">
+              <p className="text-lg text-muted-foreground md:text-xl">
                 Build focused, meaningful collections that reflect your genuine
                 preferences and local expertise. Share them like recommendations
                 from a trusted friend.
               </p>
 
-              {/* CTA Button */}
               <div>
                 <Button
                   variant="default"
@@ -75,11 +71,6 @@ export default function LandingPageClient() {
                   Create Your First List
                 </Button>
               </div>
-            </div>
-
-            {/* Hero Image Column (60% on desktop) */}
-            <div className="col-span-1 lg:col-span-3">
-              <HeroImageGrid />
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { CreatePlaceForm } from "@/components/dashboard/places/CreatePlaceForm";
 import * as placeActions from "@/actions/place-actions";
 import type { SearchPlacesSuccessData } from "@/actions/place-actions";
+import type { GooglePlaceResult } from "@/lib/services/google-places/types";
 import type { ActionState } from "@/types/forms";
 
 // ─── Mock server actions ──────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ const PLACE_NO_PHOTO = {
 };
 
 function successSearch(
-  places = [PLACE_WITH_PHOTO]
+  places: GooglePlaceResult[] = [PLACE_WITH_PHOTO]
 ): ActionState<SearchPlacesSuccessData> {
   return { data: { results: places }, error: null, fieldErrors: {}, isSuccess: true };
 }
@@ -166,7 +167,7 @@ describe("CreatePlaceForm", () => {
       expect(screen.getByRole("listbox", { name: /place suggestions/i })).toBeTruthy()
     );
     const listbox = screen.getByRole("listbox", { name: /place suggestions/i });
-    await user.click(within(listbox).getAllByRole("button")[0]);
+    await user.click(within(listbox).getAllByRole("button")[0]!);
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /add place/i })).not.toBeDisabled()
     );
@@ -180,7 +181,7 @@ describe("CreatePlaceForm", () => {
       expect(screen.getByRole("listbox", { name: /place suggestions/i })).toBeTruthy()
     );
     const listbox = screen.getByRole("listbox", { name: /place suggestions/i });
-    await user.click(within(listbox).getAllByRole("button")[0]);
+    await user.click(within(listbox).getAllByRole("button")[0]!);
     await waitFor(() =>
       expect(mockResolvePhoto).toHaveBeenCalledWith(
         "places/ChIJdd4hrwug2EcRmSrV3Vo6llI/photos/AbcDef123"
