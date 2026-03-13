@@ -56,11 +56,11 @@ export function DashboardSidebar(): JSX.Element {
       {/* Logo/Branding */}
       <div className="border-b p-6">
         <span
-          className="font-serif text-5xl leading-none tracking-tighter select-none"
+          className="font-serif text-xl leading-none tracking-tight select-none"
           aria-label="myfaves"
         >
           <span className="text-foreground">my</span>
-          <span className="text-violet-500 dark:text-violet-400">faves</span>
+          <span className="text-violet-500 dark:text-violet-300">faves</span>
         </span>
       </div>
 

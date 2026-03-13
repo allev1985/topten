@@ -38,11 +38,11 @@ export default async function ProfileLayout({
           aria-label="myfaves home"
         >
           <span
-            className="font-serif text-5xl leading-none tracking-tighter select-none"
+            className="font-serif text-2xl leading-none tracking-tight select-none"
             aria-label="myfaves"
           >
             <span className="text-foreground">my</span>
-            <span className="text-violet-500 dark:text-violet-400">faves</span>
+            <span className="text-violet-500 dark:text-violet-300">faves</span>
           </span>
         </Link>
       </nav>

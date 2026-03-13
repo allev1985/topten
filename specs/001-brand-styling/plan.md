@@ -14,7 +14,7 @@ Replace the app's generic neutral/zinc palette, Geist/Arial typography, orange M
 ## Technical Context
 
 **Language/Version**: TypeScript 5 / Node 20  
-**Primary Dependencies**: Next.js 15 (App Router), Tailwind CSS v4, shadcn/ui (new-york), Google Fonts (DM Serif Display, DM Sans)  
+**Primary Dependencies**: Next.js 16.0.5 (App Router), Tailwind CSS v4, shadcn/ui (new-york), Google Fonts (DM Serif Display, DM Sans)  
 **Storage**: N/A for this feature — no schema changes  
 **Testing**: Vitest (unit/component), Playwright (E2E)  
 **Target Platform**: Web — Vercel deployment, all modern browsers  
