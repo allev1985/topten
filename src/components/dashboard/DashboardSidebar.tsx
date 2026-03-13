@@ -55,7 +55,13 @@ export function DashboardSidebar(): JSX.Element {
     <div className="flex h-full flex-col">
       {/* Logo/Branding */}
       <div className="border-b p-6">
-        <h1 className="text-xl font-semibold">📍 YourFavs</h1>
+        <span
+          className="font-serif text-5xl leading-none tracking-tighter select-none"
+          aria-label="myfaves"
+        >
+          <span className="text-foreground">my</span>
+          <span className="text-violet-500 dark:text-violet-400">faves</span>
+        </span>
       </div>
 
       {/* Navigation Container */}

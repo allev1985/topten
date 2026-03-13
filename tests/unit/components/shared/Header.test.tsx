@@ -9,15 +9,17 @@ describe("Header - Brand Identity and Visual Elements (User Story 1)", () => {
     onSignup: vi.fn(),
   };
 
-  it("renders the YourFavs logo with MapPin icon and text", () => {
+  it("renders the myfaves wordmark", () => {
     render(<Header {...mockHandlers} />);
 
     // Verify logo link is present
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toBeInTheDocument();
 
-    // Verify brand text is present
-    expect(screen.getByText("YourFavs")).toBeInTheDocument();
+    // Verify two-colour wordmark spans are present
+    expect(screen.getByLabelText("myfaves")).toBeInTheDocument();
+    expect(screen.getByText("my")).toBeInTheDocument();
+    expect(screen.getByText("faves")).toBeInTheDocument();
   });
 
   it("displays both action buttons with correct labels", () => {
@@ -61,21 +63,21 @@ describe("Header - Logo Navigation (User Story 2)", () => {
   it("renders logo as a clickable link to homepage", () => {
     render(<Header {...mockHandlers} />);
 
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toHaveAttribute("href", "/");
   });
 
   it("provides visual feedback when logo is hovered", () => {
     render(<Header {...mockHandlers} />);
 
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toHaveClass("hover:opacity-80");
   });
 
   it("logo link is keyboard accessible", () => {
     render(<Header {...mockHandlers} />);
 
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink.tagName).toBe("A");
   });
 });
@@ -154,7 +156,7 @@ describe("Header - Accessibility (User Story 4)", () => {
 
     // Tab through elements
     await user.tab();
-    expect(screen.getByLabelText("YourFavs home")).toHaveFocus();
+    expect(screen.getByLabelText("myfaves home")).toHaveFocus();
 
     await user.tab();
     expect(screen.getByRole("button", { name: "Log In" })).toHaveFocus();
@@ -168,7 +170,7 @@ describe("Header - Accessibility (User Story 4)", () => {
   it("logo link has descriptive accessible label", () => {
     render(<Header {...mockHandlers} />);
 
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toBeInTheDocument();
   });
 

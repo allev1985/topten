@@ -1,5 +1,5 @@
 /**
- * Password validation utility for YourFavs
+ * Password validation utility for myfaves
  * Validates passwords against security requirements
  *
  * Requirements (from FR-002, FR-003):

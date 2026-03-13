@@ -27,12 +27,12 @@ export async function generateMetadata({
   const profile = await getPublicProfile(vanitySlug);
 
   if (!profile) {
-    return { title: "Profile not found — YourFavs" };
+    return { title: "Profile not found — myfaves" };
   }
 
-  const title = `${profile.name} (@${profile.vanitySlug}) — YourFavs`;
+  const title = `${profile.name} (@${profile.vanitySlug}) — myfaves`;
   const description =
-    profile.bio ?? `Discover ${profile.name}'s favourite places on YourFavs.`;
+    profile.bio ?? `Discover ${profile.name}'s favourite places on myfaves.`;
   const url = `/@${profile.vanitySlug}`;
 
   return {
