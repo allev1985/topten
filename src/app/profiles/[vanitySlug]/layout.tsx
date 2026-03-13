@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getPublicProfile } from "@/lib/public/service";
 import type { JSX } from "react";
 
@@ -28,5 +29,24 @@ export default async function ProfileLayout({
     notFound();
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-background">
+      <nav className="border-b px-4 py-4 md:px-8">
+        <Link
+          href="/"
+          className="inline-flex items-center transition-opacity hover:opacity-80"
+          aria-label="myfaves home"
+        >
+          <span
+            className="font-serif text-2xl leading-none tracking-tight select-none"
+            aria-label="myfaves"
+          >
+            <span className="text-foreground">my</span>
+            <span className="text-violet-500 dark:text-violet-300">faves</span>
+          </span>
+        </Link>
+      </nav>
+      {children}
+    </div>
+  );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
@@ -16,14 +15,15 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
         {/* Logo Section */}
         <Link
           href="/"
-          className="flex items-center gap-2 transition-opacity hover:opacity-80"
-          aria-label="YourFavs home"
+          className="flex items-center transition-opacity hover:opacity-80"
+          aria-label="myfaves home"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500">
-            <MapPin className="h-6 w-6 text-white" aria-hidden="true" />
-          </div>
-          <span className="text-xl font-bold text-black dark:text-white">
-            YourFavs
+          <span
+            className="font-serif text-2xl leading-none tracking-tight select-none"
+            aria-label="myfaves"
+          >
+            <span className="text-foreground">my</span>
+            <span className="text-violet-500 dark:text-violet-300">faves</span>
           </span>
         </Link>
 

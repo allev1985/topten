@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
         destination: "/profiles/:vanitySlug",
       },
       {
-        source: "/@:vanitySlug/:listSlug",
+        source: "/@:vanitySlug/lists/:listSlug",
         destination: "/profiles/:vanitySlug/lists/:listSlug",
       },
     ];

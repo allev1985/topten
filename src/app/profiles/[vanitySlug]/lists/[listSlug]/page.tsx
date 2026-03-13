@@ -24,7 +24,7 @@ export async function generateMetadata({
   const profile = await getPublicProfile(vanitySlug);
 
   if (!profile) {
-    return { title: "List not found — YourFavs" };
+    return { title: "List not found — myfaves" };
   }
 
   const listDetail = await getPublicListDetail({
@@ -33,13 +33,13 @@ export async function generateMetadata({
   });
 
   if (!listDetail) {
-    return { title: "List not found — YourFavs" };
+    return { title: "List not found — myfaves" };
   }
 
-  const title = `${listDetail.title} by ${profile.name} — YourFavs`;
+  const title = `${listDetail.title} by ${profile.name} — myfaves`;
   const description =
     listDetail.description ??
-    `${profile.name}'s list of favourite places on YourFavs.`;
+    `${profile.name}'s list of favourite places on myfaves.`;
   const url = `/@${vanitySlug}/lists/${listSlug}`;
 
   return {

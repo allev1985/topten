@@ -21,9 +21,11 @@ vi.mock("@/actions/auth-actions", () => ({
 }));
 
 describe("DashboardSidebar", () => {
-  it("renders YourFavs branding", () => {
+  it("renders myfaves wordmark", () => {
     render(<DashboardSidebar />);
-    expect(screen.getByText(/YourFavs/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("myfaves")).toBeInTheDocument();
+    expect(screen.getByText("my")).toBeInTheDocument();
+    expect(screen.getByText("faves")).toBeInTheDocument();
   });
 
   it("applies correct styling classes", () => {

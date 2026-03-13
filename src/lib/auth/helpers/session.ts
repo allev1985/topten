@@ -1,5 +1,5 @@
 /**
- * Session validation utilities for YourFavs
+ * Session validation utilities for myfaves
  * Provides consistent session validation and expiry checks
  *
  * Works on both client and server contexts

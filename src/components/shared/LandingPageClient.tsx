@@ -21,7 +21,7 @@ export default function LandingPageClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header onLogin={handleLogin} onSignup={openSignupModal} />
 
       <LoginModal
@@ -44,21 +44,21 @@ export default function LandingPageClient() {
               {/* Tagline with Sparkles Icon */}
               <div className="flex items-center gap-2">
                 <Sparkles
-                  className="h-4 w-4 text-zinc-600 dark:text-zinc-400"
+                  className="h-4 w-4 text-muted-foreground"
                   aria-hidden="true"
                 />
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm font-medium text-muted-foreground">
                   Your personal guide to the world
                 </p>
               </div>
 
               {/* Headline */}
-              <h1 className="text-4xl font-bold tracking-tight text-black md:text-5xl lg:text-6xl dark:text-white">
+              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
                 Curate and share your favourite places
               </h1>
 
               {/* Subheading */}
-              <p className="max-w-prose text-lg text-zinc-600 md:text-xl dark:text-zinc-400">
+              <p className="max-w-prose text-lg text-muted-foreground md:text-xl">
                 Build focused, meaningful collections that reflect your genuine
                 preferences and local expertise. Share them like recommendations
                 from a trusted friend.
