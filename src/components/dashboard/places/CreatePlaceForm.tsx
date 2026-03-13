@@ -57,16 +57,11 @@ export function CreatePlaceForm({
   const [isResolvingPhoto, setIsResolvingPhoto] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(false);
   const searchIdRef = useRef(0);
 
-  // ── Mount / unmount tracking ──────────────────────────────────────
-  // Re-set to true on every mount so React StrictMode's simulated
-  // unmount+remount cycle does not leave mountedRef permanently false.
+  // ── Debounce cleanup ──────────────────────────────────────────────
   useEffect(() => {
-    mountedRef.current = true;
     return () => {
-      mountedRef.current = false;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
@@ -106,11 +101,10 @@ export function CreatePlaceForm({
       }
 
       debounceRef.current = setTimeout(async () => {
-        if (!mountedRef.current) return;
         const id = ++searchIdRef.current;
         setIsSearching(true);
         const result = await searchPlacesAction(value);
-        if (!mountedRef.current || searchIdRef.current !== id) return;
+        if (searchIdRef.current !== id) return;
         setIsSearching(false);
         if (result.isSuccess && result.data) {
           setSuggestions(result.data.results);
@@ -137,7 +131,6 @@ export function CreatePlaceForm({
       const photoResult = await resolveGooglePlacePhotoAction(
         place.photoResourceName
       );
-      if (!mountedRef.current) return;
       setIsResolvingPhoto(false);
       if (photoResult.isSuccess && photoResult.data) {
         setHeroImageUrl(photoResult.data.photoUri);
