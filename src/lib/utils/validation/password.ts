@@ -10,7 +10,7 @@
  * - At least 1 symbol (special character)
  */
 
-import { PASSWORD_REQUIREMENTS } from "@/lib/config";
+import { config } from "@/lib/config/client";
 
 export interface PasswordValidationResult {
   isValid: boolean;
@@ -31,20 +31,21 @@ export interface PasswordValidationResult {
  * @returns PasswordValidationResult with validation status, errors, strength, and individual checks
  */
 export function validatePassword(password: string): PasswordValidationResult {
+  const { minLength, minWeakChecks, minMediumChecks, specialCharRegex } =
+    config.auth.password;
+
   const checks = {
-    minLength: password.length >= PASSWORD_REQUIREMENTS.minLength,
+    minLength: password.length >= minLength,
     hasLowercase: /[a-z]/.test(password),
     hasUppercase: /[A-Z]/.test(password),
     hasDigit: /\d/.test(password),
-    hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password),
+    hasSymbol: specialCharRegex.test(password),
   };
 
   const errors: string[] = [];
 
   if (!checks.minLength) {
-    errors.push(
-      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
-    );
+    errors.push(`Password must be at least ${minLength} characters`);
   }
   if (!checks.hasLowercase) {
     errors.push("Password must contain at least one lowercase letter");
@@ -63,20 +64,15 @@ export function validatePassword(password: string): PasswordValidationResult {
   const isValid = errors.length === 0;
 
   let strength: "weak" | "medium" | "strong";
-  if (passedChecks <= PASSWORD_REQUIREMENTS.minWeakChecks) {
+  if (passedChecks <= minWeakChecks) {
     strength = "weak";
-  } else if (passedChecks <= PASSWORD_REQUIREMENTS.minMediumChecks) {
+  } else if (passedChecks <= minMediumChecks) {
     strength = "medium";
   } else {
     strength = "strong";
   }
 
-  return {
-    isValid,
-    errors,
-    strength,
-    checks,
-  };
+  return { isValid, errors, strength, checks };
 }
 
 /**
@@ -85,7 +81,7 @@ export function validatePassword(password: string): PasswordValidationResult {
  */
 export function getPasswordRequirements(): string[] {
   return [
-    `At least ${PASSWORD_REQUIREMENTS.minLength} characters`,
+    `At least ${config.auth.password.minLength} characters`,
     "At least one lowercase letter",
     "At least one uppercase letter",
     "At least one number",

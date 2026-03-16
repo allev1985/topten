@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// We need to reset module cache between tests to test lazy loading behavior
-describe("Environment Validation", () => {
+describe("config — environment validation", () => {
   const originalEnv = process.env;
 
-  // Shared mock values for valid environment
   const validEnv = {
     NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
     NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
@@ -13,7 +11,6 @@ describe("Environment Validation", () => {
     GOOGLE_PLACES_API_KEY: "test-places-key",
   };
 
-  // Helper to set all valid env vars
   const setValidEnv = () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = validEnv.NEXT_PUBLIC_SUPABASE_URL;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
@@ -22,8 +19,7 @@ describe("Environment Validation", () => {
     process.env.DATABASE_URL = validEnv.DATABASE_URL;
   };
 
-  // Helper to clear all env vars
-  const clearAllEnv = () => {
+  const clearRequiredEnv = () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -40,144 +36,138 @@ describe("Environment Validation", () => {
     process.env = originalEnv;
   });
 
-  describe("validateEnv", () => {
-    it("should return config when all required variables are set", async () => {
+  describe("required variables", () => {
+    it("builds config when all required variables are set", async () => {
       setValidEnv();
       process.env.GOOGLE_PLACES_API_KEY = validEnv.GOOGLE_PLACES_API_KEY;
 
-      const { validateEnv } = await import("@/lib/env");
-      const config = validateEnv();
+      const { config } = await import("@/lib/config");
 
-      expect(config.NEXT_PUBLIC_SUPABASE_URL).toBe(
-        validEnv.NEXT_PUBLIC_SUPABASE_URL
-      );
-      expect(config.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBe(
+      expect(config.supabase.url).toBe(validEnv.NEXT_PUBLIC_SUPABASE_URL);
+      expect(config.supabase.anonKey).toBe(
         validEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY
       );
-      expect(config.SUPABASE_SERVICE_ROLE_KEY).toBe(
+      expect(config.supabase.serviceRoleKey).toBe(
         validEnv.SUPABASE_SERVICE_ROLE_KEY
       );
-      expect(config.DATABASE_URL).toBe(validEnv.DATABASE_URL);
-      expect(config.GOOGLE_PLACES_API_KEY).toBe(validEnv.GOOGLE_PLACES_API_KEY);
+      expect(config.db.url).toBe(validEnv.DATABASE_URL);
+      expect(config.googlePlaces.apiKey).toBe(validEnv.GOOGLE_PLACES_API_KEY);
     });
 
-    it("should throw error when NEXT_PUBLIC_SUPABASE_URL is missing", async () => {
+    it("throws when NEXT_PUBLIC_SUPABASE_URL is missing", async () => {
       setValidEnv();
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL"
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "NEXT_PUBLIC_SUPABASE_URL"
       );
     });
 
-    it("should throw error when NEXT_PUBLIC_SUPABASE_ANON_KEY is missing", async () => {
+    it("throws when NEXT_PUBLIC_SUPABASE_ANON_KEY is missing", async () => {
       setValidEnv();
       delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY"
       );
     });
 
-    it("should throw error when SUPABASE_SERVICE_ROLE_KEY is missing", async () => {
+    it("throws when SUPABASE_SERVICE_ROLE_KEY is missing", async () => {
       setValidEnv();
       delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY"
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "SUPABASE_SERVICE_ROLE_KEY"
       );
     });
 
-    it("should throw error when DATABASE_URL is missing", async () => {
+    it("throws when DATABASE_URL is missing", async () => {
       setValidEnv();
       delete process.env.DATABASE_URL;
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: DATABASE_URL"
-      );
+      await expect(import("@/lib/config")).rejects.toThrow("DATABASE_URL");
     });
 
-    it("should treat empty string as missing variable", async () => {
+    it("treats empty string as invalid", async () => {
       setValidEnv();
       process.env.NEXT_PUBLIC_SUPABASE_URL = "";
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL"
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "NEXT_PUBLIC_SUPABASE_URL"
       );
     });
 
-    it("should treat whitespace-only string as missing variable", async () => {
+    it("treats whitespace-only string as invalid", async () => {
       setValidEnv();
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "   ";
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "   ";
 
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
-        "Missing required environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "NEXT_PUBLIC_SUPABASE_URL"
       );
     });
 
-    it("should allow optional GOOGLE_PLACES_API_KEY to be undefined", async () => {
-      setValidEnv();
-      delete process.env.GOOGLE_PLACES_API_KEY;
+    it("includes actionable message in error", async () => {
+      clearRequiredEnv();
 
-      const { validateEnv } = await import("@/lib/env");
-      const config = validateEnv();
-
-      expect(config.GOOGLE_PLACES_API_KEY).toBeUndefined();
-    });
-
-    it("should include actionable message in error", async () => {
-      clearAllEnv();
-
-      const { validateEnv } = await import("@/lib/env");
-
-      expect(() => validateEnv()).toThrow(
+      await expect(import("@/lib/config")).rejects.toThrow(
         "Please check your .env.local file or environment configuration"
       );
     });
   });
 
-  describe("getEnv", () => {
-    it("should return config when all required variables are set", async () => {
+  describe("optional variables", () => {
+    it("googlePlaces.apiKey defaults to empty string when not set", async () => {
       setValidEnv();
+      delete process.env.GOOGLE_PLACES_API_KEY;
 
-      const { getEnv } = await import("@/lib/env");
-      const config = getEnv();
+      const { config } = await import("@/lib/config");
 
-      expect(config.NEXT_PUBLIC_SUPABASE_URL).toBe(
-        validEnv.NEXT_PUBLIC_SUPABASE_URL
-      );
+      expect(config.googlePlaces.apiKey).toBe("");
     });
 
-    it("should use lazy-loaded singleton pattern", async () => {
+    it("otel.serviceName defaults to 'topten' when not set", async () => {
       setValidEnv();
+      delete process.env.OTEL_SERVICE_NAME;
 
-      const { getEnv } = await import("@/lib/env");
+      const { config } = await import("@/lib/config");
 
-      const config1 = getEnv();
-      const config2 = getEnv();
-
-      // Both calls should return the same cached instance
-      expect(config1).toBe(config2);
+      expect(config.otel.serviceName).toBe("topten");
     });
 
-    it("should throw on first call if env is invalid", async () => {
-      clearAllEnv();
+    it("otel.endpoint is undefined when not set", async () => {
+      setValidEnv();
+      delete process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
-      const { getEnv } = await import("@/lib/env");
+      const { config } = await import("@/lib/config");
 
-      expect(() => getEnv()).toThrow("Missing required environment variable");
+      expect(config.otel.endpoint).toBeUndefined();
+    });
+  });
+
+  describe("log level", () => {
+    it("defaults to 'debug' in non-production", async () => {
+      setValidEnv();
+      delete process.env.LOG_LEVEL;
+
+      const { config } = await import("@/lib/config");
+
+      expect(config.log.level).toBe("debug");
+    });
+
+    it("accepts a valid LOG_LEVEL", async () => {
+      setValidEnv();
+      process.env.LOG_LEVEL = "warn";
+
+      const { config } = await import("@/lib/config");
+
+      expect(config.log.level).toBe("warn");
+    });
+
+    it("throws on invalid LOG_LEVEL", async () => {
+      setValidEnv();
+      process.env.LOG_LEVEL = "verbose";
+
+      await expect(import("@/lib/config")).rejects.toThrow("LOG_LEVEL");
     });
   });
 });

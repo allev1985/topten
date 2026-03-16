@@ -8,7 +8,7 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
-import { REDIRECT_ROUTES, getAppUrl } from "@/lib/config";
+import { config, getAppUrl } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
 import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
@@ -166,7 +166,7 @@ export async function loginAction(
     const targetUrl =
       result.data.redirectTo && isValidRedirect(result.data.redirectTo)
         ? result.data.redirectTo
-        : REDIRECT_ROUTES.default;
+        : config.auth.redirectRoutes.default;
 
     redirect(targetUrl);
   } catch (err) {

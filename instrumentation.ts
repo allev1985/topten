@@ -24,16 +24,14 @@ export async function register() {
       await import("@opentelemetry/resources");
     const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } =
       await import("@opentelemetry/semantic-conventions");
-    const { getEnv } = await import("@/lib/env");
+    const { config } = await import("@/lib/config");
 
-    const env = getEnv();
-    const otlpEndpoint =
-      env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318";
+    const otlpEndpoint = config.otel.endpoint ?? "http://localhost:4318";
 
     const sdk = new NodeSDK({
       resource: defaultResource().merge(
         resourceFromAttributes({
-          [ATTR_SERVICE_NAME]: env.OTEL_SERVICE_NAME,
+          [ATTR_SERVICE_NAME]: config.otel.serviceName,
           [ATTR_SERVICE_VERSION]: process.env.npm_package_version ?? "0.0.0",
         })
       ),

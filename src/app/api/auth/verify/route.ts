@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyEmail } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
-import { REDIRECT_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
+import { config } from "@/lib/config";
 import { redirectResponse } from "@/lib/utils/api/response";
 import { createServiceLogger } from "@/lib/services/logging";
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Handle OTP-based verification (token_hash + type=email)
-    if (token_hash && type === VERIFICATION_TYPE_EMAIL) {
+    if (token_hash && type === config.auth.verificationTypeEmail) {
       try {
         const result = await verifyEmail(token_hash, type);
 
@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
           { method: "GET", flow: "OTP", userId: result.user.id },
           "OTP verification successful"
         );
-        return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
+        return redirectResponse(
+          origin,
+          config.auth.redirectRoutes.auth.success
+        );
       } catch (error) {
         if (error instanceof AuthServiceError) {
           log.error(
@@ -60,9 +63,13 @@ export async function GET(request: NextRequest) {
           const errorType = error.message.toLowerCase().includes("expired")
             ? "expired_token"
             : "invalid_token";
-          return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
-            error: errorType,
-          });
+          return redirectResponse(
+            origin,
+            config.auth.redirectRoutes.auth.error,
+            {
+              error: errorType,
+            }
+          );
         }
         throw error;
       }
@@ -80,23 +87,23 @@ export async function GET(request: NextRequest) {
         const errorType = error.message.toLowerCase().includes("expired")
           ? "expired_token"
           : "invalid_token";
-        return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+        return redirectResponse(origin, config.auth.redirectRoutes.auth.error, {
           error: errorType,
         });
       }
 
       log.info({ method: "GET", flow: "PKCE" }, "Code exchange successful");
-      return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
+      return redirectResponse(origin, config.auth.redirectRoutes.auth.success);
     }
 
     // No valid token or code provided
     log.warn({ method: "GET", flow: "unknown" }, "Missing token or code");
-    return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+    return redirectResponse(origin, config.auth.redirectRoutes.auth.error, {
       error: "missing_token",
     });
   } catch (err) {
     log.error({ method: "GET", err }, "Unexpected error during verification");
-    return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
+    return redirectResponse(origin, config.auth.redirectRoutes.auth.error, {
       error: "server_error",
     });
   }

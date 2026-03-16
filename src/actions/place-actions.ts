@@ -13,7 +13,7 @@ import {
   deletePlace,
 } from "@/lib/place/service";
 import { PlaceServiceError } from "@/lib/place/service/errors";
-import { DASHBOARD_ROUTES } from "@/lib/config";
+import { config } from "@/lib/config";
 import {
   searchPlaces,
   resolvePhotoUri,
@@ -106,9 +106,9 @@ export async function createPlaceAction(
     });
 
     if (listId) {
-      revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+      revalidatePath(config.routes.dashboard.listDetail(listId));
     }
-    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
     return {
       data: { placeId: created.place.id, listPlaceId: created.listPlaceId },
@@ -172,7 +172,7 @@ export async function addExistingPlaceToListAction(
       userId: auth.userId,
     });
 
-    revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+    revalidatePath(config.routes.dashboard.listDetail(listId));
     return {
       data: { listPlaceId },
       error: null,
@@ -252,9 +252,9 @@ export async function updatePlaceAction(
     });
 
     if (resolvedListId) {
-      revalidatePath(DASHBOARD_ROUTES.listDetail(resolvedListId));
+      revalidatePath(config.routes.dashboard.listDetail(resolvedListId));
     }
-    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
     return {
       data: { placeId: place.id },
@@ -450,7 +450,7 @@ export async function deletePlaceAction(
   try {
     await deletePlaceFromList({ placeId, listId, userId: auth.userId });
 
-    revalidatePath(DASHBOARD_ROUTES.listDetail(listId));
+    revalidatePath(config.routes.dashboard.listDetail(listId));
     return {
       data: { success: true },
       error: null,
@@ -503,7 +503,7 @@ export async function deletePlaceGlobalAction(
       userId: auth.userId,
     });
 
-    revalidatePath(DASHBOARD_ROUTES.places, "page");
+    revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
     return {
       data: { deletedListPlaceCount },

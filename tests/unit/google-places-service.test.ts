@@ -9,10 +9,16 @@ import { GooglePlacesServiceError } from "@/lib/services/google-places/errors";
 // can safely mutate `.apiKey` without reassigning a module namespace export.
 const googlePlacesConfig = vi.hoisted(() => ({ apiKey: "test-api-key-12345" }));
 
-vi.mock("@/lib/config", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/config")>()),
-  GOOGLE_PLACES_CONFIG: googlePlacesConfig,
-}));
+vi.mock("@/lib/config", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/config")>();
+  return {
+    ...original,
+    config: {
+      ...original.config,
+      googlePlaces: googlePlacesConfig,
+    },
+  };
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
