@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getValidatedRedirect } from "@/lib/utils/validation/redirect";
-import { config } from "@/lib/config";
+import { config } from "@/lib/config/client";
 
 /**
  * Get the pathname from a request
