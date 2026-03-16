@@ -97,6 +97,15 @@ describe("config — environment validation", () => {
       );
     });
 
+    it("treats whitespace-only string as invalid", async () => {
+      setValidEnv();
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "   ";
+
+      await expect(import("@/lib/config")).rejects.toThrow(
+        "NEXT_PUBLIC_SUPABASE_URL"
+      );
+    });
+
     it("includes actionable message in error", async () => {
       clearRequiredEnv();
 
