@@ -198,7 +198,9 @@ describe("getValidatedRedirect", () => {
   });
 
   it("returns default for undefined", () => {
-    expect(getValidatedRedirect(undefined)).toBe(config.auth.redirectRoutes.default);
+    expect(getValidatedRedirect(undefined)).toBe(
+      config.auth.redirectRoutes.default
+    );
   });
 
   it("returns default for empty string", () => {
@@ -212,7 +214,9 @@ describe("getValidatedRedirect", () => {
   });
 
   it("returns default for protocol-relative URL", () => {
-    expect(getValidatedRedirect("//evil.com")).toBe(config.auth.redirectRoutes.default);
+    expect(getValidatedRedirect("//evil.com")).toBe(
+      config.auth.redirectRoutes.default
+    );
   });
 
   it("returns default for javascript URL", () => {

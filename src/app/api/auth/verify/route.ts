@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
           { method: "GET", flow: "OTP", userId: result.user.id },
           "OTP verification successful"
         );
-        return redirectResponse(origin, config.auth.redirectRoutes.auth.success);
+        return redirectResponse(
+          origin,
+          config.auth.redirectRoutes.auth.success
+        );
       } catch (error) {
         if (error instanceof AuthServiceError) {
           log.error(
@@ -60,9 +63,13 @@ export async function GET(request: NextRequest) {
           const errorType = error.message.toLowerCase().includes("expired")
             ? "expired_token"
             : "invalid_token";
-          return redirectResponse(origin, config.auth.redirectRoutes.auth.error, {
-            error: errorType,
-          });
+          return redirectResponse(
+            origin,
+            config.auth.redirectRoutes.auth.error,
+            {
+              error: errorType,
+            }
+          );
         }
         throw error;
       }
