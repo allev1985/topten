@@ -29,9 +29,17 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
-  LOG_LEVEL: z
-    .enum(["trace", "debug", "info", "warn", "error", "fatal"])
-    .default(logLevelDefault),
+  LOG_LEVEL: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      if (trimmed === "") return undefined;
+      return trimmed.toLowerCase();
+    },
+    z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default(
+      logLevelDefault
+    )
+  ),
   OTEL_SERVICE_NAME: z.string().default("topten"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
 });
