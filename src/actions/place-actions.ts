@@ -107,7 +107,12 @@ export async function createPlaceAction(
     }
     revalidatePath(DASHBOARD_ROUTES.places, "page");
     revalidatePath("/dashboard/lists", "layout");
-    return { data: { placeId: created.place.id, listPlaceId: created.listPlaceId }, error: null, fieldErrors: {}, isSuccess: true };
+    return {
+      data: { placeId: created.place.id, listPlaceId: created.listPlaceId },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
   } catch (err) {
     const message =
       err instanceof PlaceServiceError
@@ -350,7 +355,12 @@ export async function resolveGooglePlacePhotoAction(
 
   try {
     const photoUri = await resolvePhotoUri(photoResourceName);
-    return { data: { photoUri }, error: null, fieldErrors: {}, isSuccess: true };
+    return {
+      data: { photoUri },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
   } catch (err) {
     if (err instanceof GooglePlacesServiceError) {
       console.error(
@@ -449,7 +459,6 @@ export async function deletePlaceAction(
     return { data: null, error: message, fieldErrors: {}, isSuccess: false };
   }
 }
-
 
 // ─── deletePlaceGlobalAction ──────────────────────────────────────────────────
 

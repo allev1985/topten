@@ -165,9 +165,13 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onEdit = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />);
+      render(
+        <ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />
+      );
 
-      const menuButton = screen.getByLabelText("Options for Test Published List");
+      const menuButton = screen.getByLabelText(
+        "Options for Test Published List"
+      );
       await user.click(menuButton);
 
       await user.click(screen.getByText("Edit List"));
@@ -180,7 +184,13 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onPublishToggle = vi.fn();
 
-      render(<ListCard list={mockDraftList} onClick={onClick} onPublishToggle={onPublishToggle} />);
+      render(
+        <ListCard
+          list={mockDraftList}
+          onClick={onClick}
+          onPublishToggle={onPublishToggle}
+        />
+      );
 
       const menuButton = screen.getByLabelText("Options for Test Draft List");
       await user.click(menuButton);
@@ -195,9 +205,17 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onPublishToggle = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onPublishToggle={onPublishToggle} />);
+      render(
+        <ListCard
+          list={mockPublishedList}
+          onClick={onClick}
+          onPublishToggle={onPublishToggle}
+        />
+      );
 
-      const menuButton = screen.getByLabelText("Options for Test Published List");
+      const menuButton = screen.getByLabelText(
+        "Options for Test Published List"
+      );
       await user.click(menuButton);
 
       await user.click(screen.getByText("Unpublish"));
@@ -210,9 +228,17 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
+      render(
+        <ListCard
+          list={mockPublishedList}
+          onClick={onClick}
+          onDelete={onDelete}
+        />
+      );
 
-      const menuButton = screen.getByLabelText("Options for Test Published List");
+      const menuButton = screen.getByLabelText(
+        "Options for Test Published List"
+      );
       await user.click(menuButton);
 
       await user.click(screen.getByText("Delete List"));
@@ -226,9 +252,17 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
+      render(
+        <ListCard
+          list={mockPublishedList}
+          onClick={onClick}
+          onDelete={onDelete}
+        />
+      );
 
-      const menuButton = screen.getByLabelText("Options for Test Published List");
+      const menuButton = screen.getByLabelText(
+        "Options for Test Published List"
+      );
       await user.click(menuButton);
 
       await user.click(screen.getByText("Delete List"));
@@ -242,9 +276,17 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onDelete = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onDelete={onDelete} />);
+      render(
+        <ListCard
+          list={mockPublishedList}
+          onClick={onClick}
+          onDelete={onDelete}
+        />
+      );
 
-      const menuButton = screen.getByLabelText("Options for Test Published List");
+      const menuButton = screen.getByLabelText(
+        "Options for Test Published List"
+      );
       await user.click(menuButton);
 
       await user.click(screen.getByText("Delete List"));
@@ -291,7 +333,9 @@ describe("ListCard", () => {
       const onClick = vi.fn();
       const onEdit = vi.fn();
 
-      render(<ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />);
+      render(
+        <ListCard list={mockPublishedList} onClick={onClick} onEdit={onEdit} />
+      );
 
       const menuButton = screen.getByLabelText(
         "Options for Test Published List"

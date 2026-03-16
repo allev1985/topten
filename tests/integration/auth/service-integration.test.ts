@@ -55,7 +55,9 @@ describe("Auth Service Integration Tests", () => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabaseClient();
     vi.mocked(supabaseServer.createClient).mockResolvedValue(
-      mockSupabase as any
+      mockSupabase as unknown as Awaited<
+        ReturnType<typeof supabaseServer.createClient>
+      >
     );
   });
 
@@ -85,7 +87,10 @@ describe("Auth Service Integration Tests", () => {
         error: null,
       });
 
-      const verifyResult = await verifyEmail(TEST_TOKENS.validTokenHash, "email");
+      const verifyResult = await verifyEmail(
+        TEST_TOKENS.validTokenHash,
+        "email"
+      );
 
       expect(verifyResult.user).toEqual(testUser);
       expect(verifyResult.session).toBeDefined();
@@ -146,7 +151,10 @@ describe("Auth Service Integration Tests", () => {
         error: null,
       });
 
-      const loginResult = await login(TEST_CREDENTIALS.email, "NewPassword123!");
+      const loginResult = await login(
+        TEST_CREDENTIALS.email,
+        "NewPassword123!"
+      );
 
       expect(loginResult.user).toEqual(testUser);
       expect(loginResult.session).toBeDefined();
@@ -269,7 +277,10 @@ describe("Auth Service Integration Tests", () => {
         error: null,
       });
 
-      const newLoginResult = await login(TEST_CREDENTIALS.email, "NewPassword456!");
+      const newLoginResult = await login(
+        TEST_CREDENTIALS.email,
+        "NewPassword456!"
+      );
 
       expect(newLoginResult.user).toEqual(testUser);
       expect(newLoginResult.session).toBeDefined();

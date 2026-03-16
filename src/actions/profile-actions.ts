@@ -32,7 +32,12 @@ export async function updateNameAction(
 ): Promise<ActionState<UpdateNameSuccessData>> {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return { data: null, error: "You must be logged in to update your profile", fieldErrors: {}, isSuccess: false };
+    return {
+      data: null,
+      error: "You must be logged in to update your profile",
+      fieldErrors: {},
+      isSuccess: false,
+    };
   }
 
   const currentUserId = auth.userId;
@@ -51,9 +56,17 @@ export async function updateNameAction(
   }
 
   try {
-    const { name: savedName } = await updateName(currentUserId, result.data.name);
+    const { name: savedName } = await updateName(
+      currentUserId,
+      result.data.name
+    );
     revalidatePath("/dashboard/settings");
-    return { data: { name: savedName }, error: null, fieldErrors: {}, isSuccess: true };
+    return {
+      data: { name: savedName },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
   } catch (err) {
     const message =
       err instanceof ProfileServiceError
@@ -81,7 +94,12 @@ export async function updateSlugAction(
 ): Promise<ActionState<UpdateSlugSuccessData>> {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return { data: null, error: "You must be logged in to update your profile", fieldErrors: {}, isSuccess: false };
+    return {
+      data: null,
+      error: "You must be logged in to update your profile",
+      fieldErrors: {},
+      isSuccess: false,
+    };
   }
 
   const currentUserId = auth.userId;
@@ -104,7 +122,12 @@ export async function updateSlugAction(
       result.data.vanitySlug
     );
     revalidatePath("/dashboard/settings");
-    return { data: { vanitySlug: savedSlug }, error: null, fieldErrors: {}, isSuccess: true };
+    return {
+      data: { vanitySlug: savedSlug },
+      error: null,
+      fieldErrors: {},
+      isSuccess: true,
+    };
   } catch (err) {
     if (err instanceof ProfileServiceError && err.code === "SLUG_TAKEN") {
       return {

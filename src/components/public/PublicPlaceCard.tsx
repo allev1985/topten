@@ -22,15 +22,17 @@ export function PublicPlaceCard({
   return (
     <Card>
       <CardContent className="flex gap-4 py-4">
-        <Badge className="h-8 w-8 flex-shrink-0 rounded-full text-sm justify-center">
+        <Badge className="h-8 w-8 flex-shrink-0 justify-center rounded-full text-sm">
           {rank}
         </Badge>
 
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold leading-snug">{place.name}</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{place.address}</p>
+          <h3 className="leading-snug font-semibold">{place.name}</h3>
+          <p className="text-muted-foreground mt-0.5 text-sm">
+            {place.address}
+          </p>
           {place.description && (
-            <p className="mt-2 text-sm text-foreground">{place.description}</p>
+            <p className="text-foreground mt-2 text-sm">{place.description}</p>
           )}
         </div>
 

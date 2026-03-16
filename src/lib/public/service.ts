@@ -22,7 +22,12 @@ import type {
 import { publicServiceError } from "./service/errors";
 export { PublicServiceError } from "./service/errors";
 
-export type { PublicProfile, PublicListSummary, PublicListDetail, PublicPlaceEntry };
+export type {
+  PublicProfile,
+  PublicListSummary,
+  PublicListDetail,
+  PublicPlaceEntry,
+};
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -106,8 +111,8 @@ export const getPublicListsForProfile = cache(
 /**
  * Fetch the full detail of a single published list, including ordered places.
  *
- * @param params.userId   - The list owner's UUID (ownership scoping)
- * @param params.listSlug - The list slug
+ * @param userId   - The list owner's UUID (ownership scoping)
+ * @param listSlug - The list slug
  * @returns PublicListDetail if found and published, null otherwise
  */
 export const getPublicListDetail = cache(
@@ -125,7 +130,10 @@ export const getPublicListDetail = cache(
     );
 
     try {
-      const result = await publicRepository.getPublicListDetail({ userId, listSlug });
+      const result = await publicRepository.getPublicListDetail({
+        userId,
+        listSlug,
+      });
 
       if (result) {
         console.info(

@@ -27,12 +27,17 @@ vi.mock("@/db", () => ({
   },
 }));
 
-function makeThenableChain(resolveWith: () => unknown): Record<string, unknown> {
+function makeThenableChain(
+  resolveWith: () => unknown
+): Record<string, unknown> {
   const asPromise = () => Promise.resolve(resolveWith());
   const node: Record<string, unknown> = {
-    then: (onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
-      asPromise().then(onFulfilled, onRejected),
-    catch: (onRejected?: (e: unknown) => unknown) => asPromise().catch(onRejected),
+    then: (
+      onFulfilled?: (v: unknown) => unknown,
+      onRejected?: (e: unknown) => unknown
+    ) => asPromise().then(onFulfilled, onRejected),
+    catch: (onRejected?: (e: unknown) => unknown) =>
+      asPromise().catch(onRejected),
     finally: (onFinally?: () => void) => asPromise().finally(onFinally),
     where: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
     returning: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
@@ -76,7 +81,9 @@ beforeEach(() => {
 describe("updatePlace — description-only mutability rules", () => {
   it("successfully updates description and returns id + description + updatedAt", async () => {
     mockSelectRows = [{ placeId: PLACE_ID }]; // ownership check passes
-    mockUpdateRows = [{ id: PLACE_ID, description: "Lovely coffee shop", updatedAt: NOW }];
+    mockUpdateRows = [
+      { id: PLACE_ID, description: "Lovely coffee shop", updatedAt: NOW },
+    ];
 
     const result = await updatePlace({
       placeId: PLACE_ID,
@@ -105,7 +112,9 @@ describe("updatePlace — description-only mutability rules", () => {
 
   it("permits omitting description (no-op update)", async () => {
     mockSelectRows = [{ placeId: PLACE_ID }];
-    mockUpdateRows = [{ id: PLACE_ID, description: "Old notes", updatedAt: NOW }];
+    mockUpdateRows = [
+      { id: PLACE_ID, description: "Old notes", updatedAt: NOW },
+    ];
 
     const result = await updatePlace({
       placeId: PLACE_ID,
@@ -152,8 +161,15 @@ describe("updatePlace — description-only mutability rules", () => {
     'throws IMMUTABLE_FIELD with field name when "%s" is passed at runtime',
     async (field) => {
       await expect(
-        updatePlace({ placeId: PLACE_ID, userId: USER_ID, [field]: "any" } as Parameters<typeof updatePlace>[0])
-      ).rejects.toMatchObject({ code: "IMMUTABLE_FIELD", message: expect.stringContaining(field) });
+        updatePlace({
+          placeId: PLACE_ID,
+          userId: USER_ID,
+          [field]: "any",
+        } as Parameters<typeof updatePlace>[0])
+      ).rejects.toMatchObject({
+        code: "IMMUTABLE_FIELD",
+        message: expect.stringContaining(field),
+      });
     }
   );
 

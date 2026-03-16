@@ -52,7 +52,9 @@ export type UpdatedPlaceRow = {
 /**
  * Fetch all active places attached to a list, in position order.
  */
-export async function getPlacesByList(listId: string): Promise<PlaceSummaryRow[]> {
+export async function getPlacesByList(
+  listId: string
+): Promise<PlaceSummaryRow[]> {
   return db
     .select({
       id: places.id,
@@ -84,7 +86,6 @@ export async function getAvailablePlacesForList({
   listId: string;
   userId: string;
 }): Promise<PlaceSummaryRow[]> {
-
   const attachedInTarget = db
     .select({ placeId: listPlaces.placeId })
     .from(listPlaces)
@@ -117,7 +118,6 @@ export async function getAllPlacesByUser({
 }: {
   userId: string;
 }): Promise<PlaceWithListCountRow[]> {
-
   return db
     .select({
       id: places.id,
@@ -156,11 +156,12 @@ export async function getPlaceByGoogleId({
   userId: string;
   googlePlaceId: string;
 }): Promise<PlaceRecord | null> {
-
   const rows = await db
     .select()
     .from(places)
-    .where(and(eq(places.userId, userId), eq(places.googlePlaceId, googlePlaceId)));
+    .where(
+      and(eq(places.userId, userId), eq(places.googlePlaceId, googlePlaceId))
+    );
 
   return (rows[0] as PlaceRecord) ?? null;
 }
@@ -177,12 +178,15 @@ export async function getListOwnership({
   listId: string;
   userId: string;
 }): Promise<boolean> {
-
   const rows = await db
     .select({ id: lists.id })
     .from(lists)
     .where(
-      and(eq(lists.id, listId), eq(lists.userId, userId), isNull(lists.deletedAt))
+      and(
+        eq(lists.id, listId),
+        eq(lists.userId, userId),
+        isNull(lists.deletedAt)
+      )
     );
 
   return rows.length > 0;
@@ -199,7 +203,6 @@ export async function getListPlaceRow({
   listId: string;
   placeId: string;
 }): Promise<ListPlaceRow | null> {
-
   const rows = await db
     .select({ id: listPlaces.id, deletedAt: listPlaces.deletedAt })
     .from(listPlaces)
@@ -235,7 +238,6 @@ export async function getPlaceInListByOwner({
   listId: string;
   userId: string;
 }): Promise<boolean> {
-
   const rows = await db
     .select({ placeId: listPlaces.placeId })
     .from(listPlaces)
@@ -268,12 +270,15 @@ export async function getPlaceByOwner({
   placeId: string;
   userId: string;
 }): Promise<boolean> {
-
   const rows = await db
     .select({ id: places.id })
     .from(places)
     .where(
-      and(eq(places.id, placeId), eq(places.userId, userId), isNull(places.deletedAt))
+      and(
+        eq(places.id, placeId),
+        eq(places.userId, userId),
+        isNull(places.deletedAt)
+      )
     );
 
   return rows.length > 0;
@@ -295,7 +300,8 @@ export async function restorePlace(placeId: string): Promise<PlaceRecord> {
     .returning();
 
   const row = rows[0] as PlaceRecord;
-  if (!row) throw new Error(`restorePlace: no row returned for place ${placeId}`);
+  if (!row)
+    throw new Error(`restorePlace: no row returned for place ${placeId}`);
   return row;
 }
 
@@ -356,7 +362,6 @@ export async function createPlaceWithListAttachment({
   description?: string | null;
   heroImageUrl?: string | null;
 }): Promise<{ place: PlaceRecord; listPlaceId: string }> {
-
   return db.transaction(async (tx) => {
     const placeRows = await tx
       .insert(places)
@@ -373,7 +378,10 @@ export async function createPlaceWithListAttachment({
       .returning();
 
     const newPlace = placeRows[0] as PlaceRecord;
-    if (!newPlace) throw new Error("createPlaceWithListAttachment: place insert returned no row.");
+    if (!newPlace)
+      throw new Error(
+        "createPlaceWithListAttachment: place insert returned no row."
+      );
 
     // Compute next position (MAX + 1, or 1 if list is empty)
     const posResult = await tx
@@ -389,7 +397,10 @@ export async function createPlaceWithListAttachment({
       .returning({ id: listPlaces.id });
 
     const lp = lpRows[0];
-    if (!lp) throw new Error("createPlaceWithListAttachment: listPlace insert returned no row.");
+    if (!lp)
+      throw new Error(
+        "createPlaceWithListAttachment: listPlace insert returned no row."
+      );
 
     return { place: newPlace, listPlaceId: lp.id };
   });
@@ -405,7 +416,6 @@ export async function restoreListPlace({
   listPlaceId: string;
   nextPosition: number;
 }): Promise<void> {
-
   await db
     .update(listPlaces)
     .set({ deletedAt: null, position: nextPosition })
@@ -444,10 +454,10 @@ export async function updatePlaceDescription({
   placeId: string;
   description?: string | null;
 }): Promise<UpdatedPlaceRow | null> {
-
-  const updateValues: Partial<{ description: string | null; updatedAt: Date }> = {
-    updatedAt: new Date(),
-  };
+  const updateValues: Partial<{ description: string | null; updatedAt: Date }> =
+    {
+      updatedAt: new Date(),
+    };
   if (description !== undefined) updateValues.description = description;
 
   const rows = await db
@@ -475,7 +485,6 @@ export async function softDeleteListPlace({
   placeId: string;
   listId: string;
 }): Promise<{ id: string } | null> {
-
   const rows = await db
     .update(listPlaces)
     .set({ deletedAt: new Date() })
@@ -505,7 +514,6 @@ export async function deletePlaceWithCascade({
   placeId: string;
   userId: string;
 }): Promise<{ deletedListPlaceCount: number } | null> {
-
   return db.transaction(async (tx) => {
     // Verify ownership inside the transaction
     const ownerRows = await tx

@@ -87,8 +87,8 @@ export async function getPublicListsForProfile(
  *   1. Fetch the list header (returns null if not found / not published)
  *   2. Fetch ordered places with COALESCE hero image
  *
- * @param params.userId   - The list owner's UUID (ownership scoping)
- * @param params.listSlug - The list slug
+ * @param userId   - The list owner's UUID (ownership scoping)
+ * @param listSlug - The list slug
  * @returns PublicListDetail if found and published, null otherwise
  */
 export async function getPublicListDetail({
@@ -98,7 +98,6 @@ export async function getPublicListDetail({
   userId: string;
   listSlug: string;
 }): Promise<PublicListDetail | null> {
-
   // Step 1: Fetch the list header
   const listRows = await db
     .select({
@@ -129,7 +128,9 @@ export async function getPublicListDetail({
       name: places.name,
       address: places.address,
       description: places.description,
-      heroImageUrl: sql<string | null>`COALESCE(${listPlaces.heroImageUrl}, ${places.heroImageUrl})`,
+      heroImageUrl: sql<
+        string | null
+      >`COALESCE(${listPlaces.heroImageUrl}, ${places.heroImageUrl})`,
       position: listPlaces.position,
     })
     .from(listPlaces)

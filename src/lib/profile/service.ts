@@ -15,7 +15,11 @@ import {
   profileServiceError,
   isUniqueViolation,
 } from "./service/errors";
-import type { UpdateNameResult, UpdateSlugResult, SettingsProfile } from "./service/types";
+import type {
+  UpdateNameResult,
+  UpdateSlugResult,
+  SettingsProfile,
+} from "./service/types";
 
 export { ProfileServiceError };
 export type { UpdateNameResult, UpdateSlugResult, SettingsProfile };
@@ -62,12 +66,18 @@ export async function updateName(
   userId: string,
   name: string
 ): Promise<UpdateNameResult> {
-  console.info("[ProfileService:updateName]", `Updating name for user ${userId}`);
+  console.info(
+    "[ProfileService:updateName]",
+    `Updating name for user ${userId}`
+  );
 
   try {
     await profileRepository.updateUserName({ userId, name });
 
-    console.info("[ProfileService:updateName]", `Name updated for user ${userId}`);
+    console.info(
+      "[ProfileService:updateName]",
+      `Name updated for user ${userId}`
+    );
 
     return { name };
   } catch (err) {
@@ -106,7 +116,10 @@ export async function updateSlug(
   );
 
   // Layer 1: Application pre-check
-  const isTaken = await profileRepository.getSlugConflict({ vanitySlug, userId });
+  const isTaken = await profileRepository.getSlugConflict({
+    vanitySlug,
+    userId,
+  });
 
   if (isTaken) {
     console.info(

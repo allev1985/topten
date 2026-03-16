@@ -14,7 +14,9 @@ interface DashboardHeaderProps {
  * Accepts an optional `onNewList` callback so the parent (DashboardClient)
  * can open the Create List dialog.
  */
-export function DashboardHeader({ onNewList }: DashboardHeaderProps): JSX.Element {
+export function DashboardHeader({
+  onNewList,
+}: DashboardHeaderProps): JSX.Element {
   return (
     <header className="mb-8">
       <div className="flex flex-wrap items-start justify-between gap-4">

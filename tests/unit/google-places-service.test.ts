@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { searchPlaces, resolvePhotoUri } from "@/lib/services/google-places/service";
+import {
+  searchPlaces,
+  resolvePhotoUri,
+} from "@/lib/services/google-places/service";
 import { GooglePlacesServiceError } from "@/lib/services/google-places/errors";
 
 // Stable mutable object — the mock always exposes the same reference so tests
@@ -22,7 +25,8 @@ function mockFetch(response: {
   const mockResponse = {
     ok: response.ok,
     status: response.status ?? (response.ok ? 200 : 500),
-    statusText: response.statusText ?? (response.ok ? "OK" : "Internal Server Error"),
+    statusText:
+      response.statusText ?? (response.ok ? "OK" : "Internal Server Error"),
     json: vi.fn().mockResolvedValue(response.body),
   };
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
@@ -131,7 +135,9 @@ describe("searchPlaces", () => {
     it("maps formattedAddress", async () => {
       mockFetch({ ok: true, body: VALID_TEXT_SEARCH_RESPONSE });
       const [first] = await searchPlaces("Nobu");
-      expect(first?.formattedAddress).toBe("19 Old Park Lane, London W1K 1LB, UK");
+      expect(first?.formattedAddress).toBe(
+        "19 Old Park Lane, London W1K 1LB, UK"
+      );
     });
 
     it("maps latitude and longitude from location", async () => {
@@ -203,7 +209,10 @@ describe("searchPlaces", () => {
 
   describe("TIMEOUT", () => {
     it("throws TIMEOUT when fetch throws a TimeoutError (DOMException)", async () => {
-      const timeoutErr = new DOMException("The operation timed out.", "TimeoutError");
+      const timeoutErr = new DOMException(
+        "The operation timed out.",
+        "TimeoutError"
+      );
       mockFetchThrow(timeoutErr);
       await expect(searchPlaces("Nobu")).rejects.toMatchObject({
         code: "TIMEOUT",
@@ -225,7 +234,10 @@ describe("searchPlaces", () => {
     const fetchCall = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     const [url, options] = fetchCall as [string, RequestInit];
     expect(url).toBe("https://places.googleapis.com/v1/places:searchText");
-    const body = JSON.parse(options.body as string) as { textQuery: string; pageSize: number };
+    const body = JSON.parse(options.body as string) as {
+      textQuery: string;
+      pageSize: number;
+    };
     expect(body.textQuery).toBe("Nobu restaurant");
     expect(body.pageSize).toBe(5);
   });
@@ -238,7 +250,9 @@ describe("searchPlaces", () => {
     const headers = options.headers as Record<string, string>;
     expect(headers["X-Goog-FieldMask"]).toContain("places.id");
     expect(headers["X-Goog-FieldMask"]).toContain("places.displayName");
-    expect(headers["X-Goog-FieldMask"]).not.toContain("places.editorialSummary");
+    expect(headers["X-Goog-FieldMask"]).not.toContain(
+      "places.editorialSummary"
+    );
     expect(headers["X-Goog-FieldMask"]).toContain("places.photos");
   });
 });
@@ -246,7 +260,8 @@ describe("searchPlaces", () => {
 // ─── resolvePhotoUri ──────────────────────────────────────────────────────────
 
 describe("resolvePhotoUri", () => {
-  const PHOTO_RESOURCE_NAME = "places/ChIJdd4hrwug2EcRmSrV3Vo6llI/photos/AbcDef123";
+  const PHOTO_RESOURCE_NAME =
+    "places/ChIJdd4hrwug2EcRmSrV3Vo6llI/photos/AbcDef123";
   const RESOLVED_URI = "https://lh3.googleusercontent.com/places/photo/abc123";
 
   describe("INVALID_QUERY", () => {
@@ -293,7 +308,11 @@ describe("resolvePhotoUri", () => {
 
   describe("API_ERROR", () => {
     it("throws API_ERROR on non-200 response", async () => {
-      mockFetch({ ok: false, status: 404, body: { error: { code: 404, message: "Not Found" } } });
+      mockFetch({
+        ok: false,
+        status: 404,
+        body: { error: { code: 404, message: "Not Found" } },
+      });
       await expect(resolvePhotoUri(PHOTO_RESOURCE_NAME)).rejects.toMatchObject({
         code: "API_ERROR",
       });

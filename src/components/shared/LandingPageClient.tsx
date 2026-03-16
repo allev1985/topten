@@ -19,7 +19,7 @@ export default function LandingPageClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="bg-background flex min-h-screen flex-col">
       <Header onLogin={handleLogin} onSignup={openSignupModal} />
 
       <LoginModal
@@ -34,12 +34,12 @@ export default function LandingPageClient() {
       />
 
       <main className="flex flex-1 items-center px-4 py-8 md:px-8 lg:py-0">
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="mx-auto w-full max-w-7xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Large Logo */}
             <div className="flex items-center justify-center lg:justify-start">
               <span
-                className="font-serif font-bold leading-none tracking-tight select-none text-[clamp(5rem,15vw,11rem)]"
+                className="font-serif text-[clamp(5rem,15vw,11rem)] leading-none font-bold tracking-tight select-none"
                 aria-label="myfaves"
               >
                 <span className="text-foreground">my</span>
@@ -51,11 +51,11 @@ export default function LandingPageClient() {
 
             {/* Text + CTA */}
             <div className="flex flex-col space-y-6">
-              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+              <h1 className="text-foreground font-serif text-4xl font-bold tracking-tight md:text-5xl">
                 Curate and share your favourite places
               </h1>
 
-              <p className="text-lg text-muted-foreground md:text-xl">
+              <p className="text-muted-foreground text-lg md:text-xl">
                 Build focused, meaningful collections that reflect your genuine
                 preferences and local expertise. Share them like recommendations
                 from a trusted friend.

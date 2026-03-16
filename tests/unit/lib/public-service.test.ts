@@ -186,7 +186,10 @@ describe("Public Service", () => {
     });
 
     it("returns list detail with empty places array when list has no places", async () => {
-      mockGetPublicListDetail.mockResolvedValue({ ...listDetailRow, places: [] });
+      mockGetPublicListDetail.mockResolvedValue({
+        ...listDetailRow,
+        places: [],
+      });
 
       const result = await getPublicListDetail({
         userId: USER_ID,
@@ -234,7 +237,10 @@ describe("Public Service", () => {
       const cause = new Error("DB connection lost");
       mockGetPublicListDetail.mockRejectedValue(cause);
 
-      const err = await getPublicListDetail({ userId: USER_ID, listSlug: LIST_SLUG }).catch((e) => e);
+      const err = await getPublicListDetail({
+        userId: USER_ID,
+        listSlug: LIST_SLUG,
+      }).catch((e) => e);
 
       expect(err).toBeInstanceOf(PublicServiceError);
       expect(err.code).toBe("SERVICE_ERROR");

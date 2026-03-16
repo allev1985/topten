@@ -91,24 +91,28 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
  * Fetch places that belong to the user but are NOT currently attached to the
  * target list — suitable for the "add existing place" search path.
  *
- * @param params.listId  - Target list to exclude already-attached places from
- * @param params.userId  - Authenticated user whose places are searched
+ * @param listId  - Target list to exclude already-attached places from
+ * @param userId  - Authenticated user whose places are searched
  * @returns Array of PlaceSummary objects ordered by name ASC
  * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
  */
-export async function getAvailablePlacesForList(params: {
+export async function getAvailablePlacesForList({
+  listId,
+  userId,
+}: {
   listId: string;
   userId: string;
 }): Promise<PlaceSummary[]> {
-  const { listId, userId } = params;
-
   console.info(
     "[PlaceService:getAvailablePlacesForList]",
     `Fetching available places for list ${listId}, user ${userId}`
   );
 
   try {
-    const rows = await placeRepository.getAvailablePlacesForList(params);
+    const rows = await placeRepository.getAvailablePlacesForList({
+      listId,
+      userId,
+    });
 
     console.info(
       "[PlaceService:getAvailablePlacesForList]",
@@ -133,22 +137,22 @@ export async function getAvailablePlacesForList(params: {
  * Fetch all active places belonging to a user, annotated with the count of
  * active lists they currently appear in.
  *
- * @param params.userId - Authenticated user whose places are fetched
+ * @param userId - Authenticated user whose places are fetched
  * @returns Array of PlaceWithListCount ordered by name ASC
  * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
  */
-export async function getAllPlacesByUser(params: {
+export async function getAllPlacesByUser({
+  userId,
+}: {
   userId: string;
 }): Promise<PlaceWithListCount[]> {
-  const { userId } = params;
-
   console.info(
     "[PlaceService:getAllPlacesByUser]",
     `Fetching all places for user ${userId}`
   );
 
   try {
-    const rows = await placeRepository.getAllPlacesByUser(params);
+    const rows = await placeRepository.getAllPlacesByUser({ userId });
 
     console.info(
       "[PlaceService:getAllPlacesByUser]",
@@ -185,7 +189,17 @@ export async function getAllPlacesByUser(params: {
  * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached to the list
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function createPlace(params: {
+export async function createPlace({
+  listId,
+  userId,
+  googlePlaceId,
+  name,
+  address,
+  latitude,
+  longitude,
+  description,
+  heroImageUrl,
+}: {
   listId?: string;
   userId: string;
   googlePlaceId: string;
@@ -196,8 +210,6 @@ export async function createPlace(params: {
   description?: string | null;
   heroImageUrl?: string | null;
 }): Promise<CreatePlaceResult> {
-  const { listId, userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl } = params;
-
   console.info(
     "[PlaceService:createPlace]",
     listId
@@ -208,7 +220,10 @@ export async function createPlace(params: {
   // ── Step 1: look up any existing (userId, googlePlaceId) row ────────────────
   let existingPlace: PlaceRecord | null;
   try {
-    existingPlace = await placeRepository.getPlaceByGoogleId({ userId, googlePlaceId });
+    existingPlace = await placeRepository.getPlaceByGoogleId({
+      userId,
+      googlePlaceId,
+    });
   } catch (err) {
     console.error(
       "[PlaceService:createPlace]",
@@ -226,23 +241,36 @@ export async function createPlace(params: {
       // Restore soft-deleted place
       try {
         place = await placeRepository.restorePlace(existingPlace.id);
-        console.info("[PlaceService:createPlace]", `Restored soft-deleted place ${place.id}`);
+        console.info(
+          "[PlaceService:createPlace]",
+          `Restored soft-deleted place ${place.id}`
+        );
       } catch (err) {
         console.error(
           "[PlaceService:createPlace]",
           "Restore failed:",
           err instanceof Error ? err.message : "Unknown error"
         );
-        throw placeServiceError("Failed to create place. Please try again.", err);
+        throw placeServiceError(
+          "Failed to create place. Please try again.",
+          err
+        );
       }
     } else {
       // Reuse active place as-is
       place = existingPlace;
-      console.info("[PlaceService:createPlace]", `Reusing existing place ${place.id}`);
+      console.info(
+        "[PlaceService:createPlace]",
+        `Reusing existing place ${place.id}`
+      );
     }
 
     if (listId) {
-      const { listPlaceId } = await addExistingPlaceToList({ listId, placeId: place.id, userId });
+      const { listPlaceId } = await addExistingPlaceToList({
+        listId,
+        placeId: place.id,
+        userId,
+      });
       return { place, listPlaceId };
     }
 
@@ -254,8 +282,20 @@ export async function createPlace(params: {
   if (!listId) {
     // Standalone: simple insert
     try {
-      place = await placeRepository.insertPlace({ userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl });
-      console.info("[PlaceService:createPlace]", `Created standalone place ${place.id}`);
+      place = await placeRepository.insertPlace({
+        userId,
+        googlePlaceId,
+        name,
+        address,
+        latitude,
+        longitude,
+        description,
+        heroImageUrl,
+      });
+      console.info(
+        "[PlaceService:createPlace]",
+        `Created standalone place ${place.id}`
+      );
       return { place };
     } catch (err) {
       if (err instanceof PlaceServiceError) throw err;
@@ -287,7 +327,15 @@ export async function createPlace(params: {
 
   try {
     const result = await placeRepository.createPlaceWithListAttachment({
-      listId, userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl,
+      listId,
+      userId,
+      googlePlaceId,
+      name,
+      address,
+      latitude,
+      longitude,
+      description,
+      heroImageUrl,
     });
 
     console.info(
@@ -322,13 +370,15 @@ export async function createPlace(params: {
  * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function addExistingPlaceToList(params: {
+export async function addExistingPlaceToList({
+  listId,
+  placeId,
+  userId,
+}: {
   listId: string;
   placeId: string;
   userId: string;
 }): Promise<AddExistingPlaceResult> {
-  const { listId, placeId, userId } = params;
-
   console.info(
     "[PlaceService:addExistingPlaceToList]",
     `Attaching place ${placeId} to list ${listId} for user ${userId}`
@@ -341,7 +391,10 @@ export async function addExistingPlaceToList(params: {
   }
 
   // Check for any existing row — active or previously soft-deleted
-  const existingRow = await placeRepository.getListPlaceRow({ listId, placeId });
+  const existingRow = await placeRepository.getListPlaceRow({
+    listId,
+    placeId,
+  });
 
   if (existingRow && existingRow.deletedAt === null) {
     throw alreadyInListError();
@@ -354,7 +407,10 @@ export async function addExistingPlaceToList(params: {
 
     if (existingRow) {
       // Restore the previously removed attachment
-      await placeRepository.restoreListPlace({ listPlaceId: existingRow.id, nextPosition });
+      await placeRepository.restoreListPlace({
+        listPlaceId: existingRow.id,
+        nextPosition,
+      });
 
       console.info(
         "[PlaceService:addExistingPlaceToList]",
@@ -364,7 +420,11 @@ export async function addExistingPlaceToList(params: {
       return { listPlaceId: existingRow.id };
     }
 
-    const { id: listPlaceId } = await placeRepository.insertListPlace({ listId, placeId, position: nextPosition });
+    const { id: listPlaceId } = await placeRepository.insertListPlace({
+      listId,
+      placeId,
+      position: nextPosition,
+    });
 
     console.info(
       "[PlaceService:addExistingPlaceToList]",
@@ -395,26 +455,22 @@ export async function addExistingPlaceToList(params: {
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-const UPDATE_PLACE_ALLOWED_KEYS = new Set([
-  "placeId",
-  "listId",
-  "userId",
-  "description",
-]);
-
-export async function updatePlace(params: {
+export async function updatePlace({
+  placeId,
+  listId,
+  userId,
+  description,
+  ...rest
+}: {
   placeId: string;
   listId?: string;
   userId: string;
   description?: string | null;
 }): Promise<UpdatePlaceResult> {
-  for (const key of Object.keys(params)) {
-    if (!UPDATE_PLACE_ALLOWED_KEYS.has(key)) {
-      throw immutableFieldError(key);
-    }
+  const extraKeys = Object.keys(rest);
+  if (extraKeys.length > 0) {
+    throw immutableFieldError(extraKeys[0]);
   }
-
-  const { placeId, listId, userId, description } = params;
 
   console.info(
     "[PlaceService:updatePlace]",
@@ -425,18 +481,28 @@ export async function updatePlace(params: {
     // Ownership check: use list membership when listId is provided,
     // otherwise verify directly via places.userId
     if (listId) {
-      const accessible = await placeRepository.getPlaceInListByOwner({ placeId, listId, userId });
+      const accessible = await placeRepository.getPlaceInListByOwner({
+        placeId,
+        listId,
+        userId,
+      });
       if (!accessible) {
         throw notFoundError();
       }
     } else {
-      const accessible = await placeRepository.getPlaceByOwner({ placeId, userId });
+      const accessible = await placeRepository.getPlaceByOwner({
+        placeId,
+        userId,
+      });
       if (!accessible) {
         throw notFoundError();
       }
     }
 
-    const row = await placeRepository.updatePlaceDescription({ placeId, description });
+    const row = await placeRepository.updatePlaceDescription({
+      placeId,
+      description,
+    });
 
     if (!row) {
       throw notFoundError();
@@ -452,10 +518,7 @@ export async function updatePlace(params: {
       "DB error:",
       err instanceof Error ? err.message : "Unknown error"
     );
-    throw placeServiceError(
-      "Failed to update place. Please try again.",
-      err
-    );
+    throw placeServiceError("Failed to update place. Please try again.", err);
   }
 }
 
@@ -466,13 +529,15 @@ export async function updatePlace(params: {
  * @throws {PlaceServiceError} code NOT_FOUND if attachment missing, already removed, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function deletePlaceFromList(params: {
+export async function deletePlaceFromList({
+  placeId,
+  listId,
+  userId,
+}: {
   placeId: string;
   listId: string;
   userId: string;
 }): Promise<RemovePlaceFromListResult> {
-  const { placeId, listId, userId } = params;
-
   console.info(
     "[PlaceService:deletePlaceFromList]",
     `Removing place ${placeId} from list ${listId} for user ${userId}`
@@ -480,7 +545,11 @@ export async function deletePlaceFromList(params: {
 
   try {
     // Verify list ownership and that the attachment is currently active
-    const accessible = await placeRepository.getPlaceInListByOwner({ placeId, listId, userId });
+    const accessible = await placeRepository.getPlaceInListByOwner({
+      placeId,
+      listId,
+      userId,
+    });
     if (!accessible) {
       throw notFoundError();
     }
@@ -522,19 +591,23 @@ export async function deletePlaceFromList(params: {
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function deletePlace(params: {
+export async function deletePlace({
+  placeId,
+  userId,
+}: {
   placeId: string;
   userId: string;
 }): Promise<DeletePlaceResult> {
-  const { placeId, userId } = params;
-
   console.info(
     "[PlaceService:deletePlace]",
     `Deleting place ${placeId} for user ${userId}`
   );
 
   try {
-    const result = await placeRepository.deletePlaceWithCascade({ placeId, userId });
+    const result = await placeRepository.deletePlaceWithCascade({
+      placeId,
+      userId,
+    });
 
     if (!result) {
       throw notFoundError();

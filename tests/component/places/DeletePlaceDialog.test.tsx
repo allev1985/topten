@@ -42,7 +42,9 @@ vi.mock("react", async (importOriginal) => {
 
 // ─── Test data ────────────────────────────────────────────────────────────────
 
-const makePlace = (override: Partial<PlaceWithListCount> = {}): PlaceWithListCount => ({
+const makePlace = (
+  override: Partial<PlaceWithListCount> = {}
+): PlaceWithListCount => ({
   id: "place-1",
   name: "The Coffee House",
   address: "1 Main St",
@@ -91,7 +93,9 @@ describe("DeletePlaceDialog", () => {
 
   it("Delete button is enabled in idle state", () => {
     renderDialog();
-    expect(screen.getByRole("button", { name: /delete place/i })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /delete place/i })
+    ).not.toBeDisabled();
   });
 
   it("Delete button is disabled while pending", () => {
@@ -101,7 +105,12 @@ describe("DeletePlaceDialog", () => {
   });
 
   it("shows error message from action state", () => {
-    mockState = { data: null, error: "Something went wrong", fieldErrors: {}, isSuccess: false };
+    mockState = {
+      data: null,
+      error: "Something went wrong",
+      fieldErrors: {},
+      isSuccess: false,
+    };
     renderDialog();
     expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong");
   });
@@ -121,7 +130,9 @@ describe("DeletePlaceDialog", () => {
 
   it("hidden placeId input is present with correct value", () => {
     renderDialog(makePlace({ id: "place-abc" }));
-    const input = document.querySelector<HTMLInputElement>("input[name='placeId']");
+    const input = document.querySelector<HTMLInputElement>(
+      "input[name='placeId']"
+    );
     expect(input?.value).toBe("place-abc");
   });
 });

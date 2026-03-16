@@ -30,7 +30,7 @@ export default async function ProfileLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <nav className="border-b px-4 py-4 md:px-8">
         <Link
           href="/"

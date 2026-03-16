@@ -82,7 +82,8 @@ export function PlaceList({
         <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-lg border border-dashed py-16 text-center">
           <p className="text-base font-medium">No places yet — add one!</p>
           <p className="text-sm">
-            Use the &ldquo;Add a place&rdquo; button to start building your list.
+            Use the &ldquo;Add a place&rdquo; button to start building your
+            list.
           </p>
         </div>
       ) : (

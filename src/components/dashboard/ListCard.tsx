@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Edit, Eye, Upload, Download, Trash2 } from "lucide-react";
+import {
+  MoreVertical,
+  Edit,
+  Eye,
+  Upload,
+  Download,
+  Trash2,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +99,7 @@ export function ListCard({
           <div className="p-4">
             {/* Header row: title + menu */}
             <div className="flex items-start justify-between gap-2">
-              <h3 className="line-clamp-2 text-lg font-semibold leading-snug">
+              <h3 className="line-clamp-2 text-lg leading-snug font-semibold">
                 {list.title}
               </h3>
 
@@ -109,39 +116,39 @@ export function ListCard({
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit List
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handlePublishToggle}>
-                    {list.isPublished ? (
-                      <>
-                        <Download className="mr-2 h-4 w-4" />
-                        Unpublish
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Publish
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  {list.isPublished && (
-                    <DropdownMenuItem onClick={handleViewPublic}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Public Page
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleEdit}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit List
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleDeleteClick}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete List
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuItem onClick={handlePublishToggle}>
+                      {list.isPublished ? (
+                        <>
+                          <Download className="mr-2 h-4 w-4" />
+                          Unpublish
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Publish
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    {list.isPublished && (
+                      <DropdownMenuItem onClick={handleViewPublic}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Public Page
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleDeleteClick}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete List
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
@@ -168,7 +175,9 @@ export function ListCard({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete &ldquo;{list.title}&rdquo;?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete &ldquo;{list.title}&rdquo;?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This list will be permanently deleted and cannot be recovered.
             </AlertDialogDescription>

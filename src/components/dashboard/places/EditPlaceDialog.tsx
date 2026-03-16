@@ -58,7 +58,7 @@ export function EditPlaceDialog({
     buildInitialState()
   );
 
-  // Sync initial ref when the dialog opens for a (potentially) different place
+  // Reset form when the dialog opens (handles switching to a different place)
   useEffect(() => {
     if (open) {
       initialValues.current = { description: place.description ?? "" };
@@ -71,8 +71,10 @@ export function EditPlaceDialog({
     if (state.isSuccess) onOpenChange(false);
   }, [state.isSuccess, onOpenChange]);
 
+  /* eslint-disable react-hooks/refs -- initialValues.current is only mutated in effects, safe to read during render */
   const isDirty =
     formValues.description.trim() !== initialValues.current.description.trim();
+  /* eslint-enable react-hooks/refs */
 
   const handleOpenChange = (next: boolean) => {
     if (!next && isDirty && !isPending) {

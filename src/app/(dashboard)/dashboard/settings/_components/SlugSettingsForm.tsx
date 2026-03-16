@@ -29,7 +29,8 @@ export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
 
   // The displayed slug reflects the latest saved value on success,
   // otherwise falls back to the initial prop from the server.
-  const currentSlug = state.isSuccess && state.data ? state.data.vanitySlug : initialSlug;
+  const currentSlug =
+    state.isSuccess && state.data ? state.data.vanitySlug : initialSlug;
 
   return (
     <Card>
@@ -49,7 +50,10 @@ export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
 
           {state.isSuccess && (
             <Alert>
-              <AlertDescription role="status" aria-label="Profile URL updated successfully.">
+              <AlertDescription
+                role="status"
+                aria-label="Profile URL updated successfully."
+              >
                 Profile URL updated successfully.
               </AlertDescription>
             </Alert>

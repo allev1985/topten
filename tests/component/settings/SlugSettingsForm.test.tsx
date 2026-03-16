@@ -66,7 +66,9 @@ describe("SlugSettingsForm", () => {
 
     it("shows inline field error when vanitySlug fieldError is present", () => {
       mockState.fieldErrors = {
-        vanitySlug: ["This URL is already taken. Please choose a different one."],
+        vanitySlug: [
+          "This URL is already taken. Please choose a different one.",
+        ],
       };
 
       render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
@@ -80,7 +82,9 @@ describe("SlugSettingsForm", () => {
 
     it("field error element has role=alert", () => {
       mockState.fieldErrors = {
-        vanitySlug: ["URL can only contain lowercase letters, numbers, and hyphens"],
+        vanitySlug: [
+          "URL can only contain lowercase letters, numbers, and hyphens",
+        ],
       };
 
       render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
@@ -109,7 +113,9 @@ describe("SlugSettingsForm", () => {
       render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
 
       expect(
-        screen.getByRole("status", { name: /profile url updated successfully/i })
+        screen.getByRole("status", {
+          name: /profile url updated successfully/i,
+        })
       ).toBeInTheDocument();
     });
 
@@ -133,7 +139,9 @@ describe("SlugSettingsForm", () => {
     });
 
     it("input value updates when initialSlug prop changes (server re-render)", () => {
-      const { rerender } = render(<SlugSettingsForm initialSlug={DEFAULT_SLUG} />);
+      const { rerender } = render(
+        <SlugSettingsForm initialSlug={DEFAULT_SLUG} />
+      );
 
       const input = screen.getByRole("textbox", { name: /profile url/i });
       expect(input).toHaveValue(DEFAULT_SLUG);

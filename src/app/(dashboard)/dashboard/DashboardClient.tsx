@@ -124,7 +124,11 @@ function DashboardContent({
   const handleEdit = (listId: string) => {
     const list = lists.find((l) => l.id === listId);
     if (!list) return;
-    setEditTarget({ id: list.id, title: list.title, description: list.description });
+    setEditTarget({
+      id: list.id,
+      title: list.title,
+      description: list.description,
+    });
   };
 
   const handleEditSuccess = () => {

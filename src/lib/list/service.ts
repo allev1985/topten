@@ -101,25 +101,31 @@ export async function getListsByUser(userId: string): Promise<ListSummary[]> {
  * On the extremely unlikely event of a per-user collision, one retry
  * is attempted before throwing a SLUG_COLLISION error.
  *
- * @param params.userId - The authenticated user's id
- * @param params.title  - The list title (already validated by the caller)
+ * @param userId - The authenticated user's id
+ * @param title  - The list title (already validated by the caller)
  * @returns CreateListResult containing the full new list record
  * @throws {ListServiceError} code SLUG_COLLISION if both slug attempts collide
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function createList(params: {
+export async function createList({
+  userId,
+  title,
+}: {
   userId: string;
   title: string;
 }): Promise<CreateListResult> {
-  const { userId, title } = params;
-
   console.info(
     "[ListService:createList]",
     `Creating list for user ${userId}, title: "${title}"`
   );
 
   const attemptInsert = async (slug: string) => {
-    return listRepository.insertList({ userId, title, slug, isPublished: false });
+    return listRepository.insertList({
+      userId,
+      title,
+      slug,
+      isPublished: false,
+    });
   };
 
   try {
@@ -181,29 +187,37 @@ export async function createList(params: {
 /**
  * Update a list's title and/or description.
  *
- * @param params.listId      - The list's UUID
- * @param params.userId      - The authenticated user's id (ownership check)
- * @param params.title       - Optional new title
- * @param params.description - Optional new description
+ * @param listId      - The list's UUID
+ * @param userId      - The authenticated user's id (ownership check)
+ * @param title       - Optional new title
+ * @param description - Optional new description
  * @returns UpdateListResult with the updated fields
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function updateList(params: {
+export async function updateList({
+  listId,
+  userId,
+  title,
+  description,
+}: {
   listId: string;
   userId: string;
   title?: string;
   description?: string;
 }): Promise<UpdateListResult> {
-  const { listId, userId } = params;
-
   console.info(
     "[ListService:updateList]",
     `Updating list ${listId} for user ${userId}`
   );
 
   try {
-    const row = await listRepository.updateList(params);
+    const row = await listRepository.updateList({
+      listId,
+      userId,
+      title,
+      description,
+    });
 
     if (!row) {
       throw notFoundError();
@@ -226,25 +240,26 @@ export async function updateList(params: {
 /**
  * Soft-delete a list by setting deletedAt to the current timestamp.
  *
- * @param params.listId - The list's UUID
- * @param params.userId - The authenticated user's id (ownership check)
+ * @param listId - The list's UUID
+ * @param userId - The authenticated user's id (ownership check)
  * @returns DeleteListResult { success: true }
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function deleteList(params: {
+export async function deleteList({
+  listId,
+  userId,
+}: {
   listId: string;
   userId: string;
 }): Promise<DeleteListResult> {
-  const { listId, userId } = params;
-
   console.info(
     "[ListService:deleteList]",
     `Soft-deleting list ${listId} for user ${userId}`
   );
 
   try {
-    const row = await listRepository.softDeleteList(params);
+    const row = await listRepository.softDeleteList({ listId, userId });
 
     if (!row) {
       throw notFoundError();
@@ -267,25 +282,26 @@ export async function deleteList(params: {
 /**
  * Publish a list (isPublished = true, publishedAt = now).
  *
- * @param params.listId - The list's UUID
- * @param params.userId - The authenticated user's id
+ * @param listId - The list's UUID
+ * @param userId - The authenticated user's id
  * @returns PublishListResult with updated isPublished, publishedAt, and vanitySlug
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function publishList(params: {
+export async function publishList({
+  listId,
+  userId,
+}: {
   listId: string;
   userId: string;
 }): Promise<PublishListResult> {
-  const { listId, userId } = params;
-
   console.info(
     "[ListService:publishList]",
     `Publishing list ${listId} for user ${userId}`
   );
 
   try {
-    const row = await listRepository.publishList(params);
+    const row = await listRepository.publishList({ listId, userId });
 
     if (!row) {
       throw notFoundError();
@@ -310,25 +326,26 @@ export async function publishList(params: {
 /**
  * Unpublish a list (isPublished = false, publishedAt = null).
  *
- * @param params.listId - The list's UUID
- * @param params.userId - The authenticated user's id
+ * @param listId - The list's UUID
+ * @param userId - The authenticated user's id
  * @returns UnpublishListResult with updated isPublished and publishedAt
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
-export async function unpublishList(params: {
+export async function unpublishList({
+  listId,
+  userId,
+}: {
   listId: string;
   userId: string;
 }): Promise<UnpublishListResult> {
-  const { listId, userId } = params;
-
   console.info(
     "[ListService:unpublishList]",
     `Unpublishing list ${listId} for user ${userId}`
   );
 
   try {
-    const row = await listRepository.unpublishList(params);
+    const row = await listRepository.unpublishList({ listId, userId });
 
     if (!row) {
       throw notFoundError();

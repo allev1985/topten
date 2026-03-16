@@ -34,7 +34,7 @@ export function PublicListCard({
   return (
     <Link
       href={href}
-      className="block transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+      className="focus-visible:ring-ring block rounded-xl transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="h-full gap-3 py-5">
         <CardHeader className="pb-0">
@@ -45,7 +45,7 @@ export function PublicListCard({
             </CardDescription>
           )}
         </CardHeader>
-        <CardFooter className="text-xs text-muted-foreground gap-3">
+        <CardFooter className="text-muted-foreground gap-3 text-xs">
           <span>
             {list.placeCount} {list.placeCount === 1 ? "place" : "places"}
           </span>

@@ -37,9 +37,7 @@ describe("ProfileHeader", () => {
 
   it("renders bio when provided", () => {
     render(<ProfileHeader {...baseProps} bio="Coffee lover and bookworm" />);
-    expect(
-      screen.getByText("Coffee lover and bookworm")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Coffee lover and bookworm")).toBeInTheDocument();
   });
 
   it("does not render bio element when bio is null", () => {

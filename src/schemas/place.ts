@@ -17,12 +17,8 @@ export const createPlaceSchema = z.object({
     .trim()
     .min(1, "Address is required")
     .max(500, "Address must be 500 characters or fewer"),
-  latitude: z
-    .string()
-    .regex(/^-?\d+(\.\d+)?$/, "Invalid latitude"),
-  longitude: z
-    .string()
-    .regex(/^-?\d+(\.\d+)?$/, "Invalid longitude"),
+  latitude: z.string().regex(/^-?\d+(\.\d+)?$/, "Invalid latitude"),
+  longitude: z.string().regex(/^-?\d+(\.\d+)?$/, "Invalid longitude"),
   description: z
     .string()
     .trim()

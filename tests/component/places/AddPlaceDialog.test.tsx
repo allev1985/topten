@@ -95,7 +95,9 @@ describe("AddPlaceDialog (standalone)", () => {
       isSuccess: false,
     };
     renderDialog();
-    expect(screen.getByRole("alert")).toHaveTextContent("Failed to create place");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Failed to create place"
+    );
   });
 
   it("Cancel closes the dialog", async () => {
