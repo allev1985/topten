@@ -42,8 +42,8 @@ export async function getSettingsProfile(
 /**
  * Check whether a vanity slug is already claimed by another active user.
  *
- * @param params.vanitySlug - Slug to check
- * @param params.userId     - Current user — excluded from the conflict check
+ * @param vanitySlug - Slug to check
+ * @param userId     - Current user — excluded from the conflict check
  * @returns true if the slug is taken by another user
  */
 export async function getSlugConflict({
@@ -73,8 +73,8 @@ export async function getSlugConflict({
 /**
  * Update a user's display name.
  *
- * @param params.userId - The authenticated user's UUID
- * @param params.name   - New display name
+ * @param userId - The authenticated user's UUID
+ * @param name   - New display name
  */
 export async function updateUserName({
   userId,
@@ -95,8 +95,8 @@ export async function updateUserName({
  * Caller is responsible for performing pre-checks and catching unique
  * violations (race-condition defence in the service layer).
  *
- * @param params.userId     - The authenticated user's UUID
- * @param params.vanitySlug - New slug
+ * @param userId     - The authenticated user's UUID
+ * @param vanitySlug - New slug
  */
 export async function updateUserSlug({
   userId,

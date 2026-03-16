@@ -111,8 +111,8 @@ export const getPublicListsForProfile = cache(
 /**
  * Fetch the full detail of a single published list, including ordered places.
  *
- * @param params.userId   - The list owner's UUID (ownership scoping)
- * @param params.listSlug - The list slug
+ * @param userId   - The list owner's UUID (ownership scoping)
+ * @param listSlug - The list slug
  * @returns PublicListDetail if found and published, null otherwise
  */
 export const getPublicListDetail = cache(

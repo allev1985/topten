@@ -87,8 +87,8 @@ export async function getPublicListsForProfile(
  *   1. Fetch the list header (returns null if not found / not published)
  *   2. Fetch ordered places with COALESCE hero image
  *
- * @param params.userId   - The list owner's UUID (ownership scoping)
- * @param params.listSlug - The list slug
+ * @param userId   - The list owner's UUID (ownership scoping)
+ * @param listSlug - The list slug
  * @returns PublicListDetail if found and published, null otherwise
  */
 export async function getPublicListDetail({
