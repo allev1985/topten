@@ -1,4 +1,4 @@
-import { config } from "@/lib/config";
+import { config } from "@/lib/config/client";
 
 /**
  * Validates that a URL is safe for redirection.
