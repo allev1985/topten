@@ -20,9 +20,9 @@ import {
   GooglePlacesServiceError,
 } from "@/lib/services/google-places";
 import { createServiceLogger } from "@/lib/services/logging";
+import type { GooglePlaceResult } from "@/lib/services/google-places";
 
 const log = createServiceLogger("place-actions");
-import type { GooglePlaceResult } from "@/lib/services/google-places";
 
 // ─── Success data types ───────────────────────────────────────────────────────
 
