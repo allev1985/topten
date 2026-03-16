@@ -13,7 +13,7 @@ export const config = {
       minLength: 12,
       minWeakChecks: 2,
       minMediumChecks: 4,
-      specialCharRegex: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
+      specialCharRegex: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]/,
     },
     sessionExpiryThresholdMs: 5 * 60 * 1000,
     redirectRoutes: {
