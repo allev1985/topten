@@ -36,9 +36,9 @@ const envSchema = z.object({
       if (trimmed === "") return undefined;
       return trimmed.toLowerCase();
     },
-    z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default(
-      logLevelDefault
-    )
+    z
+      .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+      .default(logLevelDefault)
   ),
   OTEL_SERVICE_NAME: z.string().default("topten"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
