@@ -149,6 +149,52 @@ describe("List Service", () => {
       expect(capturedSlug).toHaveLength(4);
       expect(capturedSlug).toMatch(/^[0-9a-f]{4}$/);
     });
+
+    it("retries on first unique-violation and returns the list on success", async () => {
+      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      mockInsertList
+        .mockRejectedValueOnce(uniqueViolation)
+        .mockResolvedValueOnce(fullListRow);
+
+      const result = await createList({ userId: USER_ID, title: "My Top 10" });
+
+      expect(mockInsertList).toHaveBeenCalledTimes(2);
+      expect(result.list.id).toBe(LIST_ID);
+    });
+
+    it("throws SLUG_COLLISION when both attempts hit a unique-violation", async () => {
+      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      mockInsertList.mockRejectedValue(uniqueViolation);
+
+      await expect(
+        createList({ userId: USER_ID, title: "My Top 10" })
+      ).rejects.toMatchObject({ code: "SLUG_COLLISION" });
+
+      expect(mockInsertList).toHaveBeenCalledTimes(2);
+    });
+
+    it("throws SERVICE_ERROR immediately on a non-unique DB error (no retry)", async () => {
+      mockInsertList.mockRejectedValue(new Error("connection reset"));
+
+      await expect(
+        createList({ userId: USER_ID, title: "My Top 10" })
+      ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+
+      expect(mockInsertList).toHaveBeenCalledTimes(1);
+    });
+
+    it("throws SERVICE_ERROR when retry fails with a non-unique DB error", async () => {
+      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      mockInsertList
+        .mockRejectedValueOnce(uniqueViolation)
+        .mockRejectedValueOnce(new Error("deadlock detected"));
+
+      await expect(
+        createList({ userId: USER_ID, title: "My Top 10" })
+      ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+
+      expect(mockInsertList).toHaveBeenCalledTimes(2);
+    });
   });
 
   // ───────────────────────────────────────────────────────────────────────────
