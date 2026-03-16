@@ -23,7 +23,7 @@ import {
 } from "@/actions/list-actions";
 import type { ListSummary } from "@/lib/list/service/types";
 import type { List } from "@/types/list";
-import { DASHBOARD_ROUTES } from "@/lib/config";
+import { config } from "@/lib/config/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,7 +102,7 @@ function DashboardContent({
   };
 
   const handleListClick = (listId: string) => {
-    router.push(DASHBOARD_ROUTES.listDetail(listId));
+    router.push(config.routes.dashboard.listDetail(listId));
   };
 
   const handleRetry = () => {

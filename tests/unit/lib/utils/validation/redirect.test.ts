@@ -3,7 +3,7 @@ import {
   isValidRedirect,
   getValidatedRedirect,
 } from "@/lib/utils/validation/redirect";
-import { REDIRECT_ROUTES } from "@/lib/config";
+import { config } from "@/lib/config";
 
 describe("isValidRedirect", () => {
   describe("valid relative paths", () => {
@@ -194,30 +194,30 @@ describe("getValidatedRedirect", () => {
   });
 
   it("returns default for null", () => {
-    expect(getValidatedRedirect(null)).toBe(REDIRECT_ROUTES.default);
+    expect(getValidatedRedirect(null)).toBe(config.auth.redirectRoutes.default);
   });
 
   it("returns default for undefined", () => {
-    expect(getValidatedRedirect(undefined)).toBe(REDIRECT_ROUTES.default);
+    expect(getValidatedRedirect(undefined)).toBe(config.auth.redirectRoutes.default);
   });
 
   it("returns default for empty string", () => {
-    expect(getValidatedRedirect("")).toBe(REDIRECT_ROUTES.default);
+    expect(getValidatedRedirect("")).toBe(config.auth.redirectRoutes.default);
   });
 
   it("returns default for external URL", () => {
     expect(getValidatedRedirect("https://evil.com")).toBe(
-      REDIRECT_ROUTES.default
+      config.auth.redirectRoutes.default
     );
   });
 
   it("returns default for protocol-relative URL", () => {
-    expect(getValidatedRedirect("//evil.com")).toBe(REDIRECT_ROUTES.default);
+    expect(getValidatedRedirect("//evil.com")).toBe(config.auth.redirectRoutes.default);
   });
 
   it("returns default for javascript URL", () => {
     expect(getValidatedRedirect("javascript:alert(1)")).toBe(
-      REDIRECT_ROUTES.default
+      config.auth.redirectRoutes.default
     );
   });
 

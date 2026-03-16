@@ -7,7 +7,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import type { SessionInfo } from "@/types/auth";
-import { SESSION_EXPIRY_THRESHOLD_MS } from "@/lib/config";
+import { config } from "@/lib/config";
 
 /**
  * Extract session information for API response
@@ -76,7 +76,7 @@ export function getSessionTimeRemaining(session: Session | null): number {
  */
 export function isSessionExpiringSoon(
   session: Session | null,
-  thresholdMs: number = SESSION_EXPIRY_THRESHOLD_MS
+  thresholdMs: number = config.auth.sessionExpiryThresholdMs
 ): boolean {
   if (!session?.expires_at) {
     return false;

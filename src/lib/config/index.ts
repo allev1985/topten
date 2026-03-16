@@ -1,111 +1,86 @@
 /**
- * Application configuration
- * Central configuration for application-wide settings
+ * Server configuration — single source of truth for all config.
+ *
+ * Environment variables are validated against a Zod schema at module load
+ * and merged with the shared client constants. All server modules import
+ * from here; client components import from `@/lib/config/client` instead.
  */
 
-export const PASSWORD_REQUIREMENTS = {
-  minLength: 12,
-  minWeakChecks: 2,
-  minMediumChecks: 4,
-  /**
-   * Regex for special characters allowed in passwords
-   * Includes common special characters used in password policies
-   */
-  specialCharRegex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
-} as const;
+import "server-only";
+import { z } from "zod";
+import { config as clientConfig } from "./client";
 
-/**
- * Session expiry threshold (5 minutes in milliseconds)
- * Used to determine when to proactively refresh sessions
- */
-export const SESSION_EXPIRY_THRESHOLD_MS = 5 * 60 * 1000;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-/**
- * Redirect URL configuration
- * Centralized redirect paths for auth flows
- */
-export const REDIRECT_ROUTES = {
-  /** Default redirect after successful login */
-  default: "/dashboard",
-  /** Auth-specific redirects */
-  auth: {
-    /** Redirect after successful auth operations (signup verification, etc.) */
-    success: "/dashboard",
-    /** Redirect for auth errors */
-    error: "/auth/error",
-    /** Redirect for password reset flow */
-    passwordReset: "/reset-password",
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+
+// ---------------------------------------------------------------------------
+// Env schema
+// ---------------------------------------------------------------------------
+
+const logLevelDefault =
+  process.env.NODE_ENV === "production" ? "info" : "debug";
+
+const envSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  DATABASE_URL: z.string().min(1),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+  LOG_LEVEL: z
+    .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+    .default(logLevelDefault),
+  OTEL_SERVICE_NAME: z.string().default("topten"),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  const issues = parsed.error.issues
+    .map((i) => `  ${i.path.join(".")}: ${i.message}`)
+    .join("\n");
+  throw new Error(
+    `Invalid environment configuration:\n${issues}\n` +
+      `Please check your .env.local file or environment configuration.`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Config object
+// ---------------------------------------------------------------------------
+
+export const config = {
+  ...clientConfig,
+  supabase: {
+    url: parsed.data.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    serviceRoleKey: parsed.data.SUPABASE_SERVICE_ROLE_KEY,
+  },
+  db: {
+    url: parsed.data.DATABASE_URL,
+  },
+  googlePlaces: {
+    apiKey: parsed.data.GOOGLE_PLACES_API_KEY ?? "",
+  },
+  log: {
+    level: parsed.data.LOG_LEVEL as LogLevel,
+  },
+  otel: {
+    serviceName: parsed.data.OTEL_SERVICE_NAME,
+    endpoint: parsed.data.OTEL_EXPORTER_OTLP_ENDPOINT,
   },
 } as const;
 
-/**
- * Verification type constant for OTP verification
- */
-export const VERIFICATION_TYPE_EMAIL = "email" as const;
+// ---------------------------------------------------------------------------
+// Utilities that depend on runtime context (not pure config values)
+// ---------------------------------------------------------------------------
 
 /**
- * Route protection configuration for authentication middleware
- */
-
-/** Routes that require authentication */
-export const PROTECTED_ROUTES = ["/dashboard", "/settings"] as const;
-
-/** Routes that are always publicly accessible */
-export const PUBLIC_ROUTES = [
-  "/",
-  "/login",
-  "/signup",
-  "/verify-email",
-  "/forgot-password",
-  "/reset-password",
-  "/auth",
-] as const;
-
-/** Type for protected route paths */
-export type ProtectedRoute = (typeof PROTECTED_ROUTES)[number];
-
-/** Type for public route paths */
-export type PublicRoute = (typeof PUBLIC_ROUTES)[number];
-
-/**
- * Dashboard route helpers
- */
-export const DASHBOARD_ROUTES = {
-  /** Dashboard home */
-  home: "/dashboard",
-  /** Individual list detail page */
-  listDetail: (listId: string) => `/dashboard/lists/${listId}`,
-  /** My Places management page */
-  places: "/dashboard/places",
-} as const;
-
-/**
- * Google Places API configuration
- * Key is read from process.env at module load.
- */
-export const GOOGLE_PLACES_CONFIG = {
-  apiKey: process.env.GOOGLE_PLACES_API_KEY ?? "",
-} as const;
-
-/**
- * Log level configuration
- * Read from process.env at module load. Full validation (enum check) is
- * handled by env.ts at app boot — here we just need a safe fallback for
- * test environments that do not set every required variable.
- */
-export const LOG_LEVEL =
-  (process.env.LOG_LEVEL?.toLowerCase() as
-    | "trace"
-    | "debug"
-    | "info"
-    | "warn"
-    | "error"
-    | "fatal"
-    | undefined) ?? (process.env.NODE_ENV === "production" ? "info" : "debug");
-
-/**
- * Get the application URL from environment or request origin
- * @param requestOrigin - Optional origin from request headers
+ * Resolve the application base URL.
+ * Prefers the request origin (from headers) over the static env var.
  */
 export function getAppUrl(requestOrigin?: string | null): string {
   return requestOrigin ?? process.env.NEXT_PUBLIC_APP_URL ?? "";

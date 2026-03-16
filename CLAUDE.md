@@ -109,7 +109,7 @@ All Google Places API calls are **server-side only**. Place data is cached in th
 - Comment complex logic with references to `docs/decisions/`
 - Google Places API key is server-side only (`GOOGLE_PLACES_API_KEY`, no `NEXT_PUBLIC_` prefix)
 - **Never use `console.log/info/warn/error` in server-side code** — use the structured logger instead (see Logging below)
-- **Never use `process.env` outside `src/lib/env.ts` or `src/lib/config/index.ts`**
+- **Never use `process.env` outside `src/lib/config/index.ts`**
 
 ## Logging
 

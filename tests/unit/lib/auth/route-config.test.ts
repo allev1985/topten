@@ -1,57 +1,57 @@
 import { describe, it, expect } from "vitest";
-import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/config";
+import { config } from "@/lib/config";
 import { isProtectedRoute, isPublicRoute } from "@/lib/auth/helpers/middleware";
 
 describe("route-config", () => {
-  describe("PROTECTED_ROUTES", () => {
+  describe("config.auth.protectedRoutes", () => {
     it("includes /dashboard", () => {
-      expect(PROTECTED_ROUTES).toContain("/dashboard");
+      expect(config.auth.protectedRoutes).toContain("/dashboard");
     });
 
     it("includes /settings", () => {
-      expect(PROTECTED_ROUTES).toContain("/settings");
+      expect(config.auth.protectedRoutes).toContain("/settings");
     });
 
     it("is a tuple type (const assertion)", () => {
       // The `as const` assertion creates a readonly tuple type
       // We verify it has a fixed length and expected values
-      expect(PROTECTED_ROUTES.length).toBe(2);
+      expect(config.auth.protectedRoutes.length).toBe(2);
     });
   });
 
-  describe("PUBLIC_ROUTES", () => {
+  describe("config.auth.publicRoutes", () => {
     it("includes homepage", () => {
-      expect(PUBLIC_ROUTES).toContain("/");
+      expect(config.auth.publicRoutes).toContain("/");
     });
 
     it("includes login page", () => {
-      expect(PUBLIC_ROUTES).toContain("/login");
+      expect(config.auth.publicRoutes).toContain("/login");
     });
 
     it("includes signup page", () => {
-      expect(PUBLIC_ROUTES).toContain("/signup");
+      expect(config.auth.publicRoutes).toContain("/signup");
     });
 
     it("includes verify-email page", () => {
-      expect(PUBLIC_ROUTES).toContain("/verify-email");
+      expect(config.auth.publicRoutes).toContain("/verify-email");
     });
 
     it("includes forgot-password page", () => {
-      expect(PUBLIC_ROUTES).toContain("/forgot-password");
+      expect(config.auth.publicRoutes).toContain("/forgot-password");
     });
 
     it("includes reset-password page", () => {
-      expect(PUBLIC_ROUTES).toContain("/reset-password");
+      expect(config.auth.publicRoutes).toContain("/reset-password");
     });
 
     it("includes auth callback routes", () => {
-      expect(PUBLIC_ROUTES).toContain("/auth");
+      expect(config.auth.publicRoutes).toContain("/auth");
     });
 
     it("is a tuple type (const assertion)", () => {
       // The `as const` assertion creates a readonly tuple type
       // We verify it has the expected number of public routes
-      expect(PUBLIC_ROUTES.length).toBe(7);
+      expect(config.auth.publicRoutes.length).toBe(7);
     });
   });
 

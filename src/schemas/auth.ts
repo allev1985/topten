@@ -1,5 +1,17 @@
 import { z } from "zod";
-import { PASSWORD_REQUIREMENTS, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
+import { config } from "@/lib/config/client";
+
+const { minLength, specialCharRegex } = config.auth.password;
+const { verificationTypeEmail } = config.auth;
+
+const passwordField = z
+  .string({ message: "Password is required" })
+  .min(1, "Password is required")
+  .min(minLength, `Password must be at least ${minLength} characters`)
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(specialCharRegex, "Password must contain at least one special character");
 
 /**
  * Schema for validating signup requests
@@ -24,20 +36,7 @@ export const signupSchema = z.object({
       .min(1, "Email is required")
       .email("Invalid email format")
   ),
-  password: z
-    .string({ message: "Password is required" })
-    .min(1, "Password is required")
-    .min(
-      PASSWORD_REQUIREMENTS.minLength,
-      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
-    )
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(
-      PASSWORD_REQUIREMENTS.specialCharRegex,
-      "Password must contain at least one special character"
-    ),
+  password: passwordField,
 });
 
 /**
@@ -46,7 +45,7 @@ export const signupSchema = z.object({
  */
 export const verifyTokenSchema = z.object({
   token_hash: z.string().min(1, "Token is required"),
-  type: z.literal(VERIFICATION_TYPE_EMAIL),
+  type: z.literal(verificationTypeEmail),
 });
 
 /**
@@ -107,20 +106,7 @@ export const passwordResetSchema = z.object({
  * 2. Session - existing authenticated user
  */
 export const passwordUpdateSchema = z.object({
-  password: z
-    .string({ message: "Password is required" })
-    .min(1, "Password is required")
-    .min(
-      PASSWORD_REQUIREMENTS.minLength,
-      `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
-    )
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(
-      PASSWORD_REQUIREMENTS.specialCharRegex,
-      "Password must contain at least one special character"
-    ),
+  password: passwordField,
   /** OTP token hash from password reset email */
   token_hash: z.string().min(1).optional(),
   /** Token type for OTP verification (required when token_hash is provided) */

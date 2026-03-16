@@ -5,7 +5,7 @@ import {
   getSessionTimeRemaining,
   isSessionExpiringSoon,
 } from "@/lib/auth/helpers/session";
-import { SESSION_EXPIRY_THRESHOLD_MS } from "@/lib/config";
+import { config } from "@/lib/config";
 import type { Session, User } from "@supabase/supabase-js";
 
 describe("Session utilities", () => {
@@ -33,9 +33,9 @@ describe("Session utilities", () => {
     };
   };
 
-  describe("SESSION_EXPIRY_THRESHOLD_MS", () => {
+  describe("config.auth.sessionExpiryThresholdMs", () => {
     it("equals 5 minutes in milliseconds", () => {
-      expect(SESSION_EXPIRY_THRESHOLD_MS).toBe(5 * 60 * 1000);
+      expect(config.auth.sessionExpiryThresholdMs).toBe(5 * 60 * 1000);
     });
   });
 
@@ -257,7 +257,7 @@ describe("Session utilities", () => {
       const now = Date.now();
       Date.now = () => now;
 
-      const thresholdSeconds = SESSION_EXPIRY_THRESHOLD_MS / 1000;
+      const thresholdSeconds = config.auth.sessionExpiryThresholdMs / 1000;
       const session: Session = {
         access_token: "mock-access-token",
         refresh_token: "mock-refresh-token",

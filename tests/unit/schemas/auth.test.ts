@@ -6,7 +6,7 @@ import {
   verifyTokenSchema,
   verifyCodeSchema,
 } from "@/schemas/auth";
-import { PASSWORD_REQUIREMENTS } from "@/lib/config";
+import { config } from "@/lib/config";
 
 describe("signupSchema", () => {
   describe("email validation", () => {
@@ -130,7 +130,7 @@ describe("signupSchema", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0]?.message).toBe(
-          `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`
+          `Password must be at least ${config.auth.password.minLength} characters`
         );
       }
     });
@@ -381,7 +381,7 @@ describe("verifyCodeSchema", () => {
 });
 
 describe("PASSWORD_REQUIREMENTS", () => {
-  it("exports PASSWORD_REQUIREMENTS.minLength as 12", () => {
-    expect(PASSWORD_REQUIREMENTS.minLength).toBe(12);
+  it("exports config.auth.password.minLength as 12", () => {
+    expect(config.auth.password.minLength).toBe(12);
   });
 });

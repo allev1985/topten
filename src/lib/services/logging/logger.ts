@@ -20,7 +20,7 @@
  */
 
 import pino from "pino";
-import { LOG_LEVEL } from "@/lib/config";
+import { config } from "@/lib/config";
 import { getLogContext } from "./context";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ function getActiveSpanIds(): { traceId?: string; spanId?: string } {
  *   pnpm dev 2>&1 | pnpm pino-pretty
  */
 const rootLogger = pino({
-  level: LOG_LEVEL,
+  level: config.log.level,
   base: undefined, // omit pid / hostname; services add their own base
   timestamp: pino.stdTimeFunctions.isoTime,
   serializers: {

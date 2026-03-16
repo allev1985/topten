@@ -6,14 +6,14 @@
  *   - Text Search (New): POST https://places.googleapis.com/v1/places:searchText
  *   - Place Photos (New): GET  https://places.googleapis.com/v1/{photoName}/media
  *
- * API key is read from {@link GOOGLE_PLACES_CONFIG} in lib/config.
+ * API key is read from {@link config.googlePlaces} in lib/config.
  *
  * Security: the API key is NEVER logged.
  *
  * @module lib/services/google-places/service
  */
 
-import { GOOGLE_PLACES_CONFIG } from "@/lib/config";
+import { config } from "@/lib/config";
 import { createServiceLogger } from "@/lib/services/logging";
 import type { GooglePlaceResult } from "./types";
 import {
@@ -57,7 +57,7 @@ interface PhotoMediaResponse {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getApiKey(): string {
-  const key = GOOGLE_PLACES_CONFIG.apiKey;
+  const key = config.googlePlaces.apiKey;
   if (!key || !key.trim()) {
     throw configurationError();
   }

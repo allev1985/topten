@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getValidatedRedirect } from "@/lib/utils/validation/redirect";
-import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/config";
+import { config } from "@/lib/config";
 
 /**
  * Get the pathname from a request
@@ -79,7 +79,7 @@ export function getRedirectToFromRequest(request: NextRequest): string {
  * @returns true if the pathname requires authentication
  */
 export function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some(
+  return config.auth.protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }
@@ -90,7 +90,7 @@ export function isProtectedRoute(pathname: string): boolean {
  * @returns true if the pathname is publicly accessible
  */
 export function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(
+  return config.auth.publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }
