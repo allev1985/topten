@@ -17,71 +17,65 @@ import {
   placeServiceError,
 } from "@/lib/place/service/errors";
 
-// ─── DB mock setup ────────────────────────────────────────────────────────────
+// ─── Repository mock setup ────────────────────────────────────────────────────
 
-// Per-test result/error stores
-let mockSelectRows: unknown[] = [];
-let mockSelectRowsSequence: unknown[][] = []; // for consecutive select calls
-let mockSelectCallCount = 0;
-let mockInsertRows: unknown[] = [];
-let mockUpdateRows: unknown[] = [];
-let mockTransactionResult: unknown = null;
-let mockSelectError: unknown = null;
-let mockInsertError: unknown = null;
-let mockUpdateError: unknown = null;
-
-const { mockSelect, mockInsert, mockUpdate, mockTransaction } = vi.hoisted(
-  () => ({
-    mockSelect: vi.fn(),
-    mockInsert: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockTransaction: vi.fn(),
-  })
-);
-
-vi.mock("@/db", () => ({
-  db: {
-    select: mockSelect,
-    selectDistinct: mockSelect, // aliased for getAvailablePlacesForList
-    insert: mockInsert,
-    update: mockUpdate,
-    transaction: mockTransaction,
-  },
+const {
+  mockGetPlacesByList,
+  mockGetAvailablePlacesForList,
+  mockGetAllPlacesByUser,
+  mockGetPlaceByGoogleId,
+  mockGetListOwnership,
+  mockGetListPlaceRow,
+  mockGetMaxPosition,
+  mockGetPlaceInListByOwner,
+  mockGetPlaceByOwner,
+  mockRestorePlace,
+  mockInsertPlace,
+  mockCreatePlaceWithListAttachment,
+  mockRestoreListPlace,
+  mockInsertListPlace,
+  mockUpdatePlaceDescription,
+  mockSoftDeleteListPlace,
+  mockDeletePlaceWithCascade,
+} = vi.hoisted(() => ({
+  mockGetPlacesByList: vi.fn(),
+  mockGetAvailablePlacesForList: vi.fn(),
+  mockGetAllPlacesByUser: vi.fn(),
+  mockGetPlaceByGoogleId: vi.fn(),
+  mockGetListOwnership: vi.fn(),
+  mockGetListPlaceRow: vi.fn(),
+  mockGetMaxPosition: vi.fn(),
+  mockGetPlaceInListByOwner: vi.fn(),
+  mockGetPlaceByOwner: vi.fn(),
+  mockRestorePlace: vi.fn(),
+  mockInsertPlace: vi.fn(),
+  mockCreatePlaceWithListAttachment: vi.fn(),
+  mockRestoreListPlace: vi.fn(),
+  mockInsertListPlace: vi.fn(),
+  mockUpdatePlaceDescription: vi.fn(),
+  mockSoftDeleteListPlace: vi.fn(),
+  mockDeletePlaceWithCascade: vi.fn(),
 }));
 
-// ─── Fluent chain builders ────────────────────────────────────────────────────
-
-/**
- * Creates a fluent Drizzle-like query chain node that is:
- *   - Directly awaitable (via .then/.catch/.finally — thenable)
- *   - Chainable via .where(), .orderBy(), .innerJoin(), .returning()
- *
- * resolveWith returns either a Promise<T> (used for rejection too) or a raw value.
- * Each chained method returns a NEW thenable chain preserving the same resolveWith.
- */
-function makeThenableChain(resolveWith: () => unknown): Record<string, unknown> {
-  const asPromise = () => Promise.resolve(resolveWith());
-  const node: Record<string, unknown> = {
-    then: (onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
-      asPromise().then(onFulfilled, onRejected),
-    catch: (onRejected?: (e: unknown) => unknown) =>
-      asPromise().catch(onRejected),
-    finally: (onFinally?: () => void) =>
-      asPromise().finally(onFinally),
-    where: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    orderBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    groupBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    returning: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    innerJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    leftJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-  };
-  return node;
-}
-
-function makeSelectChain(resolveWith: () => unknown) {
-  const from = vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith));
-  return { from };
-}
+vi.mock("@/db/repositories/place.repository", () => ({
+  getPlacesByList: mockGetPlacesByList,
+  getAvailablePlacesForList: mockGetAvailablePlacesForList,
+  getAllPlacesByUser: mockGetAllPlacesByUser,
+  getPlaceByGoogleId: mockGetPlaceByGoogleId,
+  getListOwnership: mockGetListOwnership,
+  getListPlaceRow: mockGetListPlaceRow,
+  getMaxPosition: mockGetMaxPosition,
+  getPlaceInListByOwner: mockGetPlaceInListByOwner,
+  getPlaceByOwner: mockGetPlaceByOwner,
+  restorePlace: mockRestorePlace,
+  insertPlace: mockInsertPlace,
+  createPlaceWithListAttachment: mockCreatePlaceWithListAttachment,
+  restoreListPlace: mockRestoreListPlace,
+  insertListPlace: mockInsertListPlace,
+  updatePlaceDescription: mockUpdatePlaceDescription,
+  softDeleteListPlace: mockSoftDeleteListPlace,
+  deletePlaceWithCascade: mockDeletePlaceWithCascade,
+}));
 
 // ─── Test data ────────────────────────────────────────────────────────────────
 
@@ -115,63 +109,18 @@ const fullPlaceRow = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockSelectRows = [];
-  mockSelectRowsSequence = [];
-  mockSelectCallCount = 0;
-  mockInsertRows = [];
-  mockUpdateRows = [];
-  mockTransactionResult = null;
-  mockSelectError = null;
-  mockInsertError = null;
-  mockUpdateError = null;
 
-  // Default select chain — supports sequence via mockSelectRowsSequence
-  mockSelect.mockImplementation(() => {
-    const callIndex = mockSelectCallCount++;
-    const chain = makeSelectChain(() => {
-      if (mockSelectError) return Promise.reject(mockSelectError);
-      if (mockSelectRowsSequence.length > callIndex) {
-        return Promise.resolve(mockSelectRowsSequence[callIndex]);
-      }
-      return Promise.resolve(mockSelectRows);
-    });
-    return { from: chain.from };
-  });
-
-  // Default insert chain
-  const mockInsertReturning = vi.fn().mockImplementation(() => {
-    if (mockInsertError) return Promise.reject(mockInsertError);
-    return Promise.resolve(mockInsertRows);
-  });
-  const mockInsertValues = vi
-    .fn()
-    .mockReturnValue({ returning: mockInsertReturning });
-  mockInsert.mockReturnValue({ values: mockInsertValues });
-
-  // Default update chain
-  const mockUpdateReturning = vi.fn().mockImplementation(() => {
-    if (mockUpdateError) return Promise.reject(mockUpdateError);
-    return Promise.resolve(mockUpdateRows);
-  });
-  const mockUpdateWhere = vi
-    .fn()
-    .mockReturnValue({ returning: mockUpdateReturning });
-  const mockSet = vi.fn().mockReturnValue({ where: mockUpdateWhere });
-  mockUpdate.mockReturnValue({ set: mockSet });
-
-  // Default transaction — delegate to a callback that gets a mini tx object
-  mockTransaction.mockImplementation(
-    async (fn: (tx: unknown) => Promise<unknown>) => {
-      if (mockTransactionResult !== null) return mockTransactionResult;
-      // Build a mini tx object that mirrors db
-      const tx = {
-        select: mockSelect,
-        insert: mockInsert,
-        update: mockUpdate,
-      };
-      return fn(tx);
-    }
-  );
+  // Sensible defaults
+  mockGetPlacesByList.mockResolvedValue([]);
+  mockGetAvailablePlacesForList.mockResolvedValue([]);
+  mockGetAllPlacesByUser.mockResolvedValue([]);
+  mockGetPlaceByGoogleId.mockResolvedValue(null);
+  mockGetListOwnership.mockResolvedValue(false);
+  mockGetListPlaceRow.mockResolvedValue(null);
+  mockGetMaxPosition.mockResolvedValue(0);
+  mockGetPlaceInListByOwner.mockResolvedValue(false);
+  mockGetPlaceByOwner.mockResolvedValue(false);
+  mockDeletePlaceWithCascade.mockResolvedValue(null);
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -180,28 +129,33 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPlacesByList", () => {
     it("returns place summaries in position order", async () => {
-      mockSelectRows = [placeSummaryRow];
+      mockGetPlacesByList.mockResolvedValue([placeSummaryRow]);
+
       const result = await getPlacesByList(LIST_ID);
+
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(placeSummaryRow);
     });
 
     it("returns empty array when list has no places", async () => {
-      mockSelectRows = [];
+      mockGetPlacesByList.mockResolvedValue([]);
+
       const result = await getPlacesByList(LIST_ID);
+
       expect(result).toEqual([]);
     });
 
     it("does not return soft-deleted places (filtered by query)", async () => {
-      // The service filters via isNull(places.deletedAt) — the mock verifies
-      // that whatever the DB returns is passed through unchanged.
-      mockSelectRows = [placeSummaryRow]; // only 1 of 2 (deleted one excluded by query)
+      mockGetPlacesByList.mockResolvedValue([placeSummaryRow]);
+
       const result = await getPlacesByList(LIST_ID);
+
       expect(result).toHaveLength(1);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectError = new Error("connection reset");
+      mockGetPlacesByList.mockRejectedValue(new Error("connection reset"));
+
       await expect(getPlacesByList(LIST_ID)).rejects.toMatchObject({
         code: "SERVICE_ERROR",
       });
@@ -211,26 +165,31 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("getAvailablePlacesForList", () => {
     it("returns places from user's other lists not already in target list", async () => {
-      mockSelectRows = [placeSummaryRow];
+      mockGetAvailablePlacesForList.mockResolvedValue([placeSummaryRow]);
+
       const result = await getAvailablePlacesForList({
         listId: LIST_ID,
         userId: USER_ID,
       });
+
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(placeSummaryRow);
     });
 
     it("returns empty array when all user places are already in target list", async () => {
-      mockSelectRows = [];
+      mockGetAvailablePlacesForList.mockResolvedValue([]);
+
       const result = await getAvailablePlacesForList({
         listId: LIST_ID,
         userId: USER_ID,
       });
+
       expect(result).toEqual([]);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectError = new Error("timeout");
+      mockGetAvailablePlacesForList.mockRejectedValue(new Error("timeout"));
+
       await expect(
         getAvailablePlacesForList({ listId: LIST_ID, userId: USER_ID })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
@@ -252,9 +211,12 @@ describe("Place Service", () => {
     // ── new place (no existing row) ──────────────────────────────────────────
 
     it("creates a place and list_place row atomically, returns both ids", async () => {
-      // lookup → nothing; ownership → found; transaction returns fixed result
-      mockSelectRowsSequence = [[], [{ id: LIST_ID }]];
-      mockTransactionResult = { place: { ...fullPlaceRow, id: PLACE_ID }, listPlaceId: LIST_PLACE_ID };
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockCreatePlaceWithListAttachment.mockResolvedValue({
+        place: { ...fullPlaceRow, id: PLACE_ID },
+        listPlaceId: LIST_PLACE_ID,
+      });
 
       const result = await createPlace(newPlaceParams);
 
@@ -263,45 +225,28 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockSelectRowsSequence = [[], []]; // lookup → nothing; ownership → fails
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockGetListOwnership.mockResolvedValue(false);
+
       await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
     it("throws SERVICE_ERROR when transaction insert fails", async () => {
-      mockSelectRowsSequence = [[], [{ id: LIST_ID }]]; // lookup → nothing; ownership → passes
-      mockTransactionResult = null;
-      mockInsertError = new Error("constraint violation");
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockCreatePlaceWithListAttachment.mockRejectedValue(new Error("constraint violation"));
+
       await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "SERVICE_ERROR" });
     });
 
     it("passes the provided googlePlaceId to the insert", async () => {
-      mockSelectRowsSequence = [[], [{ id: LIST_ID }]];
       let capturedGooglePlaceId: string | undefined;
-
-      mockTransactionResult = null;
-      mockTransaction.mockImplementation(
-        async (fn: (tx: unknown) => Promise<unknown>) => {
-          let insertCallCount = 0;
-          const tx = {
-            select: vi.fn().mockReturnValue({
-              from: vi.fn().mockReturnValue({
-                where: vi.fn().mockResolvedValue([{ maxPos: 0 }]),
-              }),
-            }),
-            insert: vi.fn().mockImplementation(() => ({
-              values: (vals: { googlePlaceId?: string; position?: number }) => {
-                insertCallCount++;
-                if (insertCallCount === 1) capturedGooglePlaceId = vals.googlePlaceId;
-                return {
-                  returning: vi.fn().mockResolvedValue(
-                    insertCallCount === 1 ? [fullPlaceRow] : [{ id: LIST_PLACE_ID }]
-                  ),
-                };
-              },
-            })),
-            update: mockUpdate,
-          };
-          return fn(tx);
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockCreatePlaceWithListAttachment.mockImplementation(
+        (params: { googlePlaceId: string }) => {
+          capturedGooglePlaceId = params.googlePlaceId;
+          return Promise.resolve({ place: fullPlaceRow, listPlaceId: LIST_PLACE_ID });
         }
       );
 
@@ -313,21 +258,27 @@ describe("Place Service", () => {
     // ── existing active place ────────────────────────────────────────────────
 
     it("reuses an active place (standalone) without inserting", async () => {
-      mockSelectRowsSequence = [[fullPlaceRow]]; // lookup → active place found
-      const result = await createPlace({ userId: USER_ID, googlePlaceId: "ChIJtest_place_id", name: "The Coffee House", address: "1 Main St", latitude: "51.5", longitude: "-0.1" });
+      mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
+
+      const result = await createPlace({
+        userId: USER_ID,
+        googlePlaceId: "ChIJtest_place_id",
+        name: "The Coffee House",
+        address: "1 Main St",
+        latitude: "51.5",
+        longitude: "-0.1",
+      });
+
       expect(result.place.id).toBe(PLACE_ID);
-      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockInsertPlace).not.toHaveBeenCalled();
     });
 
     it("reuses an active place and attaches it to a list", async () => {
-      // lookup → active; then addExistingPlaceToList: ownership, no existing lp, position, insert lp
-      mockSelectRowsSequence = [
-        [fullPlaceRow],          // lookup → active place
-        [{ id: LIST_ID }],       // addExistingPlaceToList: ownership
-        [],                      // addExistingPlaceToList: no existing listPlace
-        [{ maxPos: 0 }],         // addExistingPlaceToList: position
-      ];
-      mockInsertRows = [{ id: LIST_PLACE_ID }];
+      mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue(null);
+      mockGetMaxPosition.mockResolvedValue(0);
+      mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
 
       const result = await createPlace(newPlaceParams);
 
@@ -336,11 +287,9 @@ describe("Place Service", () => {
     });
 
     it("propagates ALREADY_IN_LIST when reusing a place already attached to the list", async () => {
-      mockSelectRowsSequence = [
-        [fullPlaceRow],                            // lookup → active place
-        [{ id: LIST_ID }],                         // addExistingPlaceToList: ownership
-        [{ id: LIST_PLACE_ID, deletedAt: null }],  // addExistingPlaceToList: already active
-      ];
+      mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: null });
 
       await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "ALREADY_IN_LIST" });
     });
@@ -350,47 +299,48 @@ describe("Place Service", () => {
     it("restores a soft-deleted place (standalone) without inserting", async () => {
       const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
       const restoredPlace = { ...fullPlaceRow, deletedAt: null };
-      mockSelectRowsSequence = [[deletedPlace]]; // lookup → soft-deleted
-      mockUpdateRows = [restoredPlace];
+      mockGetPlaceByGoogleId.mockResolvedValue(deletedPlace);
+      mockRestorePlace.mockResolvedValue(restoredPlace);
 
-      const result = await createPlace({ userId: USER_ID, googlePlaceId: "ChIJtest_place_id", name: "The Coffee House", address: "1 Main St", latitude: "51.5", longitude: "-0.1" });
+      const result = await createPlace({
+        userId: USER_ID,
+        googlePlaceId: "ChIJtest_place_id",
+        name: "The Coffee House",
+        address: "1 Main St",
+        latitude: "51.5",
+        longitude: "-0.1",
+      });
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.place.deletedAt).toBeNull();
-      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockInsertPlace).not.toHaveBeenCalled();
     });
 
     it("restores a soft-deleted place and attaches it to a list", async () => {
       const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
       const restoredPlace = { ...fullPlaceRow, deletedAt: null };
-      mockUpdateRows = [restoredPlace];
-      mockSelectRowsSequence = [
-        [deletedPlace],          // lookup → soft-deleted
-        // addExistingPlaceToList sequences:
-        [{ id: LIST_ID }],       // ownership
-        [],                      // no existing listPlace
-        [{ maxPos: 2 }],         // position
-      ];
-      mockInsertRows = [{ id: LIST_PLACE_ID }];
+      mockGetPlaceByGoogleId.mockResolvedValue(deletedPlace);
+      mockRestorePlace.mockResolvedValue(restoredPlace);
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue(null);
+      mockGetMaxPosition.mockResolvedValue(2);
+      mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
 
       const result = await createPlace(newPlaceParams);
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
-      expect(mockInsert).toHaveBeenCalledTimes(1); // only listPlace insert, not place insert
+      expect(mockInsertPlace).not.toHaveBeenCalled();
     });
   });
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("addExistingPlaceToList", () => {
     it("attaches an existing place and returns the new listPlaceId", async () => {
-      // ownership check → found; existing attachment check → empty; posResult; insert
-      mockSelectRowsSequence = [
-        [{ id: LIST_ID }], // ownership
-        [],                // no existing attachment
-        [{ maxPos: 3 }],   // position query
-      ];
-      mockInsertRows = [{ id: LIST_PLACE_ID }];
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue(null);
+      mockGetMaxPosition.mockResolvedValue(3);
+      mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
 
       const result = await addExistingPlaceToList({
         listId: LIST_ID,
@@ -402,7 +352,8 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockSelectRows = [];
+      mockGetListOwnership.mockResolvedValue(false);
+
       await expect(
         addExistingPlaceToList({
           listId: LIST_ID,
@@ -413,10 +364,9 @@ describe("Place Service", () => {
     });
 
     it("throws ALREADY_IN_LIST when place is already attached", async () => {
-      mockSelectRowsSequence = [
-        [{ id: LIST_ID }],                              // ownership
-        [{ id: LIST_PLACE_ID, deletedAt: null }],       // active row found
-      ];
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: null });
+
       await expect(
         addExistingPlaceToList({
           listId: LIST_ID,
@@ -427,13 +377,10 @@ describe("Place Service", () => {
     });
 
     it("restores a previously removed place instead of inserting a duplicate", async () => {
-      mockSelectRowsSequence = [
-        [{ id: LIST_ID }],                                       // ownership
-        [{ id: LIST_PLACE_ID, deletedAt: new Date("2024-01-01") }], // soft-deleted row
-        [{ maxPos: 2 }],                                         // position query
-      ];
-      // mockUpdate is called with set({ deletedAt: null, position: 3 })
-      // No .returning() is called on the restore path — mock just needs to not throw
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: new Date("2024-01-01") });
+      mockGetMaxPosition.mockResolvedValue(2);
+      mockRestoreListPlace.mockResolvedValue(undefined);
 
       const result = await addExistingPlaceToList({
         listId: LIST_ID,
@@ -445,11 +392,11 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectRowsSequence = [
-        [{ id: LIST_ID }],
-        [],
-      ];
-      mockInsertError = new Error("db error");
+      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListPlaceRow.mockResolvedValue(null);
+      mockGetMaxPosition.mockResolvedValue(0);
+      mockInsertListPlace.mockRejectedValue(new Error("db error"));
+
       await expect(
         addExistingPlaceToList({
           listId: LIST_ID,
@@ -463,10 +410,12 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("updatePlace", () => {
     it("updates a place's description and returns the updated record", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }]; // ownership check passes
-      mockUpdateRows = [
-        { id: PLACE_ID, description: "Great coffee shop", updatedAt: NOW },
-      ];
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockUpdatePlaceDescription.mockResolvedValue({
+        id: PLACE_ID,
+        description: "Great coffee shop",
+        updatedAt: NOW,
+      });
 
       const result = await updatePlace({
         placeId: PLACE_ID,
@@ -479,7 +428,8 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when ownership check fails", async () => {
-      mockSelectRows = [];
+      mockGetPlaceInListByOwner.mockResolvedValue(false);
+
       await expect(
         updatePlace({
           placeId: PLACE_ID,
@@ -491,8 +441,9 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when DB update returns no rows", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }];
-      mockUpdateRows = [];
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockUpdatePlaceDescription.mockResolvedValue(null);
+
       await expect(
         updatePlace({
           placeId: PLACE_ID,
@@ -504,9 +455,6 @@ describe("Place Service", () => {
     });
 
     it("does NOT accept googlePlaceId as a parameter (type guard)", () => {
-      // This is a compile-time / API contract test:
-      // updatePlace's parameter type does not include googlePlaceId.
-      // We verify the function signature by checking the accepted params.
       type UpdatePlaceParams = Parameters<typeof updatePlace>[0];
       type HasGooglePlaceId = "googlePlaceId" extends keyof UpdatePlaceParams
         ? true
@@ -516,8 +464,9 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }];
-      mockUpdateError = new Error("db down");
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockUpdatePlaceDescription.mockRejectedValue(new Error("db down"));
+
       await expect(
         updatePlace({
           placeId: PLACE_ID,
@@ -532,8 +481,8 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("deletePlaceFromList", () => {
     it("soft-deletes a place and returns success: true", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }]; // ownership check
-      mockUpdateRows = [{ id: PLACE_ID }];
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockSoftDeleteListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
 
       const result = await deletePlaceFromList({
         placeId: PLACE_ID,
@@ -545,8 +494,9 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when place is already deleted (idempotency)", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }]; // ownership check
-      mockUpdateRows = []; // isNull(deletedAt) excludes already-deleted row
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockSoftDeleteListPlace.mockResolvedValue(null);
+
       await expect(
         deletePlaceFromList({
           placeId: PLACE_ID,
@@ -557,7 +507,8 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockSelectRows = []; // ownership check fails
+      mockGetPlaceInListByOwner.mockResolvedValue(false);
+
       await expect(
         deletePlaceFromList({
           placeId: PLACE_ID,
@@ -568,8 +519,9 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectRows = [{ placeId: PLACE_ID }];
-      mockUpdateError = new Error("disk full");
+      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockSoftDeleteListPlace.mockRejectedValue(new Error("disk full"));
+
       await expect(
         deletePlaceFromList({
           placeId: PLACE_ID,
@@ -582,29 +534,43 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("getAllPlacesByUser", () => {
-    const placeWithCount = { id: PLACE_ID, name: "The Coffee House", address: "1 Main St", description: null, heroImageUrl: null, activeListCount: 2 };
+    const placeWithCount = {
+      id: PLACE_ID,
+      name: "The Coffee House",
+      address: "1 Main St",
+      description: null,
+      heroImageUrl: null,
+      activeListCount: 2,
+    };
 
     it("returns places with active list counts", async () => {
-      mockSelectRows = [placeWithCount];
+      mockGetAllPlacesByUser.mockResolvedValue([placeWithCount]);
+
       const result = await getAllPlacesByUser({ userId: USER_ID });
+
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(placeWithCount);
     });
 
     it("returns empty array when user has no places", async () => {
-      mockSelectRows = [];
+      mockGetAllPlacesByUser.mockResolvedValue([]);
+
       const result = await getAllPlacesByUser({ userId: USER_ID });
+
       expect(result).toEqual([]);
     });
 
     it("includes places with activeListCount = 0", async () => {
-      mockSelectRows = [{ ...placeWithCount, activeListCount: 0 }];
+      mockGetAllPlacesByUser.mockResolvedValue([{ ...placeWithCount, activeListCount: 0 }]);
+
       const result = await getAllPlacesByUser({ userId: USER_ID });
+
       expect(result[0]!.activeListCount).toBe(0);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockSelectError = new Error("connection timeout");
+      mockGetAllPlacesByUser.mockRejectedValue(new Error("connection timeout"));
+
       await expect(getAllPlacesByUser({ userId: USER_ID })).rejects.toMatchObject({
         code: "SERVICE_ERROR",
       });
@@ -614,7 +580,9 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("createPlace (standalone — no listId)", () => {
     it("inserts a place and returns it", async () => {
-      mockInsertRows = [fullPlaceRow];
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockInsertPlace.mockResolvedValue(fullPlaceRow);
+
       const result = await createPlace({
         userId: USER_ID,
         googlePlaceId: "ChIJtest_place_id",
@@ -623,18 +591,19 @@ describe("Place Service", () => {
         latitude: "51.5",
         longitude: "-0.1",
       });
+
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.place.name).toBe("The Coffee House");
     });
 
     it("passes the provided googlePlaceId to the insert", async () => {
       let capturedGooglePlaceId: string | undefined;
-      mockInsert.mockImplementation(() => ({
-        values: (vals: { googlePlaceId?: string }) => {
-          capturedGooglePlaceId = vals.googlePlaceId;
-          return { returning: vi.fn().mockResolvedValue([fullPlaceRow]) };
-        },
-      }));
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockInsertPlace.mockImplementation((vals: { googlePlaceId: string }) => {
+        capturedGooglePlaceId = vals.googlePlaceId;
+        return Promise.resolve(fullPlaceRow);
+      });
+
       await createPlace({
         userId: USER_ID,
         googlePlaceId: "ChIJprovided",
@@ -643,11 +612,14 @@ describe("Place Service", () => {
         latitude: "51.5",
         longitude: "-0.1",
       });
+
       expect(capturedGooglePlaceId).toBe("ChIJprovided");
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockInsertError = new Error("disk full");
+      mockGetPlaceByGoogleId.mockResolvedValue(null);
+      mockInsertPlace.mockRejectedValue(new Error("disk full"));
+
       await expect(
         createPlace({
           userId: USER_ID,
@@ -664,65 +636,40 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("deletePlace", () => {
     it("soft-deletes the place and cascades to list attachments", async () => {
-      let updateCallCount = 0;
-      mockUpdate.mockImplementation(() => {
-        const callIndex = ++updateCallCount;
-        const where = vi.fn().mockReturnValue(
-          callIndex === 2
-            ? { returning: vi.fn().mockResolvedValue([{ id: "lp1" }, { id: "lp2" }]) }
-            : Promise.resolve({})
-        );
-        return { set: vi.fn().mockReturnValue({ where }) };
-      });
-      mockSelectRows = [{ id: PLACE_ID }]; // ownership check
+      mockDeletePlaceWithCascade.mockResolvedValue({ deletedListPlaceCount: 2 });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
+
       expect(result.deletedListPlaceCount).toBe(2);
     });
 
     it("returns 0 cascaded rows when place is not attached to any list", async () => {
-      let updateCallCount = 0;
-      mockUpdate.mockImplementation(() => {
-        const callIndex = ++updateCallCount;
-        const where = vi.fn().mockReturnValue(
-          callIndex === 2
-            ? { returning: vi.fn().mockResolvedValue([]) }
-            : Promise.resolve({})
-        );
-        return { set: vi.fn().mockReturnValue({ where }) };
-      });
-      mockSelectRows = [{ id: PLACE_ID }];
+      mockDeletePlaceWithCascade.mockResolvedValue({ deletedListPlaceCount: 0 });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
+
       expect(result.deletedListPlaceCount).toBe(0);
     });
 
     it("throws NOT_FOUND when place does not belong to user", async () => {
-      mockSelectRows = []; // ownership check fails
+      mockDeletePlaceWithCascade.mockResolvedValue(null);
+
       await expect(
         deletePlace({ placeId: PLACE_ID, userId: USER_ID })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
     it("throws NOT_FOUND when place is already deleted", async () => {
-      mockSelectRows = []; // isNull(deletedAt) excludes deleted place
+      mockDeletePlaceWithCascade.mockResolvedValue(null);
+
       await expect(
         deletePlace({ placeId: PLACE_ID, userId: USER_ID })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
     it("throws SERVICE_ERROR on DB failure during cascade", async () => {
-      let updateCallCount = 0;
-      mockUpdate.mockImplementation(() => {
-        const callIndex = ++updateCallCount;
-        const where = vi.fn().mockReturnValue(
-          callIndex === 2
-            ? { returning: vi.fn().mockRejectedValue(new Error("connection lost")) }
-            : Promise.resolve({})
-        );
-        return { set: vi.fn().mockReturnValue({ where }) };
-      });
-      mockSelectRows = [{ id: PLACE_ID }];
+      mockDeletePlaceWithCascade.mockRejectedValue(new Error("connection lost"));
+
       await expect(
         deletePlace({ placeId: PLACE_ID, userId: USER_ID })
       ).rejects.toMatchObject({ code: "SERVICE_ERROR" });

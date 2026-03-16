@@ -32,6 +32,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-28
 - Supabase Postgres — `places` table extended with 3 new columns; 1 new Drizzle migration (008-google-places-integration)
 - TypeScript 5 / Node 20 + Next.js 16.0.5 (App Router), Tailwind CSS v4, shadcn/ui (new-york), Google Fonts (DM Serif Display, DM Sans) (001-brand-styling)
 - N/A for this feature — no schema changes (001-brand-styling)
+- TypeScript 5 / Node.js 22 + Next.js 16 (App Router), Drizzle ORM, Supabase (Postgres), Vitest 4, Playwright (009-db-layer-abstraction)
+- PostgreSQL via Supabase — Drizzle as ORM (009-db-layer-abstraction)
 
 - **Languages**: TypeScript 5.x, Node.js ≥20.0.0
 - **Framework**: Next.js 16.0.5 (App Router)
@@ -68,9 +70,9 @@ tests/
 - Prefer server components in Next.js App Router where appropriate
 
 ## Recent Changes
+- 009-db-layer-abstraction: Added TypeScript 5 / Node.js 22 + Next.js 16 (App Router), Drizzle ORM, Supabase (Postgres), Vitest 4, Playwright
 - 001-brand-styling: Added TypeScript 5 / Node 20 + Next.js 16.0.5 (App Router), Tailwind CSS v4, shadcn/ui (new-york), Google Fonts (DM Serif Display, DM Sans)
 - 008-google-places-integration: Added TypeScript 5 / Node.js 20 (Next.js 15, App Router) + Next.js 15, Drizzle ORM, Supabase Postgres, Zod, shadcn/ui, Tailwind CSS v4
-- 007-places-management: Added TypeScript 5 / Node 20 + Next.js 15 App Router, Drizzle ORM, Supabase Postgres, shadcn/ui, Tailwind CSS v4, Zod, Vitest, Playwright
 
 
 <!-- MANUAL ADDITIONS START -->

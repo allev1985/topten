@@ -2,7 +2,7 @@
  * Place Service
  *
  * Centralised service for all place domain operations.
- * Owns all direct DB access for the place domain.
+ * Delegates all DB access to the place repository.
  * Used by place server actions — never called from client code.
  *
  * Public API:
@@ -11,7 +11,7 @@
  *   - getAllPlacesByUser        — all active places for a user with active-list counts
  *   - createPlace              — create a new place; if listId is provided, atomically attach it to that list
  *   - addExistingPlaceToList   — attach an existing place to a list
- *   - updatePlace              — update a place's name and/or address
+ *   - updatePlace              — update a place's description
  *   - deletePlaceFromList      — remove a place from a specific list (soft-deletes the ListPlace row)
  *   - deletePlace              — soft-delete a place and cascade to all list attachments
  *
@@ -21,11 +21,7 @@
  * @module place/service
  */
 
-import { eq, and, isNull, asc, max, not, inArray, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { places } from "@/db/schema/place";
-import { listPlaces } from "@/db/schema/listPlace";
-import { lists } from "@/db/schema/list";
+import * as placeRepository from "@/db/repositories/place.repository";
 import {
   PlaceServiceError,
   notFoundError,
@@ -62,8 +58,6 @@ export { PlaceServiceError };
 /**
  * Fetch all active (non-deleted) places attached to a list, in position order.
  *
- * Filters out both soft-deleted ListPlace rows and soft-deleted Place rows.
- *
  * @param listId - The list's UUID
  * @returns Array of PlaceSummary objects ordered by ListPlace.position ASC
  * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
@@ -75,24 +69,7 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
   );
 
   try {
-    const rows = await db
-      .select({
-        id: places.id,
-        name: places.name,
-        address: places.address,
-        description: places.description,
-        heroImageUrl: places.heroImageUrl,
-      })
-      .from(listPlaces)
-      .innerJoin(places, eq(listPlaces.placeId, places.id))
-      .where(
-        and(
-          eq(listPlaces.listId, listId),
-          isNull(listPlaces.deletedAt),
-          isNull(places.deletedAt)
-        )
-      )
-      .orderBy(asc(listPlaces.position));
+    const rows = await placeRepository.getPlacesByList(listId);
 
     console.info(
       "[PlaceService:getPlacesByList]",
@@ -114,18 +91,8 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
  * Fetch places that belong to the user but are NOT currently attached to the
  * target list — suitable for the "add existing place" search path.
  *
- * A place is "available" when:
- *   - The Place record is active (deletedAt IS NULL)
- *   - It is (or was) connected to at least one of the user's active lists via
- *     any ListPlace row, active or soft-deleted — this is the ownership proof
- *   - It does NOT have an *active* ListPlace row for the specified listId
- *
- * Soft-deleted ListPlace rows are intentionally included in the ownership join
- * so that a place removed from all its lists remains discoverable and can be
- * re-added (the re-add path restores the ListPlace row).
- *
  * @param params.listId  - Target list to exclude already-attached places from
- * @param params.userId  - Authenticated user whose lists are searched
+ * @param params.userId  - Authenticated user whose places are searched
  * @returns Array of PlaceSummary objects ordered by name ASC
  * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
  */
@@ -141,32 +108,7 @@ export async function getAvailablePlacesForList(params: {
   );
 
   try {
-    // Subquery: placeIds already attached to this list (active rows only)
-    const attachedInTarget = db
-      .select({ placeId: listPlaces.placeId })
-      .from(listPlaces)
-      .where(
-        and(eq(listPlaces.listId, listId), isNull(listPlaces.deletedAt))
-      );
-
-    // places.userId is the direct ownership proof — no list join required
-    const rows = await db
-      .select({
-        id: places.id,
-        name: places.name,
-        address: places.address,
-        description: places.description,
-        heroImageUrl: places.heroImageUrl,
-      })
-      .from(places)
-      .where(
-        and(
-          eq(places.userId, userId),
-          isNull(places.deletedAt),
-          not(inArray(places.id, attachedInTarget))
-        )
-      )
-      .orderBy(asc(places.name));
+    const rows = await placeRepository.getAvailablePlacesForList(params);
 
     console.info(
       "[PlaceService:getAvailablePlacesForList]",
@@ -206,26 +148,7 @@ export async function getAllPlacesByUser(params: {
   );
 
   try {
-    const rows = await db
-      .select({
-        id: places.id,
-        name: places.name,
-        address: places.address,
-        description: places.description,
-        heroImageUrl: places.heroImageUrl,
-        activeListCount: sql<number>`cast(count(${listPlaces.id}) as int)`,
-      })
-      .from(places)
-      .leftJoin(
-        listPlaces,
-        and(
-          eq(listPlaces.placeId, places.id),
-          isNull(listPlaces.deletedAt)
-        )
-      )
-      .where(and(eq(places.userId, userId), isNull(places.deletedAt)))
-      .groupBy(places.id, places.name, places.address, places.description, places.heroImageUrl)
-      .orderBy(asc(places.name));
+    const rows = await placeRepository.getAllPlacesByUser(params);
 
     console.info(
       "[PlaceService:getAllPlacesByUser]",
@@ -255,19 +178,8 @@ export async function getAllPlacesByUser(params: {
  *
  * In all three cases, when `listId` is provided the place is attached via
  * addExistingPlaceToList, which handles ownership verification, ALREADY_IN_LIST,
- * and ListPlace restore/insert. This avoids hitting the unique index on
- * (userId, googlePlaceId) and gives users a clear ALREADY_IN_LIST error
- * instead of a generic DB failure.
+ * and ListPlace restore/insert.
  *
- * @param params.listId        - Optional list to attach the place to
- * @param params.userId        - Authenticated user
- * @param params.googlePlaceId - Google place ID from the API
- * @param params.name          - Place name (from API displayName.text)
- * @param params.address       - Formatted address (from API formattedAddress)
- * @param params.latitude      - Latitude decimal string (from API location.latitude)
- * @param params.longitude     - Longitude decimal string (from API location.longitude)
- * @param params.description   - Optional description, nullable
- * @param params.heroImageUrl  - Resolved photo URI, nullable
  * @returns CreatePlaceResult — listPlaceId is present when the place was attached to a list
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached to the list
@@ -294,15 +206,9 @@ export async function createPlace(params: {
   );
 
   // ── Step 1: look up any existing (userId, googlePlaceId) row ────────────────
-  // Includes soft-deleted rows so we can restore rather than re-insert and hit
-  // the unique index constraint.
   let existingPlace: PlaceRecord | null;
   try {
-    const rows = await db
-      .select()
-      .from(places)
-      .where(and(eq(places.userId, userId), eq(places.googlePlaceId, googlePlaceId)));
-    existingPlace = (rows[0] as PlaceRecord) ?? null;
+    existingPlace = await placeRepository.getPlaceByGoogleId({ userId, googlePlaceId });
   } catch (err) {
     console.error(
       "[PlaceService:createPlace]",
@@ -319,12 +225,7 @@ export async function createPlace(params: {
     if (existingPlace.deletedAt !== null) {
       // Restore soft-deleted place
       try {
-        const rows = await db
-          .update(places)
-          .set({ deletedAt: null, updatedAt: new Date() })
-          .where(eq(places.id, existingPlace.id))
-          .returning();
-        place = rows[0] as PlaceRecord;
+        place = await placeRepository.restorePlace(existingPlace.id);
         console.info("[PlaceService:createPlace]", `Restored soft-deleted place ${place.id}`);
       } catch (err) {
         console.error(
@@ -340,8 +241,6 @@ export async function createPlace(params: {
       console.info("[PlaceService:createPlace]", `Reusing existing place ${place.id}`);
     }
 
-    // Attach to list if requested — delegates to addExistingPlaceToList which
-    // handles ownership verification, ALREADY_IN_LIST, and ListPlace restore/insert.
     if (listId) {
       const { listPlaceId } = await addExistingPlaceToList({ listId, placeId: place.id, userId });
       return { place, listPlaceId };
@@ -355,12 +254,7 @@ export async function createPlace(params: {
   if (!listId) {
     // Standalone: simple insert
     try {
-      const rows = await db
-        .insert(places)
-        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
-        .returning();
-      place = rows[0] as PlaceRecord;
-      if (!place) throw placeServiceError("Place insert returned no row.");
+      place = await placeRepository.insertPlace({ userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl });
       console.info("[PlaceService:createPlace]", `Created standalone place ${place.id}`);
       return { place };
     } catch (err) {
@@ -374,19 +268,10 @@ export async function createPlace(params: {
     }
   }
 
-  // New place with list: verify ownership then atomically insert place + attach
-  let ownerRows;
+  // New place with list: verify ownership then atomically create + attach
+  let owned: boolean;
   try {
-    ownerRows = await db
-      .select({ id: lists.id })
-      .from(lists)
-      .where(
-        and(
-          eq(lists.id, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt)
-        )
-      );
+    owned = await placeRepository.getListOwnership({ listId, userId });
   } catch (err) {
     console.error(
       "[PlaceService:createPlace]",
@@ -396,38 +281,13 @@ export async function createPlace(params: {
     throw placeServiceError("Failed to create place. Please try again.", err);
   }
 
-  if (ownerRows.length === 0) {
+  if (!owned) {
     throw notFoundError();
   }
 
   try {
-    const result = await db.transaction(async (tx) => {
-      const placeRows = await tx
-        .insert(places)
-        .values({ userId, googlePlaceId, name, address, latitude, longitude, description: description ?? null, heroImageUrl: heroImageUrl ?? null })
-        .returning();
-      const newPlace = placeRows[0] as PlaceRecord;
-      if (!newPlace) throw placeServiceError("Place insert returned no row.");
-
-      // Compute next position (MAX + 1, or 1 if list is empty)
-      const posResult = await tx
-        .select({ maxPos: max(listPlaces.position) })
-        .from(listPlaces)
-        .where(
-          and(eq(listPlaces.listId, listId), isNull(listPlaces.deletedAt))
-        );
-
-      const nextPosition = (posResult[0]?.maxPos ?? 0) + 1;
-
-      const lpRows = await tx
-        .insert(listPlaces)
-        .values({ listId, placeId: newPlace.id, position: nextPosition })
-        .returning({ id: listPlaces.id });
-
-      const lp = lpRows[0];
-      if (!lp) throw placeServiceError("ListPlace insert returned no row.");
-
-      return { place: newPlace, listPlaceId: lp.id };
+    const result = await placeRepository.createPlaceWithListAttachment({
+      listId, userId, googlePlaceId, name, address, latitude, longitude, description, heroImageUrl,
     });
 
     console.info(
@@ -454,12 +314,9 @@ export async function createPlace(params: {
  * - Rejects if the place already has an active ListPlace row for this list.
  * - If a soft-deleted ListPlace row exists for this list, it is restored
  *   (deletedAt set back to null, position recomputed to MAX+1) rather than
- *   inserting a duplicate row — this is the idiomatic re-add path.
+ *   inserting a duplicate row.
  * - If no prior row exists, a fresh ListPlace row is inserted at MAX+1.
  *
- * @param params.listId  - Target list
- * @param params.placeId - Existing place to attach
- * @param params.userId  - Authenticated user (ownership check)
  * @returns AddExistingPlaceResult containing the listPlace id (restored or new)
  * @throws {PlaceServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code ALREADY_IN_LIST if place is already attached
@@ -478,33 +335,13 @@ export async function addExistingPlaceToList(params: {
   );
 
   // Verify list ownership
-  const ownerRows = await db
-    .select({ id: lists.id })
-    .from(lists)
-    .where(
-      and(
-        eq(lists.id, listId),
-        eq(lists.userId, userId),
-        isNull(lists.deletedAt)
-      )
-    );
-
-  if (ownerRows.length === 0) {
+  const owned = await placeRepository.getListOwnership({ listId, userId });
+  if (!owned) {
     throw notFoundError();
   }
 
   // Check for any existing row — active or previously soft-deleted
-  const existing = await db
-    .select({ id: listPlaces.id, deletedAt: listPlaces.deletedAt })
-    .from(listPlaces)
-    .where(
-      and(
-        eq(listPlaces.listId, listId),
-        eq(listPlaces.placeId, placeId)
-      )
-    );
-
-  const existingRow = existing[0];
+  const existingRow = await placeRepository.getListPlaceRow({ listId, placeId });
 
   if (existingRow && existingRow.deletedAt === null) {
     throw alreadyInListError();
@@ -512,21 +349,12 @@ export async function addExistingPlaceToList(params: {
 
   try {
     // Compute next position (append to end regardless of restore or fresh insert)
-    const posResult = await db
-      .select({ maxPos: max(listPlaces.position) })
-      .from(listPlaces)
-      .where(
-        and(eq(listPlaces.listId, listId), isNull(listPlaces.deletedAt))
-      );
-
-    const nextPosition = (posResult[0]?.maxPos ?? 0) + 1;
+    const maxPosition = await placeRepository.getMaxPosition(listId);
+    const nextPosition = maxPosition + 1;
 
     if (existingRow) {
-      // Restore the previously removed attachment instead of creating a duplicate
-      await db
-        .update(listPlaces)
-        .set({ deletedAt: null, position: nextPosition })
-        .where(eq(listPlaces.id, existingRow.id));
+      // Restore the previously removed attachment
+      await placeRepository.restoreListPlace({ listPlaceId: existingRow.id, nextPosition });
 
       console.info(
         "[PlaceService:addExistingPlaceToList]",
@@ -536,24 +364,14 @@ export async function addExistingPlaceToList(params: {
       return { listPlaceId: existingRow.id };
     }
 
-    const lpRows = await db
-      .insert(listPlaces)
-      .values({
-        listId,
-        placeId,
-        position: nextPosition,
-      })
-      .returning({ id: listPlaces.id });
-
-    const lp = lpRows[0];
-    if (!lp) throw placeServiceError("ListPlace insert returned no row.");
+    const { id: listPlaceId } = await placeRepository.insertListPlace({ listId, placeId, position: nextPosition });
 
     console.info(
       "[PlaceService:addExistingPlaceToList]",
       `Place ${placeId} attached to list ${listId} at position ${nextPosition}`
     );
 
-    return { listPlaceId: lp.id };
+    return { listPlaceId };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     console.error(
@@ -572,18 +390,7 @@ export async function addExistingPlaceToList(params: {
  * Update a place's description.
  *
  * Only `description` may be updated — all other fields are immutable after creation.
- * Attempts to update name, address, coordinates, or heroImageUrl are rejected at
- * compile time (type signature) and would throw IMMUTABLE_FIELD if called directly.
  *
- * - Verifies ownership via list membership when `listId` is provided.
- * - Falls back to direct `places.userId` check when `listId` is omitted
- *   (used from the "My Places" context where no list context is available).
- * - updatedAt is always refreshed.
- *
- * @param params.placeId      - The place's UUID
- * @param params.listId       - Optional: a list owned by the user (for ownership check by list)
- * @param params.userId       - Authenticated user's id
- * @param params.description  - New description value (null to clear)
  * @returns UpdatePlaceResult with the updated description and timestamp
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or not owned by user
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
@@ -618,65 +425,26 @@ export async function updatePlace(params: {
     // Ownership check: use list membership when listId is provided,
     // otherwise verify directly via places.userId
     if (listId) {
-      const ownerRows = await db
-        .select({ placeId: listPlaces.placeId })
-        .from(listPlaces)
-        .innerJoin(lists, eq(listPlaces.listId, lists.id))
-        .innerJoin(places, eq(listPlaces.placeId, places.id))
-        .where(
-          and(
-            eq(listPlaces.placeId, placeId),
-            eq(listPlaces.listId, listId),
-            eq(lists.userId, userId),
-            isNull(lists.deletedAt),
-            isNull(listPlaces.deletedAt),
-            isNull(places.deletedAt)
-          )
-        );
-
-      if (ownerRows.length === 0) {
+      const accessible = await placeRepository.getPlaceInListByOwner({ placeId, listId, userId });
+      if (!accessible) {
         throw notFoundError();
       }
     } else {
-      const ownerRows = await db
-        .select({ id: places.id })
-        .from(places)
-        .where(
-          and(
-            eq(places.id, placeId),
-            eq(places.userId, userId),
-            isNull(places.deletedAt)
-          )
-        );
-
-      if (ownerRows.length === 0) {
+      const accessible = await placeRepository.getPlaceByOwner({ placeId, userId });
+      if (!accessible) {
         throw notFoundError();
       }
     }
 
-    const updateValues: Partial<{
-      description: string | null;
-      updatedAt: Date;
-    }> = { updatedAt: new Date() };
+    const row = await placeRepository.updatePlaceDescription({ placeId, description });
 
-    if (description !== undefined) updateValues.description = description;
-    const rows = await db
-      .update(places)
-      .set(updateValues)
-      .where(and(eq(places.id, placeId), isNull(places.deletedAt)))
-      .returning({
-        id: places.id,
-        description: places.description,
-        updatedAt: places.updatedAt,
-      });
-
-    if (rows.length === 0) {
+    if (!row) {
       throw notFoundError();
     }
 
     console.info("[PlaceService:updatePlace]", `Place ${placeId} updated`);
 
-    return { place: rows[0]! };
+    return { place: row };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     console.error(
@@ -694,17 +462,6 @@ export async function updatePlace(params: {
 /**
  * Remove a place from a specific list by soft-deleting its ListPlace junction row.
  *
- * The Place record itself is left intact so the place remains available on any
- * other lists it belongs to. Only the attachment to this particular list is
- * removed.
- *
- * - Verifies that the place is attached to a list owned by the user.
- * - This operation is idempotent: the deletedAt IS NULL check means calling
- *   again on an already-removed place returns NOT_FOUND.
- *
- * @param params.placeId - The place's UUID
- * @param params.listId  - The list to remove the place from
- * @param params.userId  - Authenticated user's id (ownership check)
  * @returns RemovePlaceFromListResult { success: true }
  * @throws {PlaceServiceError} code NOT_FOUND if attachment missing, already removed, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
@@ -723,39 +480,15 @@ export async function deletePlaceFromList(params: {
 
   try {
     // Verify list ownership and that the attachment is currently active
-    const ownerRows = await db
-      .select({ placeId: listPlaces.placeId })
-      .from(listPlaces)
-      .innerJoin(lists, eq(listPlaces.listId, lists.id))
-      .innerJoin(places, eq(listPlaces.placeId, places.id))
-      .where(
-        and(
-          eq(listPlaces.placeId, placeId),
-          eq(listPlaces.listId, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt),
-          isNull(listPlaces.deletedAt),
-          isNull(places.deletedAt)
-        )
-      );
-
-    if (ownerRows.length === 0) {
+    const accessible = await placeRepository.getPlaceInListByOwner({ placeId, listId, userId });
+    if (!accessible) {
       throw notFoundError();
     }
-    // Soft-delete the ListPlace row — the Place record is left untouched
-    const rows = await db
-      .update(listPlaces)
-      .set({ deletedAt: new Date() })
-      .where(
-        and(
-          eq(listPlaces.placeId, placeId),
-          eq(listPlaces.listId, listId),
-          isNull(listPlaces.deletedAt)
-        )
-      )
-      .returning({ id: listPlaces.id });
 
-    if (rows.length === 0) {
+    // Soft-delete the ListPlace row — the Place record is left untouched
+    const row = await placeRepository.softDeleteListPlace({ placeId, listId });
+
+    if (!row) {
       throw notFoundError();
     }
 
@@ -779,17 +512,12 @@ export async function deletePlaceFromList(params: {
   }
 }
 
-
 /**
  * Permanently soft-delete a place and cascade to all its active list attachments.
  *
- * Both operations run in a single transaction to guarantee consistency.
- * After this call:
- *   - places.deletedAt and places.updatedAt are set to the same timestamp
- *   - All active ListPlace rows for this place have deletedAt set
+ * Both operations run in a single transaction (inside the repository) to guarantee
+ * consistency.
  *
- * @param params.placeId - Place to delete
- * @param params.userId  - Authenticated user (ownership check)
  * @returns DeletePlaceResult with count of ListPlace rows cascaded
  * @throws {PlaceServiceError} code NOT_FOUND if place missing, deleted, or wrong owner
  * @throws {PlaceServiceError} code SERVICE_ERROR on unexpected DB failure
@@ -806,48 +534,18 @@ export async function deletePlace(params: {
   );
 
   try {
-    return await db.transaction(async (tx) => {
-      // Verify ownership
-      const ownerRows = await tx
-        .select({ id: places.id })
-        .from(places)
-        .where(
-          and(
-            eq(places.id, placeId),
-            eq(places.userId, userId),
-            isNull(places.deletedAt)
-          )
-        );
+    const result = await placeRepository.deletePlaceWithCascade({ placeId, userId });
 
-      if (ownerRows.length === 0) {
-        throw notFoundError();
-      }
+    if (!result) {
+      throw notFoundError();
+    }
 
-      // Soft-delete the place — share a single timestamp for both columns
-      const now = new Date();
-      await tx
-        .update(places)
-        .set({ deletedAt: now, updatedAt: now })
-        .where(eq(places.id, placeId));
+    console.info(
+      "[PlaceService:deletePlace]",
+      `Place ${placeId} deleted, cascaded to ${result.deletedListPlaceCount} list attachment(s)`
+    );
 
-      // Cascade soft-delete to all active ListPlace rows
-      const cascadedRows = await tx
-        .update(listPlaces)
-        .set({ deletedAt: now })
-        .where(
-          and(eq(listPlaces.placeId, placeId), isNull(listPlaces.deletedAt))
-        )
-        .returning({ id: listPlaces.id });
-
-      const deletedListPlaceCount = cascadedRows.length;
-
-      console.info(
-        "[PlaceService:deletePlace]",
-        `Place ${placeId} deleted, cascaded to ${deletedListPlaceCount} list attachment(s)`
-      );
-
-      return { deletedListPlaceCount };
-    });
+    return result;
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     console.error(

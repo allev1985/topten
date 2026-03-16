@@ -6,63 +6,32 @@ import {
   PublicServiceError,
 } from "@/lib/public/service";
 
-// ─── DB mock setup ────────────────────────────────────────────────────────────
+// ─── Repository mock setup ────────────────────────────────────────────────────
 
-let mockSelectRows: unknown[] = [];
-let mockSelectRowsSequence: unknown[][] = [];
-let mockSelectCallCount = 0;
-let mockSelectError: unknown = null;
-
-const { mockSelect } = vi.hoisted(() => ({
-  mockSelect: vi.fn(),
+const {
+  mockGetPublicProfileBySlug,
+  mockGetPublicListsForProfile,
+  mockGetPublicListDetail,
+} = vi.hoisted(() => ({
+  mockGetPublicProfileBySlug: vi.fn(),
+  mockGetPublicListsForProfile: vi.fn(),
+  mockGetPublicListDetail: vi.fn(),
 }));
 
-vi.mock("@/db", () => ({
-  db: {
-    select: mockSelect,
-  },
+vi.mock("@/db/repositories/public.repository", () => ({
+  getPublicProfileBySlug: mockGetPublicProfileBySlug,
+  getPublicListsForProfile: mockGetPublicListsForProfile,
+  getPublicListDetail: mockGetPublicListDetail,
 }));
 
-// React.cache is a pass-through in test environments (no Next.js request context)
+// Keep React.cache as a pass-through so the service functions are directly awaitable
 vi.mock("react", async (importOriginal) => {
-  const react = await importOriginal<typeof import("react")>();
+  const actual = await importOriginal<typeof import("react")>();
   return {
-    ...react,
-    cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
+    ...actual,
+    cache: (fn: (...args: unknown[]) => unknown) => fn,
   };
 });
-
-// ─── Fluent chain builder ─────────────────────────────────────────────────────
-
-/**
- * Builds a thenable Drizzle-like chain node that resolves through all
- * chained methods (.from, .where, .limit, .leftJoin, .innerJoin,
- * .groupBy, .orderBy) before producing the final result.
- */
-function makeThenableChain(resolveWith: () => unknown): Record<string, unknown> {
-  const asPromise = () => Promise.resolve(resolveWith());
-  const node: Record<string, unknown> = {
-    then: (
-      onFulfilled?: (v: unknown) => unknown,
-      onRejected?: (e: unknown) => unknown
-    ) => asPromise().then(onFulfilled, onRejected),
-    catch: (onRejected?: (e: unknown) => unknown) =>
-      asPromise().catch(onRejected),
-    finally: (onFinally?: () => void) => asPromise().finally(onFinally),
-    where: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    limit: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    orderBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    groupBy: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    leftJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-    innerJoin: vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith)),
-  };
-  return node;
-}
-
-function makeSelectChain(resolveWith: () => unknown) {
-  const from = vi.fn((..._args: unknown[]) => makeThenableChain(resolveWith));
-  return { from };
-}
 
 // ─── Test data ────────────────────────────────────────────────────────────────
 
@@ -90,14 +59,6 @@ const listSummaryRow = {
   placeCount: 3,
 };
 
-const listHeaderRow = {
-  id: LIST_ID,
-  title: "Top 10 Coffee",
-  slug: LIST_SLUG,
-  description: "The best coffee",
-  updatedAt: NOW,
-};
-
 const placeRow = {
   id: PLACE_ID,
   name: "The Coffee House",
@@ -107,26 +68,19 @@ const placeRow = {
   position: 1,
 };
 
+const listDetailRow = {
+  id: LIST_ID,
+  title: "Top 10 Coffee",
+  slug: LIST_SLUG,
+  description: "The best coffee",
+  updatedAt: NOW,
+  places: [placeRow],
+};
+
 // ─── beforeEach ───────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockSelectRows = [];
-  mockSelectRowsSequence = [];
-  mockSelectCallCount = 0;
-  mockSelectError = null;
-
-  mockSelect.mockImplementation(() => {
-    const callIndex = mockSelectCallCount++;
-    const chain = makeSelectChain(() => {
-      if (mockSelectError) return Promise.reject(mockSelectError);
-      if (mockSelectRowsSequence.length > callIndex) {
-        return Promise.resolve(mockSelectRowsSequence[callIndex]);
-      }
-      return Promise.resolve(mockSelectRows);
-    });
-    return { from: chain.from };
-  });
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -135,29 +89,37 @@ describe("Public Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPublicProfile", () => {
     it("returns a profile when found", async () => {
-      mockSelectRows = [profileRow];
+      mockGetPublicProfileBySlug.mockResolvedValue(profileRow);
+
       const result = await getPublicProfile(VANITY_SLUG);
+
       expect(result).toEqual(profileRow);
     });
 
     it("returns null when no matching profile exists", async () => {
-      mockSelectRows = [];
+      mockGetPublicProfileBySlug.mockResolvedValue(null);
+
       const result = await getPublicProfile(VANITY_SLUG);
+
       expect(result).toBeNull();
     });
 
-    it("returns null for a soft-deleted user (DB returns empty — filtered by query)", async () => {
-      // The service filters deleted_at IS NULL at the query level;
+    it("returns null for a soft-deleted user (DB returns null — filtered by query)", async () => {
+      // The repository filters deleted_at IS NULL at the query level;
       // the mock simulates the DB returning nothing for a deleted user.
-      mockSelectRows = [];
+      mockGetPublicProfileBySlug.mockResolvedValue(null);
+
       const result = await getPublicProfile(VANITY_SLUG);
+
       expect(result).toBeNull();
     });
 
     it("wraps DB errors in PublicServiceError", async () => {
       const cause = new Error("connection reset");
-      mockSelectError = cause;
+      mockGetPublicProfileBySlug.mockRejectedValue(cause);
+
       const err = await getPublicProfile(VANITY_SLUG).catch((e) => e);
+
       expect(err).toBeInstanceOf(PublicServiceError);
       expect(err.code).toBe("SERVICE_ERROR");
       expect(err.originalError).toBe(cause);
@@ -167,8 +129,10 @@ describe("Public Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPublicListsForProfile", () => {
     it("returns published list summaries for a user", async () => {
-      mockSelectRows = [listSummaryRow];
+      mockGetPublicListsForProfile.mockResolvedValue([listSummaryRow]);
+
       const result = await getPublicListsForProfile(USER_ID);
+
       expect(result).toHaveLength(1);
       expect(result[0]?.title).toBe("Top 10 Coffee");
       expect(result[0]?.placeCount).toBe(3);
@@ -176,23 +140,28 @@ describe("Public Service", () => {
     });
 
     it("returns empty array when user has no published lists", async () => {
-      mockSelectRows = [];
+      mockGetPublicListsForProfile.mockResolvedValue([]);
+
       const result = await getPublicListsForProfile(USER_ID);
+
       expect(result).toEqual([]);
     });
 
     it("returns empty array when user has no published lists (DB filters is_published = true)", async () => {
       // Unpublished lists are excluded by the is_published = true filter at DB level.
-      // The mock simulates the DB returning nothing for unpublished lists.
-      mockSelectRows = [];
+      mockGetPublicListsForProfile.mockResolvedValue([]);
+
       const result = await getPublicListsForProfile(USER_ID);
+
       expect(result).toEqual([]);
     });
 
     it("wraps DB errors in PublicServiceError", async () => {
       const cause = new Error("query timeout");
-      mockSelectError = cause;
+      mockGetPublicListsForProfile.mockRejectedValue(cause);
+
       const err = await getPublicListsForProfile(USER_ID).catch((e) => e);
+
       expect(err).toBeInstanceOf(PublicServiceError);
       expect(err.code).toBe("SERVICE_ERROR");
       expect(err.originalError).toBe(cause);
@@ -202,12 +171,13 @@ describe("Public Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPublicListDetail", () => {
     it("returns list detail with places when found", async () => {
-      // First select: list header; second select: place rows
-      mockSelectRowsSequence = [[listHeaderRow], [placeRow]];
+      mockGetPublicListDetail.mockResolvedValue(listDetailRow);
+
       const result = await getPublicListDetail({
         userId: USER_ID,
         listSlug: LIST_SLUG,
       });
+
       expect(result).not.toBeNull();
       expect(result?.id).toBe(LIST_ID);
       expect(result?.title).toBe("Top 10 Coffee");
@@ -216,49 +186,56 @@ describe("Public Service", () => {
     });
 
     it("returns list detail with empty places array when list has no places", async () => {
-      mockSelectRowsSequence = [[listHeaderRow], []];
+      mockGetPublicListDetail.mockResolvedValue({ ...listDetailRow, places: [] });
+
       const result = await getPublicListDetail({
         userId: USER_ID,
         listSlug: LIST_SLUG,
       });
+
       expect(result).not.toBeNull();
       expect(result?.places).toEqual([]);
     });
 
     it("returns null when list is not found", async () => {
-      // First select returns empty (list not found or not published)
-      mockSelectRowsSequence = [[]];
+      mockGetPublicListDetail.mockResolvedValue(null);
+
       const result = await getPublicListDetail({
         userId: USER_ID,
         listSlug: LIST_SLUG,
       });
+
       expect(result).toBeNull();
     });
 
-    it("returns null when list exists but is not published (DB returns empty — filtered by query)", async () => {
-      // The service filters is_published = true at the query level
-      mockSelectRowsSequence = [[]];
+    it("returns null when list exists but is not published (DB returns null — filtered by query)", async () => {
+      mockGetPublicListDetail.mockResolvedValue(null);
+
       const result = await getPublicListDetail({
         userId: USER_ID,
         listSlug: LIST_SLUG,
       });
+
       expect(result).toBeNull();
     });
 
-    it("returns null when list is soft-deleted (DB returns empty — filtered by query)", async () => {
-      // The service filters deleted_at IS NULL at the query level
-      mockSelectRowsSequence = [[]];
+    it("returns null when list is soft-deleted (DB returns null — filtered by query)", async () => {
+      mockGetPublicListDetail.mockResolvedValue(null);
+
       const result = await getPublicListDetail({
         userId: USER_ID,
         listSlug: LIST_SLUG,
       });
+
       expect(result).toBeNull();
     });
 
     it("wraps DB errors in PublicServiceError", async () => {
       const cause = new Error("DB connection lost");
-      mockSelectError = cause;
+      mockGetPublicListDetail.mockRejectedValue(cause);
+
       const err = await getPublicListDetail({ userId: USER_ID, listSlug: LIST_SLUG }).catch((e) => e);
+
       expect(err).toBeInstanceOf(PublicServiceError);
       expect(err.code).toBe("SERVICE_ERROR");
       expect(err.originalError).toBe(cause);
