@@ -357,7 +357,7 @@ Image Column:
 ### Files to Modify
 
 1. **src/components/shared/LandingPageClient.tsx**
-   - Remove existing YourFavs title and tagline (lines 41-48)
+   - Remove existing myfaves title and tagline (lines 41-48)
    - Replace `main` content with new hero section layout
    - Keep Header, modals, and state management unchanged
 

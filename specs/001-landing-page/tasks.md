@@ -49,11 +49,11 @@ description: "Task list for Landing Page implementation"
 
 ## Phase 3: User Story 1 - First-Time Visitor Loads Homepage (Priority: P1) 🎯 MVP
 
-**Goal**: Enable first-time visitors to load the YourFavs landing page at the root URL with fast initial render, proper branding display, and zero hydration errors.
+**Goal**: Enable first-time visitors to load the myfaves landing page at the root URL with fast initial render, proper branding display, and zero hydration errors.
 
 **Independent Test**: Navigate to `http://localhost:3000/` in a browser and verify:
 - Page renders within 2 seconds
-- "YourFavs" heading is visible
+- "myfaves" heading is visible
 - "Curate and share your favorite places" tagline is visible
 - No console errors (especially no hydration errors)
 - Page works without JavaScript enabled (core content visible)

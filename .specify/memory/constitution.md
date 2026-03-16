@@ -10,11 +10,11 @@
 - Follow-up TODOs: none
 -->
 
-# YourFavs Constitution
+# myfaves Constitution
 
 ## Overview
 
-**YourFavs** (`topten`) is a Next.js App Router application where users curate
+**myfaves** (`topten`) is a Next.js App Router application where users curate
 and share lists of favourite places. Creators build personalised, visually-focused
 lists; visitors discover and browse them. The platform is deployed on Vercel with
 Supabase for auth and Postgres, Drizzle ORM, Tailwind CSS v4, shadcn/ui, and the
@@ -83,7 +83,7 @@ captured in plan or spec documents before heavy implementation begins. Changes
 that materially impact performance MUST be measured, and optimisations MUST
 preserve correctness and readability.
 
-**Rationale**: Predictable performance ensures YourFavs remains reliable and
+**Rationale**: Predictable performance ensures myfaves remains reliable and
 responsive as usage grows.
 
 ### V. Observability & Debuggability
@@ -98,7 +98,7 @@ work practical.
 
 ### VI. Architecture Integrity (NON-NEGOTIABLE)
 
-YourFavs uses a **service-based architecture**. Every domain has a dedicated
+myfaves uses a **service-based architecture**. Every domain has a dedicated
 service module that owns all business logic and database access for that domain.
 
 #### Server Action layer contract
@@ -236,7 +236,7 @@ major UX shifts — MUST reference a decision record in `docs/decisions/`.
 
 ## Governance
 
-The YourFavs Constitution supersedes informal practices and individual preferences
+The myfaves Constitution supersedes informal practices and individual preferences
 when they conflict. All contributors are responsible for understanding and
 applying these principles.
 

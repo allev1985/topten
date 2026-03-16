@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement the signup and email verification API endpoints for the YourFavs platform. This task creates secure authentication endpoints that enable users to register accounts and verify their email addresses using Supabase Auth. Key security features include user enumeration protection (identical responses for new and existing users), strong password validation (12+ characters with complexity requirements), and proper session management upon email verification.
+Implement the signup and email verification API endpoints for the myfaves platform. This task creates secure authentication endpoints that enable users to register accounts and verify their email addresses using Supabase Auth. Key security features include user enumeration protection (identical responses for new and existing users), strong password validation (12+ characters with complexity requirements), and proper session management upon email verification.
 
 The implementation uses Next.js App Router API routes, Supabase Auth for authentication, and Zod for input validation. All endpoints follow RESTful conventions and integrate with the existing Supabase client utilities established in Task 1.1.
 

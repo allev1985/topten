@@ -44,7 +44,7 @@ To run a single test file: `pnpm test -- tests/unit/my-file.test.ts`
 
 ## Architecture
 
-**YourFavs** is a Next.js App Router application where users curate and share lists of favourite places.
+**myfaves** is a Next.js App Router application where users curate and share lists of favourite places.
 
 ### Layer overview
 

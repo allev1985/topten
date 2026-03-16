@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Header component provides the top navigation bar for the YourFavs landing page, displaying brand identity and authentication action buttons. This contract defines the component's public API, behavior guarantees, and integration requirements.
+The Header component provides the top navigation bar for the myfaves landing page, displaying brand identity and authentication action buttons. This contract defines the component's public API, behavior guarantees, and integration requirements.
 
 ## Component Signature
 
@@ -54,9 +54,9 @@ None. All props are required.
 1. **Logo Display**:
    - MUST render a clickable link containing:
      - MapPin icon (from lucide-react) in an orange circular background
-     - "YourFavs" text in bold font
+     - "myfaves" text in bold font
    - Link MUST have `href="/"` pointing to homepage
-   - Link MUST have `aria-label="YourFavs home"` for screen readers
+   - Link MUST have `aria-label="myfaves home"` for screen readers
 
 2. **Action Buttons**:
    - MUST render two buttons:
@@ -100,7 +100,7 @@ None. All props are required.
    - Buttons MUST be activatable with Space key
 
 2. **Screen Reader Support**:
-   - Logo link MUST be announced with descriptive label "YourFavs home"
+   - Logo link MUST be announced with descriptive label "myfaves home"
    - Buttons MUST be announced with their text content ("Log In", "Start Curating")
    - Header MUST be identified as banner landmark
    - Icon MUST have `aria-hidden="true"` (decorative)

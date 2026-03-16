@@ -40,16 +40,16 @@
 
 ## Phase 3: User Story 1 — Brand identity visible on every screen (Priority: P1) 🎯 MVP
 
-**Goal**: Every page shows the "myfaves" two-colour wordmark; no MapPin icon; no "YourFavs" string in any user-visible surface.
+**Goal**: Every page shows the "myfaves" two-colour wordmark; no MapPin icon; no "myfaves" string in any user-visible surface.
 
 **Independent Test**: Open `/`, `/dashboard`, and a public profile page. Browser tab titles all read "myfaves". Header and sidebar show the serif two-tone wordmark. No orange icon visible.
 
-- [ ] T005 [US1] Replace the `<div>` containing the `<MapPin>` icon and "YourFavs" `<span>` with the canonical two-colour wordmark markup from `contracts/wordmark.md` (size `text-2xl`, `aria-label="myfaves home"` on the `<Link>`) in `src/components/shared/Header.tsx`
-- [ ] T006 [P] [US1] Replace the `📍 YourFavs` heading string with the two-colour wordmark markup from `contracts/wordmark.md` (size `text-xl`) in `src/components/dashboard/DashboardSidebar.tsx`
-- [ ] T007 [P] [US1] Update `metadata.title` from `"YourFavs"` to `"myfaves"` in `src/app/layout.tsx`
-- [ ] T008 [P] [US1] Update `metadata.title` and `openGraph.title` from `"YourFavs"` to `"myfaves"` in `src/app/page.tsx`
-- [ ] T009 [P] [US1] Replace all `"YourFavs"` occurrences in `generateMetadata` return values (title fallback, profile title, description string) in `src/app/profiles/[vanitySlug]/page.tsx`
-- [ ] T010 [P] [US1] Replace all `"YourFavs"` occurrences in `generateMetadata` return values (list title, description string) in `src/app/profiles/[vanitySlug]/lists/[listSlug]/page.tsx`
+- [ ] T005 [US1] Replace the `<div>` containing the `<MapPin>` icon and "myfaves" `<span>` with the canonical two-colour wordmark markup from `contracts/wordmark.md` (size `text-2xl`, `aria-label="myfaves home"` on the `<Link>`) in `src/components/shared/Header.tsx`
+- [ ] T006 [P] [US1] Replace the `📍 myfaves` heading string with the two-colour wordmark markup from `contracts/wordmark.md` (size `text-xl`) in `src/components/dashboard/DashboardSidebar.tsx`
+- [ ] T007 [P] [US1] Update `metadata.title` from `"myfaves"` to `"myfaves"` in `src/app/layout.tsx`
+- [ ] T008 [P] [US1] Update `metadata.title` and `openGraph.title` from `"myfaves"` to `"myfaves"` in `src/app/page.tsx`
+- [ ] T009 [P] [US1] Replace all `"myfaves"` occurrences in `generateMetadata` return values (title fallback, profile title, description string) in `src/app/profiles/[vanitySlug]/page.tsx`
+- [ ] T010 [P] [US1] Replace all `"myfaves"` occurrences in `generateMetadata` return values (list title, description string) in `src/app/profiles/[vanitySlug]/lists/[listSlug]/page.tsx`
 
 **Checkpoint**: US1 fully functional. All wordmarks correct, all page titles read "myfaves". Can be demoed independently.
 
@@ -97,8 +97,8 @@
 
 **Purpose**: Tests, final validation, and cleanup.
 
-- [ ] T016 [P] Write component test asserting: (a) wordmark renders `<span>my</span>` and `<span>faves</span>` in DM Serif text, (b) no `MapPin` or "YourFavs" text is present, in `tests/component/Header.test.tsx`
-- [ ] T017 [P] Write component test asserting: (a) sidebar wordmark renders `<span>my</span>` and `<span>faves</span>`, (b) no `📍` emoji or "YourFavs" string is present, in `tests/component/DashboardSidebar.test.tsx`
+- [ ] T016 [P] Write component test asserting: (a) wordmark renders `<span>my</span>` and `<span>faves</span>` in DM Serif text, (b) no `MapPin` or "myfaves" text is present, in `tests/component/Header.test.tsx`
+- [ ] T017 [P] Write component test asserting: (a) sidebar wordmark renders `<span>my</span>` and `<span>faves</span>`, (b) no `📍` emoji or "myfaves" string is present, in `tests/component/DashboardSidebar.test.tsx`
 - [ ] T018 Run `pnpm test` — all Vitest unit + component tests must pass; run `pnpm exec playwright test` — all E2E tests must pass; work through the manual checklist in `specs/001-brand-styling/quickstart.md` in a running browser
 
 ---

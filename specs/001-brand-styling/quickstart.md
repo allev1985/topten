@@ -44,11 +44,11 @@ Simulate via DevTools → Rendering tab → "Emulate CSS prefers-color-scheme: d
 
 ### Wordmark & Branding
 
-- [ ] Browser tab title: **myfaves** (not "YourFavs")
+- [ ] Browser tab title: **myfaves** (not "myfaves")
 - [ ] Landing header: wordmark shows "my" in near-black + "faves" in violet — no MapPin icon
-- [ ] Dashboard sidebar: same two-colour wordmark — no `📍 YourFavs` text
-- [ ] Navigate to a public profile page — page title contains "myfaves" not "YourFavs"
-- [ ] Navigate to a public list page — page title contains "myfaves" not "YourFavs"
+- [ ] Dashboard sidebar: same two-colour wordmark — no `📍 myfaves` text
+- [ ] Navigate to a public profile page — page title contains "myfaves" not "myfaves"
+- [ ] Navigate to a public list page — page title contains "myfaves" not "myfaves"
 
 ### List Cards
 
@@ -82,6 +82,6 @@ All existing tests must pass. Component tests for `Header` and `DashboardSidebar
 | `src/app/profiles/[vanitySlug]/page.tsx` | Page title/description strings → "myfaves" |
 | `src/app/profiles/[vanitySlug]/lists/[listSlug]/page.tsx` | Page title/description strings → "myfaves" |
 | `src/components/shared/Header.tsx` | Logo: MapPin+text → two-colour wordmark |
-| `src/components/dashboard/DashboardSidebar.tsx` | Logo: 📍 YourFavs → two-colour wordmark |
+| `src/components/dashboard/DashboardSidebar.tsx` | Logo: 📍 myfaves → two-colour wordmark |
 | `src/components/dashboard/ListCard.tsx` | Add gradient cover strip |
 | `src/lib/utils/gradient.ts` | New file — `BRAND_GRADIENTS` + `listCoverGradient()` |

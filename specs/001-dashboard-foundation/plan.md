@@ -79,7 +79,7 @@ The Dashboard Foundation feature provides a secure, responsive workspace for aut
 - **Navigation Pattern**: Consistent with existing app patterns (login/logout flows)
 - **Visual Structure**: Using existing shadcn/ui components for consistency
 - **Responsive Breakpoints**: Standard Tailwind breakpoints (lg:1024px)
-- **Branding**: Consistent "📍 YourFavs" branding across sidebar and mobile drawer
+- **Branding**: Consistent "📍 myfaves" branding across sidebar and mobile drawer
 - **Semantic HTML**: nav, aside, main elements for accessibility
 
 ### IV. Performance & Resource Efficiency ✅

@@ -3,19 +3,19 @@
 **Feature Branch**: `001-brand-styling`  
 **Created**: 2026-03-13  
 **Status**: Draft  
-**Input**: User description: "Update all the styling to match the brand specifications and logos as specified in docs/brand/brand-identity.html. Not the name change; not 'YourFaves' but 'myfaves'"
+**Input**: User description: "Update all the styling to match the brand specifications and logos as specified in docs/brand/brand-identity.html. Not the name change; not 'myfaves' but 'myfaves'"
 
 ---
 
 ## Context
 
-The app currently uses a generic neutral/zinc colour palette with the Geist typeface, an orange MapPin logo, and the working title "YourFavs". The brand identity system defined in `docs/brand/brand-identity.html` establishes a distinct visual language for **myfaves** — violet-led colours, DM Serif Display + DM Sans typography, a two-colour wordmark ("my" / "faves"), and a set of branded component styles. This spec covers migrating all visual styling to match that identity. Text-string renaming is part of the wordmark/logo work, not a standalone copy-change task.
+The app currently uses a generic neutral/zinc colour palette with the Geist typeface, an orange MapPin logo, and the working title "myfaves". The brand identity system defined in `docs/brand/brand-identity.html` establishes a distinct visual language for **myfaves** — violet-led colours, DM Serif Display + DM Sans typography, a two-colour wordmark ("my" / "faves"), and a set of branded component styles. This spec covers migrating all visual styling to match that identity. Text-string renaming is part of the wordmark/logo work, not a standalone copy-change task.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 – See the correct brand on every screen (Priority: P1)
 
-A visitor landing on the app, a user logging in, and an authenticated user on the dashboard all see the **myfaves** wordmark and brand colours consistently — there is no trace of the old orange icon, "YourFavs" text, or zinc/neutral palette.
+A visitor landing on the app, a user logging in, and an authenticated user on the dashboard all see the **myfaves** wordmark and brand colours consistently — there is no trace of the old orange icon, "myfaves" text, or zinc/neutral palette.
 
 **Why this priority**: Brand coherence is the whole point of this spec. Every other story builds on the correct token foundation.
 
@@ -24,8 +24,8 @@ A visitor landing on the app, a user logging in, and an authenticated user on th
 **Acceptance Scenarios**:
 
 1. **Given** a user opens the landing page, **When** the page loads, **Then** the header wordmark reads "myfaves" rendered in DM Serif Display with the two-colour split, and the orange MapPin icon is absent.
-2. **Given** a user views the dashboard sidebar, **When** the sidebar is visible, **Then** the logo area shows the "myfaves" wordmark (not "📍 YourFavs") with the correct colour split.
-3. **Given** any page with a `<title>`, **When** the browser tab is examined, **Then** the title contains "myfaves" (not "YourFavs" or "YourFaves").
+2. **Given** a user views the dashboard sidebar, **When** the sidebar is visible, **Then** the logo area shows the "myfaves" wordmark (not "📍 myfaves") with the correct colour split.
+3. **Given** any page with a `<title>`, **When** the browser tab is examined, **Then** the title contains "myfaves" (not "myfaves" or "myfaves").
 
 ---
 
@@ -101,11 +101,11 @@ When the OS/browser preference is dark, the app switches to the brand dark palet
 
 **FR-005**: The Tailwind / CSS theme MUST expose `--font-serif: 'DM Serif Display', Georgia, serif` and `--font-sans: 'DM Sans', system-ui, sans-serif` for component use.
 
-**FR-006**: The `Header` component (`src/components/shared/Header.tsx`) MUST replace the orange MapPin + "YourFavs" logo with the myfaves two-colour wordmark: `<span>my</span>` in near-black/white and `<span>faves</span>` in `#8B5CF6`/`#C4B5FD`, rendered in DM Serif Display. The `aria-label` MUST read "myfaves home".
+**FR-006**: The `Header` component (`src/components/shared/Header.tsx`) MUST replace the orange MapPin + "myfaves" logo with the myfaves two-colour wordmark: `<span>my</span>` in near-black/white and `<span>faves</span>` in `#8B5CF6`/`#C4B5FD`, rendered in DM Serif Display. The `aria-label` MUST read "myfaves home".
 
-**FR-007**: The `DashboardSidebar` component (`src/components/dashboard/DashboardSidebar.tsx`) MUST replace the `📍 YourFavs` string with the same two-colour wordmark used in the Header.
+**FR-007**: The `DashboardSidebar` component (`src/components/dashboard/DashboardSidebar.tsx`) MUST replace the `📍 myfaves` string with the same two-colour wordmark used in the Header.
 
-**FR-008**: The page `<title>` in `src/app/layout.tsx`, `src/app/page.tsx`, and any other files containing "YourFavs" metadata MUST be updated to "myfaves".
+**FR-008**: The page `<title>` in `src/app/layout.tsx`, `src/app/page.tsx`, and any other files containing "myfaves" metadata MUST be updated to "myfaves".
 
 **FR-009**: Primary buttons MUST use `background: #8B5CF6; color: white; border-radius: 999px` (pill shape). This is achieved via the `--primary` CSS token update; no per-component Tailwind class overrides are required unless a shadcn component does not respect the token.
 
@@ -117,7 +117,7 @@ When the OS/browser preference is dark, the app switches to the brand dark palet
 
 **FR-013**: The `--radius` token MUST be updated to `0.625rem` (10 px) from the current `0.5rem`, matching the brand's rounded component style.
 
-**FR-014**: All occurrences of the string "YourFavs" or "YourFaves" in user-visible text (labels, aria attributes, `alt` text, page titles, descriptions) MUST be replaced with "myfaves".
+**FR-014**: All occurrences of the string "myfaves" or "myfaves" in user-visible text (labels, aria attributes, `alt` text, page titles, descriptions) MUST be replaced with "myfaves".
 
 ### Key Entities
 
@@ -133,7 +133,7 @@ When the OS/browser preference is dark, the app switches to the brand dark palet
 
 - **SC-001**: All pages pass a visual check where no orange, zinc, or neutral-grey primary interactive elements remain. Zero occurrences of `bg-orange-*`, `text-orange-*`, `bg-zinc-*` on brand-critical elements (logo, primary buttons, focus rings).
 - **SC-002**: Computed `font-family` on `<body>`, heading elements, and button elements resolves to DM Sans and/or DM Serif Display in Chromium DevTools.
-- **SC-003**: The string "YourFavs" or "YourFaves" does not appear in any user-visible surface (browser tab title, visible text, `aria-label`, `alt` text) across all pages.
+- **SC-003**: The string "myfaves" or "myfaves" does not appear in any user-visible surface (browser tab title, visible text, `aria-label`, `alt` text) across all pages.
 - **SC-004**: Primary CTA buttons on both the landing page and dashboard have a computed background colour of `rgb(139, 92, 246)` (`#8B5CF6`).
 - **SC-005**: In dark mode (OS preference), the body background computes to `rgb(17, 24, 39)` (`#111827`) and the wordmark "faves" span computes to `rgb(196, 181, 253)` (`#C4B5FD`).
 - **SC-006**: No list card cover shows a plain solid grey/white fill; every cover displays one of the four brand gradients.
@@ -147,4 +147,4 @@ When the OS/browser preference is dark, the app switches to the brand dark palet
 - Google Fonts is accessible in the deployment environment, or self-hosting will be arranged separately (font hosting is out of scope for this spec).
 - Existing list data in the database does not store a `coverGradient` field yet; the default gradient logic will be applied at render time and can be updated when a picker is added.
 - Dark mode is driven by `prefers-color-scheme` media query; no manual toggle is in scope for this spec.
-- The `<title>` and `<meta>` description values are the only hard-coded occurrences of "YourFavs" outside of component source files; a codebase grep will be run during implementation to catch any stragglers.
+- The `<title>` and `<meta>` description values are the only hard-coded occurrences of "myfaves" outside of component source files; a codebase grep will be run during implementation to catch any stragglers.

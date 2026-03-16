@@ -9,7 +9,7 @@
 
 ### User Story 1 - First-Time Visitor Understands Product Value (Priority: P1)
 
-A visitor arrives at the YourFavs landing page and immediately sees a clear value proposition with compelling text and imagery that explains what the product does and why they should use it.
+A visitor arrives at the myfaves landing page and immediately sees a clear value proposition with compelling text and imagery that explains what the product does and why they should use it.
 
 **Why this priority**: This is the most critical user journey because it determines whether visitors convert to users. Without clear communication of value, all other functionality is moot.
 

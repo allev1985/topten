@@ -105,7 +105,7 @@ import { MapPin } from "lucide-react";
   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500">
     <MapPin className="h-6 w-6 text-white" />
   </div>
-  <span className="text-xl font-bold">YourFavs</span>
+  <span className="text-xl font-bold">myfaves</span>
 </div>
 ```
 
@@ -140,14 +140,14 @@ import Link from "next/link";
 <Link 
   href="/" 
   className="flex items-center gap-2"
-  aria-label="YourFavs home"
+  aria-label="myfaves home"
 >
   {/* Logo content */}
 </Link>
 ```
 
 **Accessibility Considerations**:
-- `aria-label="YourFavs home"` provides descriptive label for screen readers
+- `aria-label="myfaves home"` provides descriptive label for screen readers
 - Link receives keyboard focus automatically
 - Visual focus indicator provided by Tailwind CSS focus states
 
@@ -204,9 +204,9 @@ import userEvent from "@testing-library/user-event";
 import Header from "@/components/shared/Header";
 
 describe("Header - Rendering", () => {
-  it("displays YourFavs brand with MapPin icon", () => {
+  it("displays myfaves brand with MapPin icon", () => {
     render(<Header onLogin={vi.fn()} onSignup={vi.fn()} />);
-    expect(screen.getByLabelText("YourFavs home")).toBeInTheDocument();
+    expect(screen.getByLabelText("myfaves home")).toBeInTheDocument();
   });
 });
 ```

@@ -339,7 +339,7 @@ otp_expiry = 3600
 
 **Content Requirements**:
 
-- Clear subject line: "Verify your YourFavs account"
+- Clear subject line: "Verify your myfaves account"
 - Prominent CTA button
 - Responsive design
 - Plain text alternative
@@ -353,7 +353,7 @@ otp_expiry = 3600
 
 **Content Requirements**:
 
-- Clear subject line: "Reset your YourFavs password"
+- Clear subject line: "Reset your myfaves password"
 - Expiry notice (link valid for 1 hour)
 - Prominent CTA button
 - Responsive design

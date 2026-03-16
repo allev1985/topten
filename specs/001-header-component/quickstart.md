@@ -6,7 +6,7 @@
 
 ## Overview
 
-This guide walks you through implementing the YourFavs landing page Header component. You'll create a reusable header with brand identity and authentication buttons, integrate it into the landing page, and write comprehensive tests.
+This guide walks you through implementing the myfaves landing page Header component. You'll create a reusable header with brand identity and authentication buttons, integrate it into the landing page, and write comprehensive tests.
 
 ## Prerequisites
 
@@ -41,13 +41,13 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
         <Link 
           href="/" 
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
-          aria-label="YourFavs home"
+          aria-label="myfaves home"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500">
             <MapPin className="h-6 w-6 text-white" aria-hidden="true" />
           </div>
           <span className="text-xl font-bold text-black dark:text-white">
-            YourFavs
+            myfaves
           </span>
         </Link>
 
@@ -101,7 +101,7 @@ export default function LandingPageClient() {
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-            YourFavs
+            myfaves
           </h1>
           <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
             Curate and share your favorite places
@@ -136,15 +136,15 @@ describe("Header - Brand Identity and Visual Elements (User Story 1)", () => {
     onSignup: vi.fn(),
   };
 
-  it("renders the YourFavs logo with MapPin icon and text", () => {
+  it("renders the myfaves logo with MapPin icon and text", () => {
     render(<Header {...mockHandlers} />);
     
     // Verify logo link is present
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toBeInTheDocument();
     
     // Verify brand text is present
-    expect(screen.getByText("YourFavs")).toBeInTheDocument();
+    expect(screen.getByText("myfaves")).toBeInTheDocument();
   });
 
   it("displays both action buttons with correct labels", () => {
@@ -194,21 +194,21 @@ describe("Header - Logo Navigation (User Story 2)", () => {
   it("renders logo as a clickable link to homepage", () => {
     render(<Header {...mockHandlers} />);
     
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toHaveAttribute("href", "/");
   });
 
   it("provides visual feedback when logo is hovered", () => {
     render(<Header {...mockHandlers} />);
     
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toHaveClass("hover:opacity-80");
   });
 
   it("logo link is keyboard accessible", () => {
     render(<Header {...mockHandlers} />);
     
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink.tagName).toBe("A");
   });
 });
@@ -305,7 +305,7 @@ describe("Header - Accessibility (User Story 4)", () => {
     
     // Tab through elements
     await user.tab();
-    expect(screen.getByLabelText("YourFavs home")).toHaveFocus();
+    expect(screen.getByLabelText("myfaves home")).toHaveFocus();
     
     await user.tab();
     expect(screen.getByRole("button", { name: "Log In" })).toHaveFocus();
@@ -317,7 +317,7 @@ describe("Header - Accessibility (User Story 4)", () => {
   it("logo link has descriptive accessible label", () => {
     render(<Header {...mockHandlers} />);
     
-    const logoLink = screen.getByLabelText("YourFavs home");
+    const logoLink = screen.getByLabelText("myfaves home");
     expect(logoLink).toBeInTheDocument();
   });
 
@@ -375,7 +375,7 @@ pnpm test:watch tests/component/header
    - [ ] Start dev server: `pnpm dev`
    - [ ] Navigate to http://localhost:3000
    - [ ] Verify header appears at top with orange MapPin icon
-   - [ ] Verify "YourFavs" text is visible
+   - [ ] Verify "myfaves" text is visible
    - [ ] Verify "Log In" and "Start Curating" buttons are visible
    - [ ] Verify "Start Curating" button is more prominent
 
@@ -415,7 +415,7 @@ it("renders with header for all users", () => {
   render(<LandingPageClient />);
   
   expect(screen.getByRole("banner")).toBeInTheDocument(); // Header
-  expect(screen.getByRole("heading", { name: "YourFavs" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "myfaves" })).toBeInTheDocument();
 });
 ```
 
@@ -452,7 +452,7 @@ pnpm format
 **Solution**: Verify Next.js Link is imported from `next/link`. Check that `href="/"` is set correctly.
 
 ### Issue: Accessibility tests fail
-**Solution**: Ensure `aria-label="YourFavs home"` is on the Link component. Verify header element is `<header>` tag.
+**Solution**: Ensure `aria-label="myfaves home"` is on the Link component. Verify header element is `<header>` tag.
 
 ## Success Criteria Verification
 

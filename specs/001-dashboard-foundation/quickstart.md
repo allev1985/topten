@@ -59,7 +59,7 @@ export function DashboardSidebar(): JSX.Element {
     <div className="flex flex-col h-full">
       {/* Logo/Branding */}
       <div className="p-6 border-b">
-        <h1 className="text-xl font-semibold">📍 YourFavs</h1>
+        <h1 className="text-xl font-semibold">📍 myfaves</h1>
       </div>
 
       {/* Navigation Container */}
@@ -232,9 +232,9 @@ import { render, screen } from '@testing-library/react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 
 describe('DashboardSidebar', () => {
-  it('renders YourFavs branding', () => {
+  it('renders myfaves branding', () => {
     render(<DashboardSidebar />);
-    expect(screen.getByText(/YourFavs/i)).toBeInTheDocument();
+    expect(screen.getByText(/myfaves/i)).toBeInTheDocument();
   });
 
   it('includes navigation container', () => {
@@ -581,7 +581,7 @@ test.describe('Dashboard Access', () => {
     
     // Drawer should be visible
     await expect(page.locator('[role="dialog"]')).toBeVisible();
-    await expect(page.getByText('YourFavs')).toBeVisible();
+    await expect(page.getByText('myfaves')).toBeVisible();
   });
 
   test('closes drawer on outside click', async ({ page }) => {
@@ -640,7 +640,7 @@ open coverage/index.html
 - [ ] Navigate to `/dashboard` without auth → redirects to `/login`
 - [ ] Login → navigate to `/dashboard` → shows dashboard
 - [ ] Sidebar visible on left (fixed position)
-- [ ] Logo "📍 YourFavs" visible in sidebar
+- [ ] Logo "📍 myfaves" visible in sidebar
 - [ ] Main content area offset to the right
 - [ ] Scroll page → sidebar remains fixed
 - [ ] No hamburger menu visible

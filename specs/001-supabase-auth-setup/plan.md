@@ -5,7 +5,7 @@
 
 ## Summary
 
-Create the authentication foundation for YourFavs by implementing a middleware helper for session refresh, TypeScript types for authentication responses, and ensuring environment validation works correctly. This task establishes the foundational utilities required for all subsequent authentication features.
+Create the authentication foundation for myfaves by implementing a middleware helper for session refresh, TypeScript types for authentication responses, and ensuring environment validation works correctly. This task establishes the foundational utilities required for all subsequent authentication features.
 
 **Primary deliverables:**
 

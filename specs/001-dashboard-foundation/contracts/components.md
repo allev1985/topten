@@ -36,7 +36,7 @@ export function DashboardSidebar(): JSX.Element
 ### Behavior Contract
 
 **Guarantees**:
-- MUST render "📍 YourFavs" branding at the top
+- MUST render "📍 myfaves" branding at the top
 - MUST include a navigation container for future items
 - MUST use semantic HTML (`<nav>` for navigation)
 - MUST apply consistent styling for both desktop and mobile contexts
@@ -322,8 +322,8 @@ interface Router {
 
 ```typescript
 describe('DashboardSidebar', () => {
-  it('renders YourFavs branding', () => {
-    // Verify "📍 YourFavs" text is present
+  it('renders myfaves branding', () => {
+    // Verify "📍 myfaves" text is present
   });
 
   it('includes navigation container', () => {

@@ -82,7 +82,7 @@
 
 ### Implementation for User Story 2
 
-- [x] T018 [P] [US2] Create password recovery email template at supabase/templates/recovery.html with YourFavs branding
+- [x] T018 [P] [US2] Create password recovery email template at supabase/templates/recovery.html with myfaves branding
 - [x] T019 [US2] Add responsive HTML structure with header, content, and footer sections to supabase/templates/recovery.html
 - [x] T020 [US2] Add prominent Reset Password CTA button with {{ .ConfirmationURL }} link variable to supabase/templates/recovery.html
 - [x] T021 [US2] Add 1-hour expiry notice and security messaging to supabase/templates/recovery.html
@@ -122,7 +122,7 @@
 
 ### Implementation for User Story 4
 
-- [x] T032 [P] [US4] Create email confirmation template at supabase/templates/confirmation.html with YourFavs branding
+- [x] T032 [P] [US4] Create email confirmation template at supabase/templates/confirmation.html with myfaves branding
 - [x] T033 [US4] Add responsive HTML structure with header, content, and footer sections to supabase/templates/confirmation.html
 - [x] T034 [US4] Add prominent Verify Email CTA button with {{ .ConfirmationURL }} link variable to supabase/templates/confirmation.html
 - [x] T035 [US4] Add security messaging ("if you didn't create an account...") to supabase/templates/confirmation.html

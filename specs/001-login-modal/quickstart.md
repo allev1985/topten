@@ -241,7 +241,7 @@ export default function LandingPageClient() {
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-            YourFavs
+            myfaves
           </h1>
           <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
             Curate and share your favorite places

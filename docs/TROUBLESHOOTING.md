@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide covers common issues you might encounter while developing YourFavs.
+This guide covers common issues you might encounter while developing myfaves.
 
 ## Docker Issues
 

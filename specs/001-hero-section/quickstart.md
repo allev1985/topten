@@ -673,7 +673,7 @@ Before marking implementation complete, verify:
 **Solution**: Verify `import { Sparkles } from "lucide-react"` at top of file. Check icon is rendered with `<Sparkles className="..." />`.
 
 ### Issue: Tests failing after implementation
-**Solution**: Update existing tests that check for old content ("YourFavs" heading). Replace with new hero section content checks.
+**Solution**: Update existing tests that check for old content ("myfaves" heading). Replace with new hero section content checks.
 
 ---
 

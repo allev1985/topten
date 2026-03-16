@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document defines the database schema for the YourFavs platform using Drizzle ORM with PostgreSQL. The schema includes four core entities: User, List, Place, and ListPlace.
+This document defines the database schema for the myfaves platform using Drizzle ORM with PostgreSQL. The schema includes four core entities: User, List, Place, and ListPlace.
 
 ## Entity Definitions
 

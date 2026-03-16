@@ -7,7 +7,7 @@
 
 ## Summary
 
-Build a reusable Header component for the YourFavs landing page that displays brand identity (MapPin icon + "YourFavs" text) and provides authentication entry points through "Log In" and "Start Curating" buttons. The component will be integrated into the existing LandingPageClient component and follow Next.js App Router patterns with client-side interactivity for button clicks. Implementation uses existing shadcn/ui Button components with ghost and default variants, lucide-react for icons, and follows the project's TypeScript and Tailwind CSS conventions.
+Build a reusable Header component for the myfaves landing page that displays brand identity (MapPin icon + "myfaves" text) and provides authentication entry points through "Log In" and "Start Curating" buttons. The component will be integrated into the existing LandingPageClient component and follow Next.js App Router patterns with client-side interactivity for button clicks. Implementation uses existing shadcn/ui Button components with ghost and default variants, lucide-react for icons, and follows the project's TypeScript and Tailwind CSS conventions.
 
 ## Technical Context
 
@@ -82,7 +82,7 @@ Build a reusable Header component for the YourFavs landing page that displays br
 
 **Terminology Consistency**: 
 - "Log In" and "Start Curating" match auth flow terminology
-- "YourFavs" brand name consistent with existing usage
+- "myfaves" brand name consistent with existing usage
 
 **Interaction Patterns**:
 - Buttons use existing shadcn/ui Button component patterns
@@ -171,7 +171,7 @@ tests/
 
 **Structure Decision**: 
 
-This feature follows the **Web application** structure already established in the TopTen/YourFavs codebase:
+This feature follows the **Web application** structure already established in the TopTen/myfaves codebase:
 
 1. **Component Placement**: 
    - New `Header.tsx` goes in `src/components/shared/` alongside `LandingPageClient.tsx` because it's a shared UI component used across the landing page

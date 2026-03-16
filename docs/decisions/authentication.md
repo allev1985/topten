@@ -1,5 +1,5 @@
 # Authentication 
-This document outlines the authentication mechanisms used in the YourFaves application to ensure secure access to its features and data.
+This document outlines the authentication mechanisms used in the myfaves application to ensure secure access to its features and data.
 
 > **📝 Note on Document Structure:**  
 > - **Sections 1-10** (Overview through Authentication Flows) describe the **original implementation** (pre-2025-12-07) using a three-layer architecture with API routes. These sections are preserved for historical reference.
@@ -15,7 +15,7 @@ The dashboard routes will be protected in order to provide authenticated users p
 
 ## Session Management
 
-Session management in YourFaves is a collaborative effort between Supabase and Next.js, with each handling specific responsibilities:
+Session management in myfaves is a collaborative effort between Supabase and Next.js, with each handling specific responsibilities:
 
 ### Supabase Responsibilities
 - **Session creation** - Generates access tokens and refresh tokens when users authenticate

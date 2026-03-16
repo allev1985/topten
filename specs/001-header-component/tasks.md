@@ -46,21 +46,21 @@ This is a Next.js web application with:
 
 ## Phase 3: User Story 1 - View Brand Identity and Navigation (Priority: P1) 🎯 MVP
 
-**Goal**: Display professional header with YourFavs logo (MapPin icon in orange circle + text) and two action buttons ("Log In" subtle, "Start Curating" prominent)
+**Goal**: Display professional header with myfaves logo (MapPin icon in orange circle + text) and two action buttons ("Log In" subtle, "Start Curating" prominent)
 
 **Independent Test**: Load landing page and verify header renders with all visual elements (logo, buttons) visible and properly styled
 
 ### Implementation for User Story 1
 
 - [x] T004 [US1] Create Header component with props interface in src/components/shared/Header.tsx
-- [x] T005 [US1] Implement logo section with Next.js Link, MapPin icon in orange circle, and "YourFavs" text in src/components/shared/Header.tsx
+- [x] T005 [US1] Implement logo section with Next.js Link, MapPin icon in orange circle, and "myfaves" text in src/components/shared/Header.tsx
 - [x] T006 [US1] Implement action buttons section with "Log In" (ghost variant) and "Start Curating" (default variant) in src/components/shared/Header.tsx
 - [x] T007 [US1] Apply responsive layout with flexbox and horizontal padding in src/components/shared/Header.tsx
 
 ### Tests for User Story 1
 
 - [x] T008 [P] [US1] Create rendering test file to verify brand identity elements in tests/component/header/header-rendering.test.tsx
-- [x] T009 [P] [US1] Add test: renders YourFavs logo with MapPin icon and text in tests/component/header/header-rendering.test.tsx
+- [x] T009 [P] [US1] Add test: renders myfaves logo with MapPin icon and text in tests/component/header/header-rendering.test.tsx
 - [x] T010 [P] [US1] Add test: displays both action buttons with correct labels in tests/component/header/header-rendering.test.tsx
 - [x] T011 [P] [US1] Add test: renders header as banner landmark element in tests/component/header/header-rendering.test.tsx
 - [x] T012 [P] [US1] Add test: applies correct styling for visual hierarchy in tests/component/header/header-rendering.test.tsx

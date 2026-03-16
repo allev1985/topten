@@ -1,4 +1,4 @@
-# Quickstart Guide: YourFavs Development Setup
+# Quickstart Guide: myfaves Development Setup
 
 **Feature**: 001-local-dev-setup | **Date**: 2025-11-28
 

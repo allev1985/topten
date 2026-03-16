@@ -85,7 +85,7 @@
 ### Implementation for User Story 2
 
 - [X] T020 [P] [US2] Create DashboardSidebar component in `src/components/dashboard/DashboardSidebar.tsx`
-- [X] T021 [US2] Add "📍 YourFavs" branding to DashboardSidebar in `src/components/dashboard/DashboardSidebar.tsx`
+- [X] T021 [US2] Add "📍 myfaves" branding to DashboardSidebar in `src/components/dashboard/DashboardSidebar.tsx`
 - [X] T022 [US2] Add navigation container with semantic nav element in `src/components/dashboard/DashboardSidebar.tsx`
 - [X] T023 [US2] Add fixed desktop sidebar to dashboard page in `src/app/(dashboard)/dashboard/page.tsx`
 - [X] T024 [US2] Apply fixed positioning and styling (hidden lg:block, w-64, border-r) to sidebar in `src/app/(dashboard)/dashboard/page.tsx`
@@ -303,7 +303,7 @@ With multiple developers:
 
 ### User Story 2: Desktop Navigation Workspace
 - [ ] Desktop viewport (≥1024px) shows fixed sidebar on left
-- [ ] Sidebar displays "📍 YourFavs" logo/branding
+- [ ] Sidebar displays "📍 myfaves" logo/branding
 - [ ] Sidebar remains fixed during main content scrolling
 - [ ] Resizing from desktop to mobile hides sidebar and shows hamburger
 

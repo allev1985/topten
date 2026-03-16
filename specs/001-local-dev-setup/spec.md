@@ -3,13 +3,13 @@
 **Feature Branch**: `001-local-dev-setup`  
 **Created**: 2025-11-28  
 **Status**: Draft  
-**Input**: User description: "Create a feature specification for setting up the local development environment for the YourFavs/TopTen platform"
+**Input**: User description: "Create a feature specification for setting up the local development environment for the myfaves/TopTen platform"
 
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Initial Project Setup (Priority: P1)
 
-As a new developer joining the YourFavs/TopTen project, I want to clone the repository and set up my local development environment quickly so that I can start contributing code within a reasonable timeframe.
+As a new developer joining the myfaves/TopTen project, I want to clone the repository and set up my local development environment quickly so that I can start contributing code within a reasonable timeframe.
 
 **Why this priority**: This is the foundational capability - without a working local environment, no development work can occur. Every other feature depends on this being complete.
 

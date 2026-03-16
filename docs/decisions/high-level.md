@@ -1,12 +1,12 @@
-# YourFavs Platform Architecture
+# myfaves Platform Architecture
 
 ## Overview
 
-YourFavs is a platform that empowers individuals to curate and share personalised collections of their favourite places. Users build focused, meaningful lists that reflect their genuine preferences and local expertise.
+myfaves is a platform that empowers individuals to curate and share personalised collections of their favourite places. Users build focused, meaningful lists that reflect their genuine preferences and local expertise.
 
-The platform prioritises visual storytelling and ease of consumption. Rather than overwhelming viewers with dense information, YourFavs presents each list through a carefully designed interface that highlights compelling imagery, distills key details, and creates an intuitive browsing experience. The result is a format that feels less like a review database and more like a personal recommendation from a trusted friend.
+The platform prioritises visual storytelling and ease of consumption. Rather than overwhelming viewers with dense information, myfaves presents each list through a carefully designed interface that highlights compelling imagery, distills key details, and creates an intuitive browsing experience. The result is a format that feels less like a review database and more like a personal recommendation from a trusted friend.
 
-Core to the platform is the concept of curation as expression. Users aren't just logging places they've visited—they're crafting a curated identity around taste, discovery, and place. Whether someone is a local sharing hidden gems or a traveller documenting memorable finds, YourFavs provides the canvas to showcase what matters to them in a way that's both visually appealing and immediately useful to others.
+Core to the platform is the concept of curation as expression. Users aren't just logging places they've visited—they're crafting a curated identity around taste, discovery, and place. Whether someone is a local sharing hidden gems or a traveller documenting memorable finds, myfaves provides the canvas to showcase what matters to them in a way that's both visually appealing and immediately useful to others.
 
 ## Executive Summary
 
@@ -54,14 +54,14 @@ The platform is built as a modern, serverless application optimised for rapid de
 
 ```mermaid
 C4Context
-    title YourFavs - System Context Diagram
+    title myfaves - System Context Diagram
 
     Person(creator, "List Creator", "Curates and publishes personalised lists of favourite places")
     Person(visitor, "Visitor", "Discovers and browses published lists")
 
-    Enterprise_Boundary(yf, "YourFavs Platform") {
-        System(portal, "YourFavs Web Application", "Enables list creation, curation, and discovery through a visually-focused interface")
-        SystemDb(db, "YourFavs Database", "Stores user profiles, lists, and places")
+    Enterprise_Boundary(yf, "myfaves Platform") {
+        System(portal, "myfaves Web Application", "Enables list creation, curation, and discovery through a visually-focused interface")
+        SystemDb(db, "myfaves Database", "Stores user profiles, lists, and places")
     }
 
     System_Ext(google, "Google Places API", "Provides place search, details, and imagery")

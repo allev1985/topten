@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: YourFavs Authentication API - Login & Logout
+  title: myfaves Authentication API - Login & Logout
   description: API contracts for login and logout endpoints
   version: 1.0.0
 

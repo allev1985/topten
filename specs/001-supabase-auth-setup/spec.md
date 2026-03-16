@@ -9,7 +9,7 @@
 
 ### User Story 1 - Developer Sets Up Local Authentication Environment (Priority: P1)
 
-As a developer working on the YourFavs application, I need to be able to set up the authentication foundation locally so that I can build and test authentication features that protect dashboard routes.
+As a developer working on the myfaves application, I need to be able to set up the authentication foundation locally so that I can build and test authentication features that protect dashboard routes.
 
 **Why this priority**: This is the critical foundation that all other authentication tasks depend on. Without proper Supabase client configuration and middleware helpers, no authentication features can be implemented.
 

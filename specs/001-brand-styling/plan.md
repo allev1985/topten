@@ -7,7 +7,7 @@
 
 ## Summary
 
-Replace the app's generic neutral/zinc palette, Geist/Arial typography, orange MapPin logo, and "YourFavs" naming with the **myfaves** brand identity: violet (`#8B5CF6`) as the primary colour, DM Serif Display + DM Sans typefaces, a two-colour wordmark, and branded list-card cover gradients. All changes flow through three levers: (1) CSS custom-property tokens in `globals.css`, (2) Google Fonts loading in `layout.tsx`, and (3) targeted component updates in Header, DashboardSidebar, ListCard, and page metadata. No schema changes required.
+Replace the app's generic neutral/zinc palette, Geist/Arial typography, orange MapPin logo, and "myfaves" naming with the **myfaves** brand identity: violet (`#8B5CF6`) as the primary colour, DM Serif Display + DM Sans typefaces, a two-colour wordmark, and branded list-card cover gradients. All changes flow through three levers: (1) CSS custom-property tokens in `globals.css`, (2) Google Fonts loading in `layout.tsx`, and (3) targeted component updates in Header, DashboardSidebar, ListCard, and page metadata. No schema changes required.
 
 ---
 
@@ -67,13 +67,13 @@ src/
 │   ├── layout.tsx                                   # Add Google Fonts <link>, update metadata title
 │   ├── page.tsx                                     # Update metadata title + OG tags
 │   └── profiles/
-│       ├── [vanitySlug]/page.tsx                    # Update "— YourFavs" in title/description strings
-│       └── [vanitySlug]/lists/[listSlug]/page.tsx   # Update "— YourFavs" in title/description strings
+│       ├── [vanitySlug]/page.tsx                    # Update "— myfaves" in title/description strings
+│       └── [vanitySlug]/lists/[listSlug]/page.tsx   # Update "— myfaves" in title/description strings
 ├── components/
 │   ├── shared/
 │   │   └── Header.tsx                               # Replace MapPin+text logo with two-colour wordmark
 │   └── dashboard/
-│       ├── DashboardSidebar.tsx                     # Replace 📍 YourFavs with two-colour wordmark
+│       ├── DashboardSidebar.tsx                     # Replace 📍 myfaves with two-colour wordmark
 │       └── ListCard.tsx                             # Add gradient cover strip above CardContent body
 └── globals.css                                      # CSS token overhaul + font variables
 ```
@@ -255,7 +255,7 @@ pnpm dev
 3. **Primary button**: Computed `background-color` on "Create Your First List" is `rgb(139, 92, 246)`.
 4. **Focus ring**: Tab to any button → focus outline is violet.
 5. **Wordmark**: Header shows "myfaves" with two-tone split, no MapPin icon.
-6. **Page title**: Browser tab shows "myfaves" (not "YourFavs").
+6. **Page title**: Browser tab shows "myfaves" (not "myfaves").
 7. **Dark mode**: Set OS to dark → background is `rgb(17, 24, 39)`, "faves" is lavender.
 8. **List cards**: Each card in the dashboard grid shows a coloured gradient cover strip.
 
