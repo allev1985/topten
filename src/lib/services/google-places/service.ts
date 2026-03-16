@@ -14,6 +14,7 @@
  */
 
 import { GOOGLE_PLACES_CONFIG } from "@/lib/config";
+import { createServiceLogger } from "@/lib/services/logging";
 import type { GooglePlaceResult } from "./types";
 import {
   invalidQueryError,
@@ -21,6 +22,8 @@ import {
   apiError,
   timeoutError,
 } from "./errors";
+
+const log = createServiceLogger("google-places");
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,8 +96,9 @@ export async function searchPlaces(
 
   const apiKey = getApiKey();
   const t0 = Date.now();
-  console.info(
-    `[GooglePlaces:searchText] query_len=${query.trim().length} starting request`
+  log.debug(
+    { method: "searchPlaces", queryLen: query.trim().length },
+    "Starting text search request"
   );
 
   let response: Response;
@@ -113,25 +117,28 @@ export async function searchPlaces(
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
+    const durationMs = Date.now() - t0;
     if (
       err instanceof DOMException &&
       (err.name === "TimeoutError" || err.name === "AbortError")
     ) {
-      console.error(
-        `[GooglePlaces:searchText] timeout after ${Date.now() - t0}ms`
+      log.error(
+        { method: "searchPlaces", durationMs, err },
+        "Request timed out"
       );
       throw timeoutError(err);
     }
     // Fallback for environments where DOMException is not an instance of itself
     if (err instanceof Error && err.name === "AbortError") {
-      console.error(
-        `[GooglePlaces:searchText] timeout after ${Date.now() - t0}ms`
+      log.error(
+        { method: "searchPlaces", durationMs, err },
+        "Request timed out"
       );
       throw timeoutError(err);
     }
-    console.error(
-      `[GooglePlaces:searchText] network error after ${Date.now() - t0}ms:`,
-      err
+    log.error(
+      { method: "searchPlaces", durationMs, err },
+      "Network request failed"
     );
     throw apiError(0, "Network request failed", err);
   }
@@ -140,9 +147,10 @@ export async function searchPlaces(
   try {
     body = (await response.json()) as TextSearchResponse;
   } catch (err) {
-    console.error(
-      `[GooglePlaces:searchText] failed to parse response JSON status=${response.status} after ${Date.now() - t0}ms:`,
-      err
+    const durationMs = Date.now() - t0;
+    log.error(
+      { method: "searchPlaces", durationMs, httpStatus: response.status, err },
+      "Failed to parse response JSON"
     );
     throw apiError(response.status, "Failed to parse response JSON", err);
   }
@@ -150,15 +158,28 @@ export async function searchPlaces(
   if (!response.ok || body.error) {
     const message = body.error?.message ?? response.statusText;
     const status = body.error?.code ?? response.status;
-    console.error(
-      `[GooglePlaces:searchText] API error status=${status} message="${message}" http_status=${response.status} after ${Date.now() - t0}ms`
+    const durationMs = Date.now() - t0;
+    log.error(
+      {
+        method: "searchPlaces",
+        durationMs,
+        httpStatus: response.status,
+        apiStatus: status,
+      },
+      `API error: ${message}`
     );
     throw apiError(status, message);
   }
 
   const resultCount = (body.places ?? []).length;
-  console.info(
-    `[GooglePlaces:searchText] success status=${response.status} results=${resultCount} duration=${Date.now() - t0}ms`
+  log.info(
+    {
+      method: "searchPlaces",
+      durationMs: Date.now() - t0,
+      httpStatus: response.status,
+      resultCount,
+    },
+    "Text search completed"
   );
   return (body.places ?? []).map(mapPlace);
 }
@@ -188,7 +209,7 @@ export async function resolvePhotoUri(
   url.searchParams.set("key", apiKey);
 
   const t0 = Date.now();
-  console.info(`[GooglePlaces:photoMedia] starting request`);
+  log.debug({ method: "resolvePhotoUri" }, "Starting photo media request");
 
   let response: Response;
   try {
@@ -197,24 +218,27 @@ export async function resolvePhotoUri(
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
+    const durationMs = Date.now() - t0;
     if (
       err instanceof DOMException &&
       (err.name === "TimeoutError" || err.name === "AbortError")
     ) {
-      console.error(
-        `[GooglePlaces:photoMedia] timeout after ${Date.now() - t0}ms`
+      log.error(
+        { method: "resolvePhotoUri", durationMs, err },
+        "Request timed out"
       );
       throw timeoutError(err);
     }
     if (err instanceof Error && err.name === "AbortError") {
-      console.error(
-        `[GooglePlaces:photoMedia] timeout after ${Date.now() - t0}ms`
+      log.error(
+        { method: "resolvePhotoUri", durationMs, err },
+        "Request timed out"
       );
       throw timeoutError(err);
     }
-    console.error(
-      `[GooglePlaces:photoMedia] network error after ${Date.now() - t0}ms:`,
-      err
+    log.error(
+      { method: "resolvePhotoUri", durationMs, err },
+      "Network request failed"
     );
     throw apiError(0, "Network request failed", err);
   }
@@ -223,9 +247,15 @@ export async function resolvePhotoUri(
   try {
     body = (await response.json()) as PhotoMediaResponse;
   } catch (err) {
-    console.error(
-      `[GooglePlaces:photoMedia] failed to parse response JSON status=${response.status} after ${Date.now() - t0}ms:`,
-      err
+    const durationMs = Date.now() - t0;
+    log.error(
+      {
+        method: "resolvePhotoUri",
+        durationMs,
+        httpStatus: response.status,
+        err,
+      },
+      "Failed to parse response JSON"
     );
     throw apiError(response.status, "Failed to parse response JSON", err);
   }
@@ -233,21 +263,35 @@ export async function resolvePhotoUri(
   if (!response.ok || body.error) {
     const message = body.error?.message ?? response.statusText;
     const status = body.error?.code ?? response.status;
-    console.error(
-      `[GooglePlaces:photoMedia] API error status=${status} message="${message}" http_status=${response.status} after ${Date.now() - t0}ms`
+    const durationMs = Date.now() - t0;
+    log.error(
+      {
+        method: "resolvePhotoUri",
+        durationMs,
+        httpStatus: response.status,
+        apiStatus: status,
+      },
+      `API error: ${message}`
     );
     throw apiError(status, message);
   }
 
   if (!body.photoUri) {
-    console.error(
-      `[GooglePlaces:photoMedia] response missing photoUri status=${response.status} after ${Date.now() - t0}ms`
+    const durationMs = Date.now() - t0;
+    log.error(
+      { method: "resolvePhotoUri", durationMs, httpStatus: response.status },
+      "Response missing photoUri"
     );
     throw apiError(response.status, "Response did not include photoUri");
   }
 
-  console.info(
-    `[GooglePlaces:photoMedia] success status=${response.status} duration=${Date.now() - t0}ms`
+  log.info(
+    {
+      method: "resolvePhotoUri",
+      durationMs: Date.now() - t0,
+      httpStatus: response.status,
+    },
+    "Photo URI resolved"
   );
   return body.photoUri;
 }

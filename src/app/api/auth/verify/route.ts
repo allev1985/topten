@@ -4,6 +4,9 @@ import { verifyEmail } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
 import { REDIRECT_ROUTES, VERIFICATION_TYPE_EMAIL } from "@/lib/config";
 import { redirectResponse } from "@/lib/utils/api/response";
+import { createServiceLogger } from "@/lib/services/logging";
+
+const log = createServiceLogger("auth-verify-route");
 
 /**
  * GET /api/auth/verify
@@ -34,11 +37,8 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const origin = request.nextUrl.origin;
 
-  // Log verification attempt (don't log full token)
-  console.info(
-    "[Verify]",
-    `Verification attempt via ${token_hash ? "OTP" : code ? "PKCE" : "unknown"}`
-  );
+  const flow = token_hash ? "OTP" : code ? "PKCE" : "unknown";
+  log.info({ method: "GET", flow }, "Email verification attempt");
 
   try {
     // Handle OTP-based verification (token_hash + type=email)
@@ -46,14 +46,17 @@ export async function GET(request: NextRequest) {
       try {
         const result = await verifyEmail(token_hash, type);
 
-        console.info(
-          "[Verify]",
-          `OTP verification successful for user: ${result.user.id}, redirecting to dashboard`
+        log.info(
+          { method: "GET", flow: "OTP", userId: result.user.id },
+          "OTP verification successful"
         );
         return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
       } catch (error) {
         if (error instanceof AuthServiceError) {
-          console.error("[Verify]", `OTP verification error: ${error.message}`);
+          log.error(
+            { method: "GET", flow: "OTP", err: error },
+            "OTP verification error"
+          );
           const errorType = error.message.toLowerCase().includes("expired")
             ? "expired_token"
             : "invalid_token";
@@ -70,7 +73,10 @@ export async function GET(request: NextRequest) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        console.error("[Verify]", `Code exchange error: ${error.message}`);
+        log.error(
+          { method: "GET", flow: "PKCE", err: error },
+          "Code exchange error"
+        );
         const errorType = error.message.toLowerCase().includes("expired")
           ? "expired_token"
           : "invalid_token";
@@ -79,24 +85,17 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      console.info(
-        "[Verify]",
-        "Code exchange successful, redirecting to dashboard"
-      );
+      log.info({ method: "GET", flow: "PKCE" }, "Code exchange successful");
       return redirectResponse(origin, REDIRECT_ROUTES.auth.success);
     }
 
     // No valid token or code provided
-    console.error("[Verify]", "Missing token or code in verification request");
+    log.warn({ method: "GET", flow: "unknown" }, "Missing token or code");
     return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
       error: "missing_token",
     });
   } catch (err) {
-    console.error(
-      "[Verify]",
-      "Unexpected error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "GET", err }, "Unexpected error during verification");
     return redirectResponse(origin, REDIRECT_ROUTES.auth.error, {
       error: "server_error",
     });

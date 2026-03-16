@@ -82,19 +82,52 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `pnpm test:coverage` | Run tests with coverage report    |
 | `pnpm test:e2e`      | Run end-to-end tests (Playwright) |
 
+### Observability (local)
+
+| Command                    | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `pnpm observability:start` | Start local Grafana stack (requires Docker)    |
+| `pnpm observability:stop`  | Stop the observability stack                   |
+| `pnpm observability:status`| Show running container status                  |
+
+Open [http://localhost:3001](http://localhost:3001) for the Grafana dashboard after starting the stack.
+
+The stack includes:
+
+| Service         | Port | Purpose                                      |
+| --------------- | ---- | -------------------------------------------- |
+| Grafana         | 3001 | Dashboards — traces, metrics, logs           |
+| OTel Collector  | 4318 | OTLP HTTP receiver (app → collector)         |
+| Prometheus      | 9090 | Metrics storage                              |
+| Grafana Tempo   | 3200 | Distributed trace storage                   |
+| Grafana Loki    | 3100 | Log aggregation                              |
+
+The Next.js app exports telemetry via `instrumentation.ts` using the [OpenTelemetry SDK](https://opentelemetry.io/docs/languages/js/). Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in `.env.local` to connect.
+
+**Log levels** are controlled by `LOG_LEVEL` in `.env.local` (`trace` | `debug` | `info` | `warn` | `error` | `fatal`). Defaults to `debug` in development and `info` in production.
+
+Logs are written as newline-delimited JSON. For human-readable output during development:
+
+```bash
+pnpm dev 2>&1 | pnpm pino-pretty
+```
+
 ## Technology Stack
 
-| Layer      | Technology                                  |
-| ---------- | ------------------------------------------- |
-| Framework  | Next.js (App Router)                        |
-| Database   | Supabase (Postgres)                         |
-| ORM        | Drizzle                                     |
-| Auth       | Supabase Auth                               |
-| Styling    | Tailwind CSS + shadcn/ui                    |
-| Places API | Google Places API                           |
-| Testing    | Vitest + React Testing Library + Playwright |
-| Linting    | ESLint + Prettier                           |
-| Local Dev  | Node.js + pnpm + Supabase CLI + Docker      |
+| Layer          | Technology                                          |
+| -------------- | --------------------------------------------------- |
+| Framework      | Next.js (App Router)                                |
+| Database       | Supabase (Postgres)                                 |
+| ORM            | Drizzle                                             |
+| Auth           | Supabase Auth                                       |
+| Styling        | Tailwind CSS + shadcn/ui                            |
+| Places API     | Google Places API                                   |
+| Logging        | Pino (structured JSON)                              |
+| Telemetry      | OpenTelemetry SDK (traces + metrics)                |
+| Observability  | Grafana + Tempo + Prometheus + Loki (local Docker)  |
+| Testing        | Vitest + React Testing Library + Playwright         |
+| Linting        | ESLint + Prettier                                   |
+| Local Dev      | Node.js + pnpm + Supabase CLI + Docker              |
 
 ## Authentication Architecture
 
@@ -129,6 +162,12 @@ topten/
 │   │   └── utils/           # General utilities
 │   ├── schemas/             # Zod validation schemas
 │   └── types/               # TypeScript types
+├── observability/           # Local observability stack config
+│   ├── grafana/             # Grafana provisioning (datasources + dashboards)
+│   ├── otel-collector/      # OpenTelemetry Collector routing config
+│   ├── prometheus/          # Prometheus scrape config
+│   ├── tempo/               # Grafana Tempo config
+│   └── loki/                # Grafana Loki config
 ├── supabase/
 │   └── migrations/          # Database migrations
 ├── tests/

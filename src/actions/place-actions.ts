@@ -19,7 +19,10 @@ import {
   resolvePhotoUri,
   GooglePlacesServiceError,
 } from "@/lib/services/google-places";
+import { createServiceLogger } from "@/lib/services/logging";
 import type { GooglePlaceResult } from "@/lib/services/google-places";
+
+const log = createServiceLogger("place-actions");
 
 // ─── Success data types ───────────────────────────────────────────────────────
 
@@ -303,9 +306,9 @@ export async function searchPlacesAction(
     return { data: { results }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     if (err instanceof GooglePlacesServiceError) {
-      console.error(
-        `[searchPlacesAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
-        err.cause ?? ""
+      log.error(
+        { method: "searchPlacesAction", code: err.code, err },
+        "GooglePlacesServiceError"
       );
       return {
         data: null,
@@ -314,7 +317,7 @@ export async function searchPlacesAction(
         isSuccess: false,
       };
     }
-    console.error("[searchPlacesAction] unexpected error:", err);
+    log.error({ method: "searchPlacesAction", err }, "Unexpected error");
     return {
       data: null,
       error: "Place search unavailable — please try again.",
@@ -363,9 +366,9 @@ export async function resolveGooglePlacePhotoAction(
     };
   } catch (err) {
     if (err instanceof GooglePlacesServiceError) {
-      console.error(
-        `[resolveGooglePlacePhotoAction] GooglePlacesServiceError code=${err.code} message="${err.message}"`,
-        err.cause ?? ""
+      log.error(
+        { method: "resolveGooglePlacePhotoAction", code: err.code, err },
+        "GooglePlacesServiceError"
       );
       return {
         data: null,
@@ -374,7 +377,10 @@ export async function resolveGooglePlacePhotoAction(
         isSuccess: false,
       };
     }
-    console.error("[resolveGooglePlacePhotoAction] unexpected error:", err);
+    log.error(
+      { method: "resolveGooglePlacePhotoAction", err },
+      "Unexpected error"
+    );
     return {
       data: null,
       error: "Could not resolve photo — please try again.",

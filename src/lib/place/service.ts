@@ -29,6 +29,7 @@ import {
   placeServiceError,
   immutableFieldError,
 } from "./service/errors";
+import { createServiceLogger } from "@/lib/services/logging";
 import type {
   PlaceSummary,
   PlaceRecord,
@@ -53,6 +54,8 @@ export type {
 
 export { PlaceServiceError };
 
+const log = createServiceLogger("place-service");
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 /**
@@ -63,26 +66,19 @@ export { PlaceServiceError };
  * @throws {PlaceServiceError} code SERVICE_ERROR on DB failure
  */
 export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
-  console.info(
-    "[PlaceService:getPlacesByList]",
-    `Fetching places for list ${listId}`
-  );
+  log.debug({ method: "getPlacesByList", listId }, "Fetching places for list");
 
   try {
     const rows = await placeRepository.getPlacesByList(listId);
 
-    console.info(
-      "[PlaceService:getPlacesByList]",
-      `Found ${rows.length} places for list ${listId}`
+    log.info(
+      { method: "getPlacesByList", listId, count: rows.length },
+      "Places fetched"
     );
 
     return rows;
   } catch (err) {
-    console.error(
-      "[PlaceService:getPlacesByList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "getPlacesByList", listId, err }, "DB error");
     throw placeServiceError("Failed to load places. Please try again.", err);
   }
 }
@@ -103,9 +99,9 @@ export async function getAvailablePlacesForList({
   listId: string;
   userId: string;
 }): Promise<PlaceSummary[]> {
-  console.info(
-    "[PlaceService:getAvailablePlacesForList]",
-    `Fetching available places for list ${listId}, user ${userId}`
+  log.debug(
+    { method: "getAvailablePlacesForList", listId, userId },
+    "Fetching available places for list"
   );
 
   try {
@@ -114,17 +110,21 @@ export async function getAvailablePlacesForList({
       userId,
     });
 
-    console.info(
-      "[PlaceService:getAvailablePlacesForList]",
-      `Found ${rows.length} available places for list ${listId}`
+    log.info(
+      {
+        method: "getAvailablePlacesForList",
+        listId,
+        userId,
+        count: rows.length,
+      },
+      "Available places fetched"
     );
 
     return rows;
   } catch (err) {
-    console.error(
-      "[PlaceService:getAvailablePlacesForList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "getAvailablePlacesForList", listId, userId, err },
+      "DB error"
     );
     throw placeServiceError(
       "Failed to load available places. Please try again.",
@@ -146,26 +146,22 @@ export async function getAllPlacesByUser({
 }: {
   userId: string;
 }): Promise<PlaceWithListCount[]> {
-  console.info(
-    "[PlaceService:getAllPlacesByUser]",
-    `Fetching all places for user ${userId}`
+  log.debug(
+    { method: "getAllPlacesByUser", userId },
+    "Fetching all places for user"
   );
 
   try {
     const rows = await placeRepository.getAllPlacesByUser({ userId });
 
-    console.info(
-      "[PlaceService:getAllPlacesByUser]",
-      `Found ${rows.length} places for user ${userId}`
+    log.info(
+      { method: "getAllPlacesByUser", userId, count: rows.length },
+      "All places fetched"
     );
 
     return rows;
   } catch (err) {
-    console.error(
-      "[PlaceService:getAllPlacesByUser]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "getAllPlacesByUser", userId, err }, "DB error");
     throw placeServiceError("Failed to load places. Please try again.", err);
   }
 }
@@ -210,11 +206,9 @@ export async function createPlace({
   description?: string | null;
   heroImageUrl?: string | null;
 }): Promise<CreatePlaceResult> {
-  console.info(
-    "[PlaceService:createPlace]",
-    listId
-      ? `Creating place "${name}" in list ${listId} for user ${userId}`
-      : `Creating standalone place "${name}" for user ${userId}`
+  log.info(
+    { method: "createPlace", userId, listId },
+    listId ? "Creating place with list attachment" : "Creating standalone place"
   );
 
   // ── Step 1: look up any existing (userId, googlePlaceId) row ────────────────
@@ -225,11 +219,7 @@ export async function createPlace({
       googlePlaceId,
     });
   } catch (err) {
-    console.error(
-      "[PlaceService:createPlace]",
-      "Lookup failed:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "createPlace", userId, listId, err }, "Lookup failed");
     throw placeServiceError("Failed to create place. Please try again.", err);
   }
 
@@ -241,15 +231,14 @@ export async function createPlace({
       // Restore soft-deleted place
       try {
         place = await placeRepository.restorePlace(existingPlace.id);
-        console.info(
-          "[PlaceService:createPlace]",
-          `Restored soft-deleted place ${place.id}`
+        log.info(
+          { method: "createPlace", userId, listId, placeId: place.id },
+          "Restored soft-deleted place"
         );
       } catch (err) {
-        console.error(
-          "[PlaceService:createPlace]",
-          "Restore failed:",
-          err instanceof Error ? err.message : "Unknown error"
+        log.error(
+          { method: "createPlace", userId, listId, err },
+          "Restore failed"
         );
         throw placeServiceError(
           "Failed to create place. Please try again.",
@@ -259,9 +248,9 @@ export async function createPlace({
     } else {
       // Reuse active place as-is
       place = existingPlace;
-      console.info(
-        "[PlaceService:createPlace]",
-        `Reusing existing place ${place.id}`
+      log.debug(
+        { method: "createPlace", userId, listId, placeId: place.id },
+        "Reusing existing place"
       );
     }
 
@@ -292,18 +281,14 @@ export async function createPlace({
         description,
         heroImageUrl,
       });
-      console.info(
-        "[PlaceService:createPlace]",
-        `Created standalone place ${place.id}`
+      log.info(
+        { method: "createPlace", userId, placeId: place.id },
+        "Created standalone place"
       );
       return { place };
     } catch (err) {
       if (err instanceof PlaceServiceError) throw err;
-      console.error(
-        "[PlaceService:createPlace]",
-        "DB error:",
-        err instanceof Error ? err.message : "Unknown error"
-      );
+      log.error({ method: "createPlace", userId, err }, "DB error");
       throw placeServiceError("Failed to create place. Please try again.", err);
     }
   }
@@ -313,10 +298,9 @@ export async function createPlace({
   try {
     owned = await placeRepository.getListOwnership({ listId, userId });
   } catch (err) {
-    console.error(
-      "[PlaceService:createPlace]",
-      "Ownership check failed:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "createPlace", userId, listId, err },
+      "Ownership check failed"
     );
     throw placeServiceError("Failed to create place. Please try again.", err);
   }
@@ -338,19 +322,21 @@ export async function createPlace({
       heroImageUrl,
     });
 
-    console.info(
-      "[PlaceService:createPlace]",
-      `Place created with id ${result.place.id}, attached as listPlace ${result.listPlaceId}`
+    log.info(
+      {
+        method: "createPlace",
+        userId,
+        listId,
+        placeId: result.place.id,
+        listPlaceId: result.listPlaceId,
+      },
+      "Place created and attached to list"
     );
 
     return result;
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:createPlace]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "createPlace", userId, listId, err }, "DB error");
     throw placeServiceError("Failed to create place. Please try again.", err);
   }
 }
@@ -379,18 +365,16 @@ export async function addExistingPlaceToList({
   placeId: string;
   userId: string;
 }): Promise<AddExistingPlaceResult> {
-  console.info(
-    "[PlaceService:addExistingPlaceToList]",
-    `Attaching place ${placeId} to list ${listId} for user ${userId}`
+  log.info(
+    { method: "addExistingPlaceToList", userId, listId, placeId },
+    "Attaching place to list"
   );
 
-  // Verify list ownership
   const owned = await placeRepository.getListOwnership({ listId, userId });
   if (!owned) {
     throw notFoundError();
   }
 
-  // Check for any existing row — active or previously soft-deleted
   const existingRow = await placeRepository.getListPlaceRow({
     listId,
     placeId,
@@ -401,20 +385,24 @@ export async function addExistingPlaceToList({
   }
 
   try {
-    // Compute next position (append to end regardless of restore or fresh insert)
     const maxPosition = await placeRepository.getMaxPosition(listId);
     const nextPosition = maxPosition + 1;
 
     if (existingRow) {
-      // Restore the previously removed attachment
       await placeRepository.restoreListPlace({
         listPlaceId: existingRow.id,
         nextPosition,
       });
 
-      console.info(
-        "[PlaceService:addExistingPlaceToList]",
-        `Place ${placeId} restored to list ${listId} at position ${nextPosition}`
+      log.info(
+        {
+          method: "addExistingPlaceToList",
+          userId,
+          listId,
+          placeId,
+          position: nextPosition,
+        },
+        "Place restored to list"
       );
 
       return { listPlaceId: existingRow.id };
@@ -426,18 +414,24 @@ export async function addExistingPlaceToList({
       position: nextPosition,
     });
 
-    console.info(
-      "[PlaceService:addExistingPlaceToList]",
-      `Place ${placeId} attached to list ${listId} at position ${nextPosition}`
+    log.info(
+      {
+        method: "addExistingPlaceToList",
+        userId,
+        listId,
+        placeId,
+        listPlaceId,
+        position: nextPosition,
+      },
+      "Place attached to list"
     );
 
     return { listPlaceId };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:addExistingPlaceToList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "addExistingPlaceToList", userId, listId, placeId, err },
+      "DB error"
     );
     throw placeServiceError(
       "Failed to add place to list. Please try again.",
@@ -472,14 +466,12 @@ export async function updatePlace({
     throw immutableFieldError(extraKeys[0]);
   }
 
-  console.info(
-    "[PlaceService:updatePlace]",
-    `Updating place ${placeId} for user ${userId}`
+  log.info(
+    { method: "updatePlace", userId, placeId, listId },
+    "Updating place"
   );
 
   try {
-    // Ownership check: use list membership when listId is provided,
-    // otherwise verify directly via places.userId
     if (listId) {
       const accessible = await placeRepository.getPlaceInListByOwner({
         placeId,
@@ -508,15 +500,17 @@ export async function updatePlace({
       throw notFoundError();
     }
 
-    console.info("[PlaceService:updatePlace]", `Place ${placeId} updated`);
+    log.info(
+      { method: "updatePlace", userId, placeId, listId },
+      "Place updated"
+    );
 
     return { place: row };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:updatePlace]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "updatePlace", userId, placeId, listId, err },
+      "DB error"
     );
     throw placeServiceError("Failed to update place. Please try again.", err);
   }
@@ -538,13 +532,12 @@ export async function deletePlaceFromList({
   listId: string;
   userId: string;
 }): Promise<RemovePlaceFromListResult> {
-  console.info(
-    "[PlaceService:deletePlaceFromList]",
-    `Removing place ${placeId} from list ${listId} for user ${userId}`
+  log.info(
+    { method: "deletePlaceFromList", userId, listId, placeId },
+    "Removing place from list"
   );
 
   try {
-    // Verify list ownership and that the attachment is currently active
     const accessible = await placeRepository.getPlaceInListByOwner({
       placeId,
       listId,
@@ -554,25 +547,23 @@ export async function deletePlaceFromList({
       throw notFoundError();
     }
 
-    // Soft-delete the ListPlace row — the Place record is left untouched
     const row = await placeRepository.softDeleteListPlace({ placeId, listId });
 
     if (!row) {
       throw notFoundError();
     }
 
-    console.info(
-      "[PlaceService:deletePlaceFromList]",
-      `Place ${placeId} removed from list ${listId}`
+    log.info(
+      { method: "deletePlaceFromList", userId, listId, placeId },
+      "Place removed from list"
     );
 
     return { success: true };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:deletePlaceFromList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "deletePlaceFromList", userId, listId, placeId, err },
+      "DB error"
     );
     throw placeServiceError(
       "Failed to remove place from list. Please try again.",
@@ -598,10 +589,7 @@ export async function deletePlace({
   placeId: string;
   userId: string;
 }): Promise<DeletePlaceResult> {
-  console.info(
-    "[PlaceService:deletePlace]",
-    `Deleting place ${placeId} for user ${userId}`
-  );
+  log.info({ method: "deletePlace", userId, placeId }, "Deleting place");
 
   try {
     const result = await placeRepository.deletePlaceWithCascade({
@@ -613,19 +601,20 @@ export async function deletePlace({
       throw notFoundError();
     }
 
-    console.info(
-      "[PlaceService:deletePlace]",
-      `Place ${placeId} deleted, cascaded to ${result.deletedListPlaceCount} list attachment(s)`
+    log.info(
+      {
+        method: "deletePlace",
+        userId,
+        placeId,
+        cascadedListPlaces: result.deletedListPlaceCount,
+      },
+      "Place deleted with cascade"
     );
 
     return result;
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
-    console.error(
-      "[PlaceService:deletePlace]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "deletePlace", userId, placeId, err }, "DB error");
     throw placeServiceError("Failed to delete place. Please try again.", err);
   }
 }

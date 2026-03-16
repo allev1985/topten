@@ -22,6 +22,9 @@ import { AuthServiceError } from "@/lib/auth/service/errors";
 import { createClient } from "@/lib/supabase/server";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
+import { createServiceLogger } from "@/lib/services/logging";
+
+const log = createServiceLogger("auth-actions");
 
 /**
  * Signup action success data
@@ -81,9 +84,9 @@ export async function signupAction(
     await signup(result.data.email, result.data.password);
   } catch (err) {
     // Log errors but still redirect for enumeration protection
-    console.error(
-      "[Signup] Error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "signupAction", err },
+      "Signup error (redirecting for enumeration protection)"
     );
   }
 
@@ -124,9 +127,9 @@ export async function loginAction(
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
 
-    console.info(
-      "[Login]",
-      `Login attempt for email: ${maskEmail(result.data.email)}`
+    log.info(
+      { method: "loginAction", email: maskEmail(result.data.email) },
+      "Login attempt"
     );
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -135,9 +138,13 @@ export async function loginAction(
     });
 
     if (error) {
-      console.error(
-        "[Login]",
-        `Login failed for ${maskEmail(result.data.email)}: ${error.message}`
+      log.error(
+        {
+          method: "loginAction",
+          email: maskEmail(result.data.email),
+          err: error,
+        },
+        "Login failed"
       );
 
       return {
@@ -150,9 +157,9 @@ export async function loginAction(
       };
     }
 
-    console.info(
-      "[Login]",
-      `Login successful for ${maskEmail(result.data.email)}`
+    log.info(
+      { method: "loginAction", email: maskEmail(result.data.email) },
+      "Login successful"
     );
 
     // Get validated redirect URL
@@ -176,10 +183,7 @@ export async function loginAction(
       throw err;
     }
 
-    console.error(
-      "[Login] Unexpected error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "loginAction", err }, "Unexpected error");
 
     return {
       data: null,
@@ -229,9 +233,9 @@ export async function passwordResetRequestAction(
       isSuccess: true,
     };
   } catch (err) {
-    console.error(
-      "[PasswordResetRequest] Error:",
-      err instanceof Error ? err.message : "Unknown error"
+    log.error(
+      { method: "passwordResetRequestAction", err },
+      "Error (returning success for enumeration protection)"
     );
 
     // Still return success for enumeration protection
@@ -341,10 +345,7 @@ export async function passwordUpdateAction(
       };
     }
 
-    console.error(
-      "[PasswordUpdate] Error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "passwordUpdateAction", err }, "Unexpected error");
 
     return {
       data: null,
@@ -451,10 +452,7 @@ export async function passwordChangeAction(
       };
     }
 
-    console.error(
-      "[PasswordChange] Error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "passwordChangeAction", err }, "Unexpected error");
 
     return {
       data: null,
@@ -488,7 +486,7 @@ export async function signOutAction(): Promise<void> {
       throw err;
     }
 
-    console.error("[SignOut] Error:", err);
+    log.error({ method: "signOutAction", err }, "Sign-out error");
     // Don't redirect on error - let component handle it
   }
 }

@@ -88,6 +88,22 @@ export const GOOGLE_PLACES_CONFIG = {
 } as const;
 
 /**
+ * Log level configuration
+ * Read from process.env at module load. Full validation (enum check) is
+ * handled by env.ts at app boot — here we just need a safe fallback for
+ * test environments that do not set every required variable.
+ */
+export const LOG_LEVEL =
+  (process.env.LOG_LEVEL?.toLowerCase() as
+    | "trace"
+    | "debug"
+    | "info"
+    | "warn"
+    | "error"
+    | "fatal"
+    | undefined) ?? (process.env.NODE_ENV === "production" ? "info" : "debug");
+
+/**
  * Get the application URL from environment or request origin
  * @param requestOrigin - Optional origin from request headers
  */

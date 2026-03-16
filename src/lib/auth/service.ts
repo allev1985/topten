@@ -22,6 +22,7 @@ import {
   isSessionError,
 } from "./service/errors";
 import { getSessionInfo } from "./helpers/session";
+import { createServiceLogger } from "@/lib/services/logging";
 import type {
   SignupResult,
   LoginResult,
@@ -32,6 +33,8 @@ import type {
   RefreshSessionResult,
   VerifyEmailResult,
 } from "./service/types";
+
+const log = createServiceLogger("auth-service");
 
 /**
  * Sign up a new user with email and password
@@ -47,22 +50,6 @@ import type {
  * @param options.emailRedirectTo - URL to redirect to after email verification
  * @returns SignupResult with user and session information
  * @throws {AuthServiceError} If signup fails
- *
- * @example
- * ```typescript
- * try {
- *   const result = await signup("user@example.com", "SecurePass123!");
- *   if (result.requiresEmailConfirmation) {
- *     console.log("Please check your email to verify your account");
- *   } else {
- *     console.log("Account created and logged in");
- *   }
- * } catch (error) {
- *   if (error instanceof AuthServiceError) {
- *     console.error("Signup failed:", error.message);
- *   }
- * }
- * ```
  */
 export async function signup(
   email: string,
@@ -72,10 +59,7 @@ export async function signup(
   }
 ): Promise<SignupResult> {
   try {
-    console.info(
-      "[AuthService:signup]",
-      `Signup attempt for email: ${maskEmail(email)}`
-    );
+    log.info({ method: "signup", email: maskEmail(email) }, "Signup attempt");
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -87,9 +71,9 @@ export async function signup(
     });
 
     if (error) {
-      console.error(
-        "[AuthService:signup]",
-        `Signup failed for ${maskEmail(email)}: ${error.message}`
+      log.error(
+        { method: "signup", email: maskEmail(email), err: error },
+        "Signup failed"
       );
       throw serviceError("Failed to create account", error);
     }
@@ -98,17 +82,17 @@ export async function signup(
     // Session is null when confirmation is required
     const requiresEmailConfirmation = !data.session;
 
-    if (requiresEmailConfirmation) {
-      console.info(
-        "[AuthService:signup]",
-        `Signup successful for ${maskEmail(email)}, verification email sent`
-      );
-    } else {
-      console.info(
-        "[AuthService:signup]",
-        `Signup successful for ${maskEmail(email)}, user auto-confirmed`
-      );
-    }
+    log.info(
+      {
+        method: "signup",
+        email: maskEmail(email),
+        requiresEmailConfirmation,
+        userId: data.user?.id,
+      },
+      requiresEmailConfirmation
+        ? "Signup successful, verification email sent"
+        : "Signup successful, user auto-confirmed"
+    );
 
     return {
       requiresEmailConfirmation,
@@ -121,16 +105,11 @@ export async function signup(
         : null,
     };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
-    if (error instanceof AuthServiceError) {
-      throw error;
-    }
+    if (error instanceof AuthServiceError) throw error;
 
-    // Wrap unexpected errors
-    console.error(
-      "[AuthService:signup]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "signup", err: error },
+      "Unexpected error during signup"
     );
     throw serviceError("An unexpected error occurred during signup", error);
   }
@@ -149,32 +128,13 @@ export async function signup(
  *   - INVALID_CREDENTIALS: Wrong email or password
  *   - EMAIL_NOT_CONFIRMED: Email not yet verified
  *   - SERVICE_ERROR: Unexpected errors
- *
- * @example
- * ```typescript
- * try {
- *   const result = await login("user@example.com", "SecurePass123!");
- *   console.log("Logged in as:", result.user.email);
- * } catch (error) {
- *   if (error instanceof AuthServiceError) {
- *     if (error.code === "EMAIL_NOT_CONFIRMED") {
- *       console.error("Please verify your email first");
- *     } else if (error.code === "INVALID_CREDENTIALS") {
- *       console.error("Invalid email or password");
- *     }
- *   }
- * }
- * ```
  */
 export async function login(
   email: string,
   password: string
 ): Promise<LoginResult> {
   try {
-    console.info(
-      "[AuthService:login]",
-      `Login attempt for email: ${maskEmail(email)}`
-    );
+    log.info({ method: "login", email: maskEmail(email) }, "Login attempt");
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -183,32 +143,29 @@ export async function login(
     });
 
     if (error) {
-      console.error(
-        "[AuthService:login]",
-        `Login failed for ${maskEmail(email)}: ${error.message}`
+      log.error(
+        { method: "login", email: maskEmail(email), err: error },
+        "Login failed"
       );
 
-      // Check if this is an email not confirmed error
       if (isEmailNotVerifiedError(error)) {
         throw emailNotConfirmedError(error);
       }
 
-      // All other errors are treated as invalid credentials for security
       throw invalidCredentialsError(error);
     }
 
-    // Supabase should return both user and session on successful login
     if (!data.user || !data.session) {
-      console.error(
-        "[AuthService:login]",
-        `Login succeeded but missing user or session for ${maskEmail(email)}`
+      log.error(
+        { method: "login", email: maskEmail(email) },
+        "Login succeeded but session data is incomplete"
       );
       throw serviceError("Login succeeded but session data is incomplete");
     }
 
-    console.info(
-      "[AuthService:login]",
-      `Login successful for ${maskEmail(email)}`
+    log.info(
+      { method: "login", email: maskEmail(email), userId: data.user.id },
+      "Login successful"
     );
 
     return {
@@ -219,17 +176,9 @@ export async function login(
       },
     };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
-    if (error instanceof AuthServiceError) {
-      throw error;
-    }
+    if (error instanceof AuthServiceError) throw error;
 
-    // Wrap unexpected errors
-    console.error(
-      "[AuthService:login]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
+    log.error({ method: "login", err: error }, "Unexpected error during login");
     throw serviceError("An unexpected error occurred during login", error);
   }
 }
@@ -242,22 +191,11 @@ export async function login(
  *
  * @returns LogoutResult indicating success
  * @throws {AuthServiceError} Only if an unexpected error occurs
- *
- * @example
- * ```typescript
- * try {
- *   await logout();
- *   console.log("Logged out successfully");
- * } catch (error) {
- *   console.error("Logout failed:", error);
- * }
- * ```
  */
 export async function logout(): Promise<LogoutResult> {
   try {
     const supabase = await createClient();
 
-    // Get current user for logging (optional)
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -265,26 +203,23 @@ export async function logout(): Promise<LogoutResult> {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error("[AuthService:logout]", `Logout error: ${error.message}`);
-      // Still treat as success for idempotency
-      // Session cookies will be cleared even if Supabase API call fails
+      // Log but treat as success for idempotency — cookies are cleared regardless
+      log.warn(
+        { method: "logout", userId: user?.id, err: error },
+        "Logout Supabase API error (session cookies still cleared)"
+      );
     }
 
-    console.info(
-      "[AuthService:logout]",
-      user
-        ? `User logged out: ${user.id}`
-        : "Logout request (no active session)"
+    log.info(
+      { method: "logout", userId: user?.id },
+      user ? "User logged out" : "Logout request (no active session)"
     );
 
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error(
-      "[AuthService:logout]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "logout", err: error },
+      "Unexpected error during logout"
     );
     throw serviceError("An unexpected error occurred during logout", error);
   }
@@ -302,16 +237,6 @@ export async function logout(): Promise<LogoutResult> {
  * @param options.redirectTo - URL to redirect to after password reset
  * @returns ResetPasswordResult indicating the request was processed
  * @throws {AuthServiceError} Only if an unexpected error occurs
- *
- * @example
- * ```typescript
- * try {
- *   await resetPassword("user@example.com");
- *   console.log("If an account exists, a reset email has been sent");
- * } catch (error) {
- *   console.error("Reset request failed:", error);
- * }
- * ```
  */
 export async function resetPassword(
   email: string,
@@ -320,9 +245,9 @@ export async function resetPassword(
   }
 ): Promise<ResetPasswordResult> {
   try {
-    console.info(
-      "[AuthService:resetPassword]",
-      `Password reset requested for: ${maskEmail(email)}`
+    log.info(
+      { method: "resetPassword", email: maskEmail(email) },
+      "Password reset requested"
     );
 
     const supabase = await createClient();
@@ -332,25 +257,22 @@ export async function resetPassword(
 
     // Log errors internally but always return success for enumeration protection
     if (error) {
-      console.error(
-        "[AuthService:resetPassword]",
-        `Reset error for ${maskEmail(email)}: ${error.message}`
+      log.warn(
+        { method: "resetPassword", email: maskEmail(email), err: error },
+        "Password reset Supabase error (returning success for enumeration protection)"
+      );
+    } else {
+      log.info(
+        { method: "resetPassword", email: maskEmail(email) },
+        "Password reset request processed"
       );
     }
 
-    console.info(
-      "[AuthService:resetPassword]",
-      `Password reset request processed for: ${maskEmail(email)}`
-    );
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error(
-      "[AuthService:resetPassword]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "resetPassword", err: error },
+      "Unexpected error during password reset"
     );
     throw serviceError(
       "An unexpected error occurred during password reset",
@@ -375,28 +297,6 @@ export async function resetPassword(
  * @param options.type - OTP token type ('recovery' or 'email')
  * @returns UpdatePasswordResult indicating success
  * @throws {AuthServiceError} If authentication fails or password update fails
- *
- * @example
- * ```typescript
- * // Update password with OTP token (from reset email)
- * try {
- *   await updatePassword("NewSecurePass123!", {
- *     token_hash: "abc123",
- *     type: "recovery"
- *   });
- *   console.log("Password updated, please log in again");
- * } catch (error) {
- *   console.error("Password update failed:", error);
- * }
- *
- * // Update password for authenticated user (session-based)
- * try {
- *   await updatePassword("NewSecurePass123!");
- *   console.log("Password updated, please log in again");
- * } catch (error) {
- *   console.error("Password update failed:", error);
- * }
- * ```
  */
 export async function updatePassword(
   password: string,
@@ -416,9 +316,9 @@ export async function updatePassword(
     // 1. Try OTP token authentication if provided
     if (options?.token_hash && options?.type) {
       authMethod = "OTP";
-      console.info(
-        "[AuthService:updatePassword]",
-        `Attempting OTP token authentication (type: ${options.type})`
+      log.debug(
+        { method: "updatePassword", authMethod, otpType: options.type },
+        "Attempting OTP token authentication"
       );
 
       const { data, error: otpError } = await supabase.auth.verifyOtp({
@@ -427,12 +327,11 @@ export async function updatePassword(
       });
 
       if (otpError) {
-        console.error(
-          "[AuthService:updatePassword]",
-          `OTP authentication failed: ${otpError.message}`
+        log.error(
+          { method: "updatePassword", authMethod, err: otpError },
+          "OTP authentication failed"
         );
 
-        // Check for expired token
         if (isExpiredTokenError(otpError)) {
           throw serviceError(
             "Authentication link has expired. Please request a new one.",
@@ -448,8 +347,8 @@ export async function updatePassword(
     // 2. Fall back to existing session
     else {
       authMethod = "session";
-      console.info(
-        "[AuthService:updatePassword]",
+      log.debug(
+        { method: "updatePassword", authMethod },
         "Attempting session-based authentication"
       );
 
@@ -459,9 +358,9 @@ export async function updatePassword(
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        console.error(
-          "[AuthService:updatePassword]",
-          `Session authentication failed: ${userError?.message ?? "No user"}`
+        log.error(
+          { method: "updatePassword", authMethod, err: userError },
+          "Session authentication failed"
         );
         throw serviceError("Authentication required", userError);
       }
@@ -469,23 +368,28 @@ export async function updatePassword(
       userEmail = user.email ?? null;
     }
 
-    console.info(
-      "[AuthService:updatePassword]",
-      `Password update requested via ${authMethod} for: ${maskEmail(userEmail ?? "unknown")}`
+    log.info(
+      {
+        method: "updatePassword",
+        authMethod,
+        email: maskEmail(userEmail ?? "unknown"),
+      },
+      "Password update requested"
     );
 
-    // Update the user's password
-    const { error: updateError } = await supabase.auth.updateUser({
-      password,
-    });
+    const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {
-      console.error(
-        "[AuthService:updatePassword]",
-        `Password update failed for ${maskEmail(userEmail ?? "unknown")}: ${updateError.message}`
+      log.error(
+        {
+          method: "updatePassword",
+          authMethod,
+          email: maskEmail(userEmail ?? "unknown"),
+          err: updateError,
+        },
+        "Password update failed"
       );
 
-      // Check for session-related errors
       if (isSessionError(updateError)) {
         throw serviceError(
           "Session has expired. Please log in again.",
@@ -496,40 +400,40 @@ export async function updatePassword(
       throw serviceError("Failed to update password", updateError);
     }
 
-    console.info(
-      "[AuthService:updatePassword]",
-      `Password updated successfully via ${authMethod} for: ${maskEmail(userEmail ?? "unknown")}`
+    log.info(
+      {
+        method: "updatePassword",
+        authMethod,
+        email: maskEmail(userEmail ?? "unknown"),
+      },
+      "Password updated successfully"
     );
 
     // Sign out user after successful password update for security
     try {
       await supabase.auth.signOut();
-      console.info(
-        "[AuthService:updatePassword]",
-        `User signed out after password update: ${maskEmail(userEmail ?? "unknown")}`
+      log.info(
+        {
+          method: "updatePassword",
+          email: maskEmail(userEmail ?? "unknown"),
+        },
+        "User signed out after password update"
       );
     } catch (signOutError) {
-      // Log error but don't fail the operation - password was already updated successfully
-      console.error(
-        "[AuthService:updatePassword]",
-        `Sign-out failed after password update: ${signOutError instanceof Error ? signOutError.message : "Unknown error"}`
+      // Password was already updated — don't fail the operation
+      log.warn(
+        { method: "updatePassword", err: signOutError },
+        "Sign-out failed after password update (password was still updated)"
       );
     }
 
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
-    if (error instanceof AuthServiceError) {
-      throw error;
-    }
+    if (error instanceof AuthServiceError) throw error;
 
-    // Wrap unexpected errors
-    console.error(
-      "[AuthService:updatePassword]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "updatePassword", err: error },
+      "Unexpected error during password update"
     );
     throw serviceError(
       "An unexpected error occurred during password update",
@@ -547,24 +451,6 @@ export async function updatePassword(
  *
  * @returns SessionResult with authentication status and user info
  * @throws {AuthServiceError} Only if an unexpected error occurs
- *
- * @example
- * ```typescript
- * try {
- *   const session = await getSession();
- *   if (session.authenticated) {
- *     console.log("Logged in as:", session.user?.email);
- *     console.log("Session expires at:", session.session?.expiresAt);
- *     if (session.session?.isExpiringSoon) {
- *       console.log("Session is expiring soon, consider refreshing");
- *     }
- *   } else {
- *     console.log("Not authenticated");
- *   }
- * } catch (error) {
- *   console.error("Failed to get session:", error);
- * }
- * ```
  */
 export async function getSession(): Promise<SessionResult> {
   try {
@@ -577,10 +463,7 @@ export async function getSession(): Promise<SessionResult> {
     const sessionInfo = getSessionInfo(session);
 
     if (!sessionInfo.isValid || !session) {
-      console.info(
-        "[AuthService:getSession]",
-        "Session status check: not authenticated"
-      );
+      log.debug({ method: "getSession" }, "Session check: not authenticated");
 
       return {
         authenticated: false,
@@ -589,9 +472,9 @@ export async function getSession(): Promise<SessionResult> {
       };
     }
 
-    console.info(
-      "[AuthService:getSession]",
-      `Session status check: authenticated as ${sessionInfo.user?.id ?? "unknown"}`
+    log.debug(
+      { method: "getSession", userId: sessionInfo.user?.id },
+      "Session check: authenticated"
     );
 
     return {
@@ -603,10 +486,9 @@ export async function getSession(): Promise<SessionResult> {
       },
     };
   } catch (error) {
-    console.error(
-      "[AuthService:getSession]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "getSession", err: error },
+      "Unexpected error during getSession"
     );
     throw serviceError(
       "An unexpected error occurred while getting session",
@@ -624,22 +506,10 @@ export async function getSession(): Promise<SessionResult> {
  *
  * @returns RefreshSessionResult with new session tokens and expiry
  * @throws {AuthServiceError} If refresh fails (e.g., expired refresh token)
- *
- * @example
- * ```typescript
- * try {
- *   const result = await refreshSession();
- *   console.log("Session refreshed, expires at:", result.session.expiresAt);
- * } catch (error) {
- *   if (error instanceof AuthServiceError) {
- *     console.error("Session expired, please log in again");
- *   }
- * }
- * ```
  */
 export async function refreshSession(): Promise<RefreshSessionResult> {
   try {
-    console.info("[AuthService:refreshSession]", "Session refresh requested");
+    log.debug({ method: "refreshSession" }, "Session refresh requested");
 
     const supabase = await createClient();
 
@@ -649,16 +519,16 @@ export async function refreshSession(): Promise<RefreshSessionResult> {
     } = await supabase.auth.refreshSession();
 
     if (error) {
-      console.error(
-        "[AuthService:refreshSession]",
-        `Refresh failed: ${error.message}`
+      log.error(
+        { method: "refreshSession", err: error },
+        "Session refresh failed"
       );
       throw serviceError("Session has expired. Please log in again.", error);
     }
 
     if (!session) {
-      console.error(
-        "[AuthService:refreshSession]",
+      log.error(
+        { method: "refreshSession" },
         "No session returned after refresh"
       );
       throw serviceError("Session has expired. Please log in again.");
@@ -668,9 +538,9 @@ export async function refreshSession(): Promise<RefreshSessionResult> {
       ? new Date(session.expires_at * 1000).toISOString()
       : null;
 
-    console.info(
-      "[AuthService:refreshSession]",
-      `Session refreshed successfully, expires at: ${expiresAt}`
+    log.info(
+      { method: "refreshSession", expiresAt },
+      "Session refreshed successfully"
     );
 
     return {
@@ -681,16 +551,11 @@ export async function refreshSession(): Promise<RefreshSessionResult> {
       },
     };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
-    if (error instanceof AuthServiceError) {
-      throw error;
-    }
+    if (error instanceof AuthServiceError) throw error;
 
-    // Wrap unexpected errors
-    console.error(
-      "[AuthService:refreshSession]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "refreshSession", err: error },
+      "Unexpected error during session refresh"
     );
     throw serviceError(
       "An unexpected error occurred during session refresh",
@@ -709,27 +574,13 @@ export async function refreshSession(): Promise<RefreshSessionResult> {
  * @param type - The verification type (must be "email" for email verification)
  * @returns VerifyEmailResult with user and session information
  * @throws {AuthServiceError} If verification fails (expired token, invalid token, or server error)
- *
- * @example
- * ```typescript
- * try {
- *   const result = await verifyEmail(token_hash, "email");
- *   console.log("Email verified for user:", result.user.id);
- *   // Session cookies are automatically set by Supabase
- * } catch (error) {
- *   if (error instanceof AuthServiceError) {
- *     // Handle verification errors (expired, invalid, etc.)
- *     console.error("Verification failed:", error.message);
- *   }
- * }
- * ```
  */
 export async function verifyEmail(
   token_hash: string,
   type: "email"
 ): Promise<VerifyEmailResult> {
   try {
-    console.info("[AuthService:verifyEmail]", "Email verification attempt");
+    log.info({ method: "verifyEmail" }, "Email verification attempt");
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.verifyOtp({
@@ -738,12 +589,11 @@ export async function verifyEmail(
     });
 
     if (error) {
-      console.error(
-        "[AuthService:verifyEmail]",
-        `Verification failed: ${error.message}`
+      log.error(
+        { method: "verifyEmail", err: error },
+        "Email verification failed"
       );
 
-      // Check for expired token
       if (isExpiredTokenError(error)) {
         throw serviceError(
           "Verification link has expired. Please request a new one.",
@@ -755,16 +605,16 @@ export async function verifyEmail(
     }
 
     if (!data.user || !data.session) {
-      console.error(
-        "[AuthService:verifyEmail]",
+      log.error(
+        { method: "verifyEmail" },
         "No user or session returned from verification"
       );
       throw serviceError("Verification failed - no user or session created");
     }
 
-    console.info(
-      "[AuthService:verifyEmail]",
-      `Email verified successfully for user: ${data.user.id}`
+    log.info(
+      { method: "verifyEmail", userId: data.user.id },
+      "Email verified successfully"
     );
 
     return {
@@ -775,16 +625,11 @@ export async function verifyEmail(
       },
     };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
-    if (error instanceof AuthServiceError) {
-      throw error;
-    }
+    if (error instanceof AuthServiceError) throw error;
 
-    // Wrap unexpected errors
-    console.error(
-      "[AuthService:verifyEmail]",
-      "Unexpected error:",
-      error instanceof Error ? error.message : "Unknown error"
+    log.error(
+      { method: "verifyEmail", err: error },
+      "Unexpected error during email verification"
     );
     throw serviceError(
       "An unexpected error occurred during email verification",
