@@ -108,6 +108,36 @@ All Google Places API calls are **server-side only**. Place data is cached in th
 - Passwords require: 12+ chars, upper, lower, number, special character
 - Comment complex logic with references to `docs/decisions/`
 - Google Places API key is server-side only (`GOOGLE_PLACES_API_KEY`, no `NEXT_PUBLIC_` prefix)
+- **Never use `console.log/info/warn/error` in server-side code** — use the structured logger instead (see Logging below)
+- **Never use `process.env` outside `src/lib/env.ts` or `src/lib/config/index.ts`**
+
+## Logging
+
+All server-side code must use the structured logger from `src/lib/services/logging/`:
+
+```typescript
+import { createServiceLogger } from "@/lib/services/logging";
+
+const log = createServiceLogger("my-service");
+
+log.info({ method: "doThing", userId }, "Thing done");
+log.error({ method: "doThing", err }, "Thing failed");
+```
+
+**Log level semantics:**
+
+| Level | When to use |
+|-------|-------------|
+| `trace` | Method entry/exit, every DB call parameter |
+| `debug` | Intermediate state, computed values, dev-only detail |
+| `info` | User-initiated actions, successful state transitions |
+| `warn` | Recoverable failures, fallbacks used |
+| `error` | Thrown errors, failed operations |
+| `fatal` | Process-level failures |
+
+**Standard fields** — include whichever are in scope: `method`, `userId`, `sessionId`, `listId`, `placeId`, `durationMs`, `err`. The `traceId`/`spanId` fields are injected automatically from the active OpenTelemetry span.
+
+`LOG_LEVEL` is set in `.env.local` and exported from `src/lib/config/index.ts`. The one exception is client components, where `console.error` is acceptable since the server-side logger cannot run in the browser.
 
 ## Environment variables
 
@@ -116,7 +146,10 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 DATABASE_URL
-GOOGLE_PLACES_API_KEY   # server-side only
+GOOGLE_PLACES_API_KEY          # server-side only
+LOG_LEVEL                      # trace|debug|info|warn|error|fatal (optional)
+OTEL_SERVICE_NAME              # defaults to "topten" (optional)
+OTEL_EXPORTER_OTLP_ENDPOINT   # defaults to http://localhost:4318 (optional)
 ```
 
 Copy `.env.example` to `.env.local` for local development.
