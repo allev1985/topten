@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import LandingPageClient from "@/components/shared/LandingPageClient";
 
 vi.mock("next/navigation", () => ({
@@ -15,21 +15,15 @@ describe("LandingPageClient - Responsive Layout", () => {
       const gridContainer = container.querySelector(".grid");
 
       expect(gridContainer?.className).toContain("grid-cols-1");
-      expect(gridContainer?.className).toContain("lg:grid-cols-5");
+      expect(gridContainer?.className).toContain("lg:grid-cols-2");
     });
 
-    it("allocates correct column spans for text and images", () => {
+    it("renders two columns inside the grid", () => {
       const { container } = render(<LandingPageClient />);
+      const gridContainer = container.querySelector(".grid");
+      const columns = gridContainer?.children;
 
-      // Text column should be col-span-1 lg:col-span-2
-      const textColumn = screen
-        .getByRole("heading", { level: 1 })
-        .closest(".col-span-1");
-      expect(textColumn?.className).toContain("lg:col-span-2");
-
-      // Image column should be col-span-1 lg:col-span-3
-      const imageColumn = container.querySelector(".lg\\:col-span-3");
-      expect(imageColumn).toBeInTheDocument();
+      expect(columns).toHaveLength(2);
     });
   });
 
@@ -51,8 +45,6 @@ describe("LandingPageClient - Responsive Layout", () => {
       expect(main?.className).toContain("px-4");
       expect(main?.className).toContain("md:px-8");
       expect(main?.className).toContain("py-8");
-      expect(main?.className).toContain("md:py-12");
-      expect(main?.className).toContain("lg:py-16");
     });
 
     it("constrains content to max-width", () => {

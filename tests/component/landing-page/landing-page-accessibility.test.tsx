@@ -45,11 +45,9 @@ describe("LandingPageClient - Accessibility", () => {
   });
 
   describe("decorative elements", () => {
-    it("marks sparkles icon as decorative", () => {
+    it("provides an accessible label for the brand logo", () => {
       const { container } = render(<LandingPageClient />);
-      const sparklesIcon = container.querySelector('[aria-hidden="true"]');
-
-      expect(sparklesIcon).toBeInTheDocument();
+      expect(container.querySelector('[aria-label="myfaves"]')).toBeInTheDocument();
     });
   });
 

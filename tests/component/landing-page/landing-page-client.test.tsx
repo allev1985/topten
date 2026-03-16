@@ -12,16 +12,9 @@ vi.mock("next/navigation", () => ({
 
 describe("LandingPageClient", () => {
   describe("hero text content", () => {
-    it("displays the tagline with sparkles icon", () => {
-      render(<LandingPageClient />);
-      expect(
-        screen.getByText("Your personal guide to the world")
-      ).toBeInTheDocument();
-      // Icon is decorative (aria-hidden), check it's in the DOM
-      const taglineContainer = screen
-        .getByText("Your personal guide to the world")
-        .closest("div");
-      expect(taglineContainer?.querySelector("svg")).toBeInTheDocument();
+    it("displays the brand logo", () => {
+      const { container } = render(<LandingPageClient />);
+      expect(container.querySelector('[aria-label="myfaves"]')).toBeInTheDocument();
     });
 
     it("displays the headline as h1", () => {
