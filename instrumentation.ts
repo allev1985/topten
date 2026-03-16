@@ -54,6 +54,12 @@ export async function register() {
       ],
     });
 
-    sdk.start();
+    try {
+      await sdk.start();
+    } catch (error) {
+      // Do not crash the app on observability startup failure,
+      // but log for visibility and debugging.
+      console.error("Failed to start OpenTelemetry NodeSDK", error);
+    }
   }
 }
