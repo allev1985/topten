@@ -8,7 +8,7 @@
 
 ### Problem Statement
 
-YourFavs allows creators to build and publish lists of their favourite places, but currently there is no way for anyone — including the creator themselves — to view this content as a public visitor. Published lists exist in the database but are unreachable from any URL. The platform's core value proposition (sharing curated recommendations with others) is entirely blocked until public-facing routes exist.
+myfaves allows creators to build and publish lists of their favourite places, but currently there is no way for anyone — including the creator themselves — to view this content as a public visitor. Published lists exist in the database but are unreachable from any URL. The platform's core value proposition (sharing curated recommendations with others) is entirely blocked until public-facing routes exist.
 
 ### What This Feature Delivers
 
@@ -30,7 +30,7 @@ These routes require no authentication to access. They are the primary surfaces 
 
 ### Persona A: The List Creator
 
-A registered YourFavs user who has built one or more lists of places (e.g. "Best coffee in Edinburgh", "My favourite Tokyo ramen"). They publish lists when they are ready to share and want to hand people a single link to their profile or a specific list. They may share links on social media, in a bio, or via direct message.
+A registered myfaves user who has built one or more lists of places (e.g. "Best coffee in Edinburgh", "My favourite Tokyo ramen"). They publish lists when they are ready to share and want to hand people a single link to their profile or a specific list. They may share links on social media, in a bio, or via direct message.
 
 Key needs:
 - A shareable profile URL that shows all their published work
@@ -40,7 +40,7 @@ Key needs:
 
 ### Persona B: The Public Visitor (Unauthenticated)
 
-Someone who has received a link to a YourFavs profile or list — possibly a friend of the creator, a social media follower, or someone who found the link in a bio. They have no YourFavs account and no intention to create one right now. They want to browse the content quickly and without friction.
+Someone who has received a link to a myfaves profile or list — possibly a friend of the creator, a social media follower, or someone who found the link in a bio. They have no myfaves account and no intention to create one right now. They want to browse the content quickly and without friction.
 
 Key needs:
 - Immediate access to the content without being prompted to sign up
@@ -49,7 +49,7 @@ Key needs:
 
 ### Persona C: The Authenticated Visitor
 
-A YourFavs user who is browsing another creator's public profile or list while logged in. Their experience of public pages should be identical to Persona B — authentication status must not alter what content is shown on public pages.
+A myfaves user who is browsing another creator's public profile or list while logged in. Their experience of public pages should be identical to Persona B — authentication status must not alter what content is shown on public pages.
 
 Key needs:
 - Same content and layout as the unauthenticated visitor
@@ -61,7 +61,7 @@ Key needs:
 
 ### Journey 1: Creator Sharing Their Profile Link
 
-1. Creator logs into YourFavs and navigates to their dashboard.
+1. Creator logs into myfaves and navigates to their dashboard.
 2. Creator sees their profile URL displayed (e.g. `yourfavs.com/@alex`).
 3. Creator copies the link and pastes it into a social media bio, message, or email.
 4. Recipient clicks the link and lands on the creator's public profile page.
@@ -184,10 +184,10 @@ As a public visitor, I want places on a list page to appear in the order defined
 
 **Given** a user with `name = "Alex"` and `vanity_slug = "alex"` and `bio = "My favourite spots around the world"`
 **When** the page `/@alex` is rendered
-**Then** the HTML `<title>` is set to `"Alex — YourFavs"` (or equivalent)
-**And** a `<meta name="description">` tag is present, populated from the user's `bio` (truncated if necessary); if `bio` is null, a generic fallback is used (e.g. "Discover Alex's curated lists on YourFavs")
+**Then** the HTML `<title>` is set to `"Alex — myfaves"` (or equivalent)
+**And** a `<meta name="description">` tag is present, populated from the user's `bio` (truncated if necessary); if `bio` is null, a generic fallback is used (e.g. "Discover Alex's curated lists on myfaves")
 **And** `og:title`, `og:description`, and `og:url` Open Graph tags are present and correctly populated
-**And** `og:image` is set to `avatar_url` if present; otherwise a default YourFavs OG image is used
+**And** `og:image` is set to `avatar_url` if present; otherwise a default myfaves OG image is used
 
 ---
 
@@ -231,10 +231,10 @@ As a public visitor, I want places on a list page to appear in the order defined
 
 **Given** a published list with `title = "Best Coffee in Edinburgh"` and `description = "My top picks for specialty coffee across the city"`
 **When** the page `/@alex/best-coffee-edinburgh` is rendered
-**Then** the HTML `<title>` is set to `"Best Coffee in Edinburgh — Alex — YourFavs"` (or equivalent)
+**Then** the HTML `<title>` is set to `"Best Coffee in Edinburgh — Alex — myfaves"` (or equivalent)
 **And** a `<meta name="description">` tag is present, populated from the list's `description` (truncated if necessary); if `description` is null, a generic fallback is used
 **And** `og:title`, `og:description`, and `og:url` Open Graph tags are present and correctly populated
-**And** `og:image` is set to the `hero_image_url` of the first place in the list (position 1) if available; otherwise a default YourFavs OG image is used
+**And** `og:image` is set to the `hero_image_url` of the first place in the list (position 1) if available; otherwise a default myfaves OG image is used
 
 ---
 

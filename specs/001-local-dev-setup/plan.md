@@ -5,7 +5,7 @@
 
 ## Summary
 
-This feature establishes the complete local development environment for the YourFavs/TopTen platform. The implementation will provide a fully functional development setup enabling developers to clone the repository and begin contributing within 15 minutes. The technical approach uses Next.js 14+ with App Router, Supabase (Postgres + Auth) running locally via Docker, Drizzle ORM for database operations, Tailwind CSS with shadcn/ui for styling, and a comprehensive testing stack (Vitest, React Testing Library, Playwright).
+This feature establishes the complete local development environment for the myfaves/TopTen platform. The implementation will provide a fully functional development setup enabling developers to clone the repository and begin contributing within 15 minutes. The technical approach uses Next.js 14+ with App Router, Supabase (Postgres + Auth) running locally via Docker, Drizzle ORM for database operations, Tailwind CSS with shadcn/ui for styling, and a comprehensive testing stack (Vitest, React Testing Library, Playwright).
 
 ## Technical Context
 

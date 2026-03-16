@@ -5,7 +5,7 @@
 
 ## Overview
 
-This guide explains how to use the Supabase authentication utilities in the YourFavs application.
+This guide explains how to use the Supabase authentication utilities in the myfaves application.
 
 ## Prerequisites
 

@@ -1,4 +1,4 @@
-# YourFavs (TopTen)
+# myfaves (TopTen)
 
 A platform that empowers individuals to curate and share personalized collections of their favorite places. Each list is organized around a specific category—such as coffee shops, hiking trails, or restaurants—allowing users to build focused, meaningful lists that reflect their preferences and local expertise.
 

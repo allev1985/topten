@@ -2,13 +2,13 @@
 
 **Feature**: Landing Page  
 **Date**: 2025-12-05  
-**Audience**: Developers working on the YourFavs landing page
+**Audience**: Developers working on the myfaves landing page
 
 ---
 
 ## Overview
 
-This guide helps developers understand, test, and extend the YourFavs landing page. The landing page uses Next.js App Router with a Server Component + Client Component pattern for optimal performance and future extensibility.
+This guide helps developers understand, test, and extend the myfaves landing page. The landing page uses Next.js App Router with a Server Component + Client Component pattern for optimal performance and future extensibility.
 
 ---
 
@@ -77,10 +77,10 @@ import type { Metadata } from 'next'
 import LandingPageClient from './_components/landing-page-client'
 
 export const metadata: Metadata = {
-  title: 'YourFavs - Curate and share your favorite places',
+  title: 'myfaves - Curate and share your favorite places',
   description: 'Discover and share curated lists of your favorite coffee shops, restaurants, bars, and more.',
   openGraph: {
-    title: 'YourFavs',
+    title: 'myfaves',
     description: 'Curate and share your favorite places',
     type: 'website',
   },
@@ -106,7 +106,7 @@ export default function LandingPageClient() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
       <main className="flex flex-col items-center gap-6 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-          YourFavs
+          myfaves
         </h1>
         <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
           Curate and share your favorite places
@@ -199,9 +199,9 @@ import { render, screen } from '@testing-library/react'
 import LandingPageClient from '@/app/_components/landing-page-client'
 
 describe('LandingPageClient', () => {
-  it('renders the YourFavs heading', () => {
+  it('renders the myfaves heading', () => {
     render(<LandingPageClient />)
-    expect(screen.getByRole('heading', { name: 'YourFavs' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'myfaves' })).toBeInTheDocument()
   })
 
   it('renders the tagline', () => {
@@ -220,7 +220,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Landing Page', () => {
   test('loads successfully', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'YourFavs' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'myfaves' })).toBeVisible()
   })
 
   test('has no console errors', async ({ page }) => {
@@ -293,12 +293,12 @@ User Request → Next.js Router → Server Component (page.tsx)
 ```typescript
 // Before
 <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-  YourFavs
+  myfaves
 </h1>
 
 // After
 <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-  YourFavs - Discover Local Gems
+  myfaves - Discover Local Gems
 </h1>
 ```
 
@@ -378,7 +378,7 @@ User Request → Next.js Router → Server Component (page.tsx)
          <Dialog open={showWelcome} onOpenChange={setShowWelcome}>
            <DialogContent>
              <DialogHeader>
-               <DialogTitle>Welcome to YourFavs!</DialogTitle>
+               <DialogTitle>Welcome to myfaves!</DialogTitle>
              </DialogHeader>
              <p>Start curating your favorite places today.</p>
            </DialogContent>
@@ -411,17 +411,17 @@ User Request → Next.js Router → Server Component (page.tsx)
 2. Modify the `metadata` export:
    ```typescript
    export const metadata: Metadata = {
-     title: 'YourFavs - Your New Title',
+     title: 'myfaves - Your New Title',
      description: 'Your new description',
      keywords: ['favorites', 'places', 'recommendations'], // Optional
      openGraph: {
-       title: 'YourFavs',
+       title: 'myfaves',
        description: 'Your new description',
        images: ['/og-image.png'], // Optional
      },
      twitter: {
        card: 'summary_large_image', // Optional
-       title: 'YourFavs',
+       title: 'myfaves',
        description: 'Your new description',
      },
    }
@@ -445,7 +445,7 @@ User Request → Next.js Router → Server Component (page.tsx)
 1. Use Tailwind responsive prefixes:
    ```typescript
    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
-     YourFavs
+     myfaves
    </h1>
    
    <p className="max-w-sm md:max-w-md lg:max-w-lg text-base md:text-lg">
@@ -509,10 +509,10 @@ useEffect(() => {
 1. Check test query method:
    ```typescript
    // ✅ Preferred: getByRole
-   screen.getByRole('heading', { name: 'YourFavs' })
+   screen.getByRole('heading', { name: 'myfaves' })
    
    // ⚠️ Fallback: getByText
-   screen.getByText('YourFavs')
+   screen.getByText('myfaves')
    
    // ❌ Avoid: getByTestId (use only as last resort)
    screen.getByTestId('landing-heading')

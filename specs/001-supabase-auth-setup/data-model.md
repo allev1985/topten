@@ -118,7 +118,7 @@ Runtime configuration validated at startup.
 
 ```typescript
 /**
- * Authentication types for YourFavs application.
+ * Authentication types for myfaves application.
  * Re-exports Supabase types with application-specific extensions.
  */
 

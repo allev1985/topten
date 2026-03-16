@@ -50,7 +50,7 @@ test.describe.skip("Dashboard Access - Mobile Navigation", () => {
 
     // Drawer should be visible
     await expect(page.locator('[role="dialog"]')).toBeVisible();
-    await expect(page.getByText("YourFavs")).toBeVisible();
+    await expect(page.getByText("myfaves")).toBeVisible();
   });
 
   test("closes drawer on outside click", async ({ page }) => {

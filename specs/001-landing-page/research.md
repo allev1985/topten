@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document captures the research and architectural decisions for implementing the YourFavs landing page using Next.js App Router with a Server Component + Client Component pattern.
+This document captures the research and architectural decisions for implementing the myfaves landing page using Next.js App Router with a Server Component + Client Component pattern.
 
 ## Architecture Decisions
 
@@ -44,7 +44,7 @@ export default function LandingPageClient() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
       <main className="flex flex-col items-center gap-6 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-          YourFavs
+          myfaves
         </h1>
         <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
           Curate and share your favorite places
@@ -103,7 +103,7 @@ export default function LandingPageClient() {
 **Location**: `tests/component/landing-page/`
 
 Test cases:
-- ✅ Renders branding (YourFavs title)
+- ✅ Renders branding (myfaves title)
 - ✅ Renders tagline ("Curate and share your favorite places")
 - ✅ Uses semantic HTML (`<main>` element)
 - ✅ Applies correct Tailwind classes for styling
@@ -120,9 +120,9 @@ import LandingPageClient from '@/app/_components/landing-page-client'
 
 describe('LandingPageClient', () => {
   describe('branding display', () => {
-    it('renders the YourFavs title', () => {
+    it('renders the myfaves title', () => {
       render(<LandingPageClient />)
-      expect(screen.getByText('YourFavs')).toBeInTheDocument()
+      expect(screen.getByText('myfaves')).toBeInTheDocument()
     })
 
     it('renders the tagline', () => {
@@ -160,13 +160,13 @@ import { test, expect } from '@playwright/test'
 test.describe('Landing Page', () => {
   test('loads successfully at root URL', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'YourFavs' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'myfaves' })).toBeVisible()
   })
 
   test('renders within 2 seconds', async ({ page }) => {
     const startTime = Date.now()
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'YourFavs' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'myfaves' })).toBeVisible()
     const loadTime = Date.now() - startTime
     expect(loadTime).toBeLessThan(2000)
   })
@@ -263,7 +263,7 @@ Based on Vitest configuration, coverage includes:
 5. **Server-Rendered Content**: Core branding and messaging visible without JavaScript
 
 **Accessibility Checklist**:
-- ✅ Proper heading hierarchy (h1 for "YourFavs")
+- ✅ Proper heading hierarchy (h1 for "myfaves")
 - ✅ Semantic HTML elements (`<main>`, `<h1>`, `<p>`)
 - ✅ Sufficient color contrast (zinc-600/zinc-400 on white/black backgrounds)
 - ✅ No content dependent on JavaScript to render
@@ -369,10 +369,10 @@ Based on Vitest configuration, coverage includes:
 **Pattern Example** (from existing tests):
 ```typescript
 // ✅ Good: Tests user-visible behavior
-expect(screen.getByText('YourFavs')).toBeInTheDocument()
+expect(screen.getByText('myfaves')).toBeInTheDocument()
 
 // ❌ Bad: Tests implementation details
-expect(component.props.title).toBe('YourFavs')
+expect(component.props.title).toBe('myfaves')
 ```
 
 ### Playwright
@@ -386,11 +386,11 @@ expect(component.props.title).toBe('YourFavs')
 **Pattern Example**:
 ```typescript
 // ✅ Good: Web-first assertion with auto-wait
-await expect(page.getByRole('heading', { name: 'YourFavs' })).toBeVisible()
+await expect(page.getByRole('heading', { name: 'myfaves' })).toBeVisible()
 
 // ❌ Bad: Manual wait + CSS selector
 await page.waitForTimeout(1000)
-expect(await page.$('h1').innerText()).toBe('YourFavs')
+expect(await page.$('h1').innerText()).toBe('myfaves')
 ```
 
 ---

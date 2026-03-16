@@ -1,6 +1,6 @@
-# Quickstart Guide: YourFavs Development Setup
+# Quickstart Guide: myfaves Development Setup
 
-This guide will help you set up the YourFavs development environment from scratch.
+This guide will help you set up the myfaves development environment from scratch.
 
 ## Prerequisites
 

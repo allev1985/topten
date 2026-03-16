@@ -58,7 +58,7 @@ Project structure follows Next.js App Router with `src/` directory:
 ### Implementation for User Story 1
 
 - [x] T009 [US1] Create root layout with basic HTML structure in `src/app/layout.tsx`
-- [x] T010 [US1] Create homepage placeholder with "YourFavs" title in `src/app/page.tsx`
+- [x] T010 [US1] Create homepage placeholder with "myfaves" title in `src/app/page.tsx`
 - [x] T011 [US1] Configure `next.config.js` with strict mode and any required Next.js settings
 - [x] T012 [US1] Create `src/lib/utils/cn.ts` utility for Tailwind CSS className merging using clsx and tailwind-merge (required by shadcn/ui components)
 

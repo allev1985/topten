@@ -3,7 +3,7 @@
 **Feature Branch**: `001-login-logout`  
 **Created**: 2025-11-29  
 **Status**: Draft  
-**Input**: Task 2.2: Login & Logout Endpoints - Create login and logout API routes with redirectTo validation, redirect URL validation, and session cookie management for YourFavs authentication system.
+**Input**: Task 2.2: Login & Logout Endpoints - Create login and logout API routes with redirectTo validation, redirect URL validation, and session cookie management for myfaves authentication system.
 
 ## User Scenarios & Testing *(mandatory)*
 

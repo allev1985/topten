@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Landing Page is the entry point to the YourFavs application, accessible at the root URL (`/`). It consists of a Server Component that renders the page shell and a Client Component wrapper that provides the foundation for future interactive features.
+The Landing Page is the entry point to the myfaves application, accessible at the root URL (`/`). It consists of a Server Component that renders the page shell and a Client Component wrapper that provides the foundation for future interactive features.
 
 ---
 
@@ -33,10 +33,10 @@ export default function LandingPage(): JSX.Element
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'YourFavs - Curate and share your favorite places',
+  title: 'myfaves - Curate and share your favorite places',
   description: 'Discover and share curated lists of your favorite coffee shops, restaurants, bars, and more.',
   openGraph: {
-    title: 'YourFavs',
+    title: 'myfaves',
     description: 'Curate and share your favorite places',
     type: 'website',
   },
@@ -103,7 +103,7 @@ Returns a React element containing:
 <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
   <main className="flex flex-col items-center gap-6 text-center">
     <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-      YourFavs
+      myfaves
     </h1>
     <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
       Curate and share your favorite places
@@ -217,7 +217,7 @@ export default function LandingPageClient() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
         <main className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-            YourFavs
+            myfaves
           </h1>
           <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
             Curate and share your favorite places
@@ -250,7 +250,7 @@ export default function LandingPageClient() {
 #### Required Test Cases
 1. **Rendering**
    - ✅ Component renders without errors
-   - ✅ Displays "YourFavs" heading
+   - ✅ Displays "myfaves" heading
    - ✅ Displays tagline text
 
 2. **Semantic Structure**

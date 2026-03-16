@@ -5,7 +5,7 @@
 
 ## Overview
 
-This guide walks through implementing the database schema and Supabase Auth configuration for YourFavs. After completing these steps, you will have:
+This guide walks through implementing the database schema and Supabase Auth configuration for myfaves. After completing these steps, you will have:
 
 - ✅ Supabase Auth configured with strong password requirements
 - ✅ Email verification enabled for new signups
@@ -82,7 +82,7 @@ mkdir -p supabase/templates
                 <h1
                   style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1a1a;"
                 >
-                  YourFavs
+                  myfaves
                 </h1>
               </td>
             </tr>
@@ -97,7 +97,7 @@ mkdir -p supabase/templates
                 <p
                   style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #4a4a4a;"
                 >
-                  Welcome to YourFavs! Please click the button below to verify
+                  Welcome to myfaves! Please click the button below to verify
                   your email address and complete your registration.
                 </p>
                 <table
@@ -117,7 +117,7 @@ mkdir -p supabase/templates
                 <p
                   style="margin: 24px 0 0; font-size: 14px; line-height: 1.5; color: #6b7280;"
                 >
-                  If you didn't create an account with YourFavs, you can safely
+                  If you didn't create an account with myfaves, you can safely
                   ignore this email.
                 </p>
               </td>
@@ -128,7 +128,7 @@ mkdir -p supabase/templates
                 style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid #e5e7eb;"
               >
                 <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                  © 2025 YourFavs. All rights reserved.
+                  © 2025 myfaves. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -166,7 +166,7 @@ mkdir -p supabase/templates
                 <h1
                   style="margin: 0; font-size: 24px; font-weight: 600; color: #1a1a1a;"
                 >
-                  YourFavs
+                  myfaves
                 </h1>
               </td>
             </tr>
@@ -218,7 +218,7 @@ mkdir -p supabase/templates
                 style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid #e5e7eb;"
               >
                 <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                  © 2025 YourFavs. All rights reserved.
+                  © 2025 myfaves. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -434,7 +434,7 @@ pnpm supabase db push
 
 ```typescript
 /**
- * Password validation utility for YourFavs
+ * Password validation utility for myfaves
  * Validates passwords against security requirements
  */
 

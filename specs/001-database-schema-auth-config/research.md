@@ -124,7 +124,7 @@ ON DELETE CASCADE;
 1. **Responsive Design**: Mobile-first HTML/CSS
 2. **Plain Text Fallback**: Required for accessibility (FR-010)
 3. **Clear CTA**: Prominent button for action (FR-008)
-4. **Branding**: Consistent with YourFavs visual identity
+4. **Branding**: Consistent with myfaves visual identity
 
 **Template Structure**:
 

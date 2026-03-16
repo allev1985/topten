@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: YourFavs Authentication API - Signup & Email Verification
+  title: myfaves Authentication API - Signup & Email Verification
   version: 1.0.0
   description: |
     API endpoints for user signup and email verification.

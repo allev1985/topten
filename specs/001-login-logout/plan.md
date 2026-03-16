@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement login and logout API routes for the YourFavs authentication system using Supabase Auth. The login endpoint validates credentials via `signInWithPassword`, manages session cookies, and validates redirect URLs to prevent open redirect attacks. The logout endpoint invalidates sessions and clears cookies. Both endpoints follow existing patterns from signup/verify endpoints with proper error handling, logging, and user enumeration protection.
+Implement login and logout API routes for the myfaves authentication system using Supabase Auth. The login endpoint validates credentials via `signInWithPassword`, manages session cookies, and validates redirect URLs to prevent open redirect attacks. The logout endpoint invalidates sessions and clears cookies. Both endpoints follow existing patterns from signup/verify endpoints with proper error handling, logging, and user enumeration protection.
 
 ## Technical Context
 

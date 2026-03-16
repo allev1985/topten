@@ -2,7 +2,7 @@
 
 ## Epic Overview
 
-**Epic:** YourFavs Landing Page
+**Epic:** myfaves Landing Page
 **Goal:** Build a visual-first landing page that serves as the primary entry point for all users, with modal-based authentication flows.
 
 **Context:**
@@ -169,13 +169,13 @@ describe('Landing Page', () => {
 **Dependencies:** Story 2
 
 ### Description
-Build the navigation header with YourFavs logo and call-to-action buttons. Header displays CTAs and triggers auth modals (wired in later story).
+Build the navigation header with myfaves logo and call-to-action buttons. Header displays CTAs and triggers auth modals (wired in later story).
 
 ### Context
 The header is the primary navigation element visible on every landing page load. It provides easy access to auth flows. The header is a Client Component because it needs to handle click events for opening modals.
 
 **Design:**
-- Logo: MapPin icon in orange circle + "YourFavs" text
+- Logo: MapPin icon in orange circle + "myfaves" text
 - Actions: "Log In" (ghost button) + "Start Curating" (primary button)
 - Header is static scroll (not fixed)
 
@@ -198,7 +198,7 @@ The header is the primary navigation element visible on every landing page load.
 ### Acceptance Criteria
 - [ ] Header renders at top of landing page
 - [ ] Logo displays MapPin icon in orange circle
-- [ ] Logo text reads "YourFavs"
+- [ ] Logo text reads "myfaves"
 - [ ] Logo links to `/` route
 - [ ] Shows "Log In" and "Start Curating" buttons
 - [ ] Click handlers fire when buttons clicked
@@ -247,7 +247,7 @@ describe('Header', () => {
 ### Design Reference
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  [○ MapPin] YourFavs          [Log In] [Start Curating] │
+│  [○ MapPin] myfaves          [Log In] [Start Curating] │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -489,7 +489,7 @@ export function LoginModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log in to YourFavs</DialogTitle>
+          <DialogTitle>Log in to myfaves</DialogTitle>
         </DialogHeader>
         <LoginForm redirectTo="/dashboard" />
       </DialogContent>

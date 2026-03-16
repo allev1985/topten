@@ -9,7 +9,7 @@
 
 ### User Story 1 - New User Creates Account (Priority: P1)
 
-A new visitor to YourFavs wants to create an account so they can start curating and sharing their favourite places. They provide their email address and a secure password, and receive a confirmation email to verify their account.
+A new visitor to myfaves wants to create an account so they can start curating and sharing their favourite places. They provide their email address and a secure password, and receive a confirmation email to verify their account.
 
 **Why this priority**: Account creation is the foundational capability that enables all other features. Without the ability to sign up, users cannot access any authenticated functionality. This is the entry point for all new users.
 

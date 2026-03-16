@@ -33,7 +33,7 @@ export function DashboardSidebar() {
     <div className="flex flex-col h-full">
       {/* Logo/Branding */}
       <div className="p-6 border-b">
-        <h1 className="text-xl font-semibold">📍 YourFavs</h1>
+        <h1 className="text-xl font-semibold">📍 myfaves</h1>
       </div>
       
       {/* Navigation Container */}

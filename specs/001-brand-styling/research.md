@@ -50,7 +50,7 @@ export function listCoverGradient(listId: string): string {
 
 ---
 
-## R-004 — "YourFavs" String Occurrences
+## R-004 — "myfaves" String Occurrences
 
 **Full list of files requiring updates** (from codebase grep):
 
@@ -65,4 +65,4 @@ export function listCoverGradient(listId: string): string {
 | `src/lib/auth/helpers/session.ts` | 2 | Code comment only — no user-visible impact, leave as-is |
 | `src/lib/utils/validation/password.ts` | 2 | Code comment only — no user-visible impact, leave as-is |
 
-**Replacement rule**: `"YourFavs"` → `"myfaves"` in all user-visible contexts (titles, descriptions, aria-labels). Code comments (`// ... for YourFavs`) are out of scope per spec FR-014.
+**Replacement rule**: `"myfaves"` → `"myfaves"` in all user-visible contexts (titles, descriptions, aria-labels). Code comments (`// ... for myfaves`) are out of scope per spec FR-014.

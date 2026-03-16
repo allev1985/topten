@@ -5,7 +5,7 @@
 
 ## Overview
 
-This guide provides implementation instructions for the login and logout authentication endpoints in YourFavs.
+This guide provides implementation instructions for the login and logout authentication endpoints in myfaves.
 
 ## Prerequisites
 

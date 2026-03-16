@@ -1,8 +1,8 @@
-# GitHub Copilot Instructions for TopTen (YourFavs)
+# GitHub Copilot Instructions for TopTen (myfaves)
 
 ## Project Overview
 
-TopTen/YourFavs is a platform that empowers individuals to curate and share personalised collections of their favourite places. Each list is organised around a specific category—such as coffee shops, hiking trails, or restaurants—allowing users to build focused, meaningful lists that reflect their preferences and local expertise.
+TopTen/myfaves is a platform that empowers individuals to curate and share personalised collections of their favourite places. Each list is organised around a specific category—such as coffee shops, hiking trails, or restaurants—allowing users to build focused, meaningful lists that reflect their preferences and local expertise.
 
 ## Technology Stack
 
