@@ -33,6 +33,11 @@ pnpm db:studio    # Drizzle Studio GUI
 pnpm supabase:start
 pnpm supabase:stop
 pnpm supabase:status
+
+# Local observability stack — Grafana at http://localhost:3001 (requires Docker)
+pnpm observability:start   # Start Grafana, Tempo, Prometheus, Loki, OTel Collector
+pnpm observability:stop    # Stop the stack
+pnpm observability:status  # Check running containers
 ```
 
 To run a single test file: `pnpm test -- tests/unit/my-file.test.ts`

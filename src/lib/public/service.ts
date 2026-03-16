@@ -13,6 +13,7 @@
 
 import { cache } from "react";
 import * as publicRepository from "@/db/repositories/public.repository";
+import { createServiceLogger } from "@/lib/services/logging";
 import type {
   PublicProfile,
   PublicListSummary,
@@ -29,6 +30,8 @@ export type {
   PublicPlaceEntry,
 };
 
+const log = createServiceLogger("public-service");
+
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 /**
@@ -43,8 +46,8 @@ export type {
 export const getPublicProfile = cache(
   async (vanitySlug: string): Promise<PublicProfile | null> => {
     const safeSlug = vanitySlug.replace(/[\r\n]/g, "_");
-    console.info(
-      "[PublicService:getPublicProfile]",
+    log.debug(
+      { method: "getPublicProfile" },
       `Fetching public profile for slug "${safeSlug}"`
     );
 
@@ -52,24 +55,20 @@ export const getPublicProfile = cache(
       const row = await publicRepository.getPublicProfileBySlug(vanitySlug);
 
       if (row) {
-        console.info(
-          "[PublicService:getPublicProfile]",
-          `Found profile for slug "${safeSlug}" (id: ${row.id})`
+        log.info(
+          { method: "getPublicProfile", userId: row.id },
+          `Profile found for slug "${safeSlug}"`
         );
       } else {
-        console.info(
-          "[PublicService:getPublicProfile]",
+        log.info(
+          { method: "getPublicProfile" },
           `No profile found for slug "${safeSlug}"`
         );
       }
 
       return row;
     } catch (err) {
-      console.error(
-        "[PublicService:getPublicProfile]",
-        "DB error:",
-        err instanceof Error ? err.message : "Unknown error"
-      );
+      log.error({ method: "getPublicProfile", err }, "DB error");
       throw publicServiceError("Failed to load profile.", err);
     }
   }
@@ -83,25 +82,24 @@ export const getPublicProfile = cache(
  */
 export const getPublicListsForProfile = cache(
   async (userId: string): Promise<PublicListSummary[]> => {
-    console.info(
-      "[PublicService:getPublicListsForProfile]",
-      `Fetching published lists for user ${userId}`
+    log.debug(
+      { method: "getPublicListsForProfile", userId },
+      "Fetching published lists"
     );
 
     try {
       const rows = await publicRepository.getPublicListsForProfile(userId);
 
-      console.info(
-        "[PublicService:getPublicListsForProfile]",
-        `Found ${rows.length} published lists for user ${userId}`
+      log.info(
+        { method: "getPublicListsForProfile", userId, count: rows.length },
+        "Published lists fetched"
       );
 
       return rows;
     } catch (err) {
-      console.error(
-        "[PublicService:getPublicListsForProfile]",
-        "DB error:",
-        err instanceof Error ? err.message : "Unknown error"
+      log.error(
+        { method: "getPublicListsForProfile", userId, err },
+        "DB error"
       );
       throw publicServiceError("Failed to load lists.", err);
     }
@@ -124,9 +122,9 @@ export const getPublicListDetail = cache(
     listSlug: string;
   }): Promise<PublicListDetail | null> => {
     const safeListSlug = listSlug.replace(/[\r\n]/g, "_");
-    console.info(
-      "[PublicService:getPublicListDetail]",
-      `Fetching list detail for user ${userId}, slug "${safeListSlug}"`
+    log.debug(
+      { method: "getPublicListDetail", userId },
+      `Fetching list detail for slug "${safeListSlug}"`
     );
 
     try {
@@ -136,24 +134,25 @@ export const getPublicListDetail = cache(
       });
 
       if (result) {
-        console.info(
-          "[PublicService:getPublicListDetail]",
-          `Found list "${safeListSlug}" with ${result.places.length} places`
+        log.info(
+          {
+            method: "getPublicListDetail",
+            userId,
+            listId: result.id,
+            placeCount: result.places.length,
+          },
+          `List detail found for slug "${safeListSlug}"`
         );
       } else {
-        console.info(
-          "[PublicService:getPublicListDetail]",
-          `List not found or not published: user ${userId}, slug "${safeListSlug}"`
+        log.info(
+          { method: "getPublicListDetail", userId },
+          `List not found or not published: slug "${safeListSlug}"`
         );
       }
 
       return result;
     } catch (err) {
-      console.error(
-        "[PublicService:getPublicListDetail]",
-        "DB error:",
-        err instanceof Error ? err.message : "Unknown error"
-      );
+      log.error({ method: "getPublicListDetail", userId, err }, "DB error");
       throw publicServiceError("Failed to load list.", err);
     }
   }

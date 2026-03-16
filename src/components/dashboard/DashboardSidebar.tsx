@@ -46,6 +46,7 @@ export function DashboardSidebar(): JSX.Element {
       }
 
       // Only reached on actual error (not redirect)
+      // Client component — server-side logger is not available here
       console.error("Failed to sign out:", err);
       setIsSigningOut(false);
     }

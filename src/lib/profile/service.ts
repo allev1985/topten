@@ -15,6 +15,7 @@ import {
   profileServiceError,
   isUniqueViolation,
 } from "./service/errors";
+import { createServiceLogger } from "@/lib/services/logging";
 import type {
   UpdateNameResult,
   UpdateSlugResult,
@@ -23,6 +24,8 @@ import type {
 
 export { ProfileServiceError };
 export type { UpdateNameResult, UpdateSlugResult, SettingsProfile };
+
+const log = createServiceLogger("profile-service");
 
 /**
  * Retrieve the profile data required for the settings page.
@@ -34,19 +37,15 @@ export type { UpdateNameResult, UpdateSlugResult, SettingsProfile };
 export async function getProfileForSettings(
   userId: string
 ): Promise<SettingsProfile | null> {
-  console.info(
-    "[ProfileService:getProfileForSettings]",
-    `Fetching settings profile for user ${userId}`
+  log.debug(
+    { method: "getProfileForSettings", userId },
+    "Fetching settings profile"
   );
 
   try {
     return await profileRepository.getSettingsProfile(userId);
   } catch (err) {
-    console.error(
-      "[ProfileService:getProfileForSettings]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "getProfileForSettings", userId, err }, "DB error");
     throw profileServiceError(
       "Failed to load profile settings. Please try again.",
       err
@@ -66,26 +65,16 @@ export async function updateName(
   userId: string,
   name: string
 ): Promise<UpdateNameResult> {
-  console.info(
-    "[ProfileService:updateName]",
-    `Updating name for user ${userId}`
-  );
+  log.info({ method: "updateName", userId }, "Updating display name");
 
   try {
     await profileRepository.updateUserName({ userId, name });
 
-    console.info(
-      "[ProfileService:updateName]",
-      `Name updated for user ${userId}`
-    );
+    log.info({ method: "updateName", userId }, "Display name updated");
 
     return { name };
   } catch (err) {
-    console.error(
-      "[ProfileService:updateName]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "updateName", userId, err }, "DB error");
     throw profileServiceError("Failed to update name. Please try again.", err);
   }
 }
@@ -110,10 +99,7 @@ export async function updateSlug(
   userId: string,
   vanitySlug: string
 ): Promise<UpdateSlugResult> {
-  console.info(
-    "[ProfileService:updateSlug]",
-    `Updating slug for user ${userId} to "${vanitySlug}"`
-  );
+  log.info({ method: "updateSlug", userId }, "Updating vanity slug");
 
   // Layer 1: Application pre-check
   const isTaken = await profileRepository.getSlugConflict({
@@ -122,9 +108,9 @@ export async function updateSlug(
   });
 
   if (isTaken) {
-    console.info(
-      "[ProfileService:updateSlug]",
-      `Slug "${vanitySlug}" already taken (pre-check)`
+    log.info(
+      { method: "updateSlug", userId },
+      "Slug already taken (pre-check)"
     );
     throw slugTakenError();
   }
@@ -133,26 +119,19 @@ export async function updateSlug(
     // Layer 2: Write with race-condition catch
     await profileRepository.updateUserSlug({ userId, vanitySlug });
 
-    console.info(
-      "[ProfileService:updateSlug]",
-      `Slug updated to "${vanitySlug}" for user ${userId}`
-    );
+    log.info({ method: "updateSlug", userId }, "Vanity slug updated");
 
     return { vanitySlug };
   } catch (err) {
     if (isUniqueViolation(err)) {
-      console.info(
-        "[ProfileService:updateSlug]",
-        `Slug "${vanitySlug}" taken via race-condition (23505)`
+      log.info(
+        { method: "updateSlug", userId },
+        "Slug taken via race-condition (23505)"
       );
       throw slugTakenError(err);
     }
 
-    console.error(
-      "[ProfileService:updateSlug]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "updateSlug", userId, err }, "DB error");
     throw profileServiceError(
       "Failed to update profile URL. Please try again.",
       err

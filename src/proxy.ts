@@ -24,6 +24,9 @@ import {
   getRequestPathname,
 } from "@/lib/auth/helpers/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
+import { createServiceLogger } from "@/lib/services/logging";
+
+const log = createServiceLogger("proxy");
 
 /**
  * Main proxy function
@@ -82,7 +85,10 @@ export async function proxy(request: NextRequest) {
       return response;
     } catch (error) {
       // Fail-closed: redirect to login on any error
-      console.error("Auth middleware error:", error);
+      log.error(
+        { method: "proxy", pathname, err: error },
+        "Auth middleware error — redirecting to login"
+      );
       return createLoginRedirect(request, pathname);
     }
   }

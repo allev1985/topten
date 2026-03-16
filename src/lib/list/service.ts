@@ -28,6 +28,7 @@ import {
   listServiceError,
   isUniqueViolation,
 } from "./service/errors";
+import { createServiceLogger } from "@/lib/services/logging";
 import type {
   ListSummary,
   CreateListResult,
@@ -47,6 +48,8 @@ export type {
   PublishListResult,
   UnpublishListResult,
 };
+
+const log = createServiceLogger("list-service");
 
 // ─── Slug generation ─────────────────────────────────────────────────────────
 
@@ -68,26 +71,19 @@ function generateSlug(): string {
  * @throws {ListServiceError} code SERVICE_ERROR on DB failure
  */
 export async function getListsByUser(userId: string): Promise<ListSummary[]> {
-  console.info(
-    "[ListService:getListsByUser]",
-    `Fetching lists for user ${userId}`
-  );
+  log.debug({ method: "getListsByUser", userId }, "Fetching lists for user");
 
   try {
     const rows = await listRepository.getListsByUser(userId);
 
-    console.info(
-      "[ListService:getListsByUser]",
-      `Found ${rows.length} lists for user ${userId}`
+    log.info(
+      { method: "getListsByUser", userId, count: rows.length },
+      "Lists fetched"
     );
 
     return rows;
   } catch (err) {
-    console.error(
-      "[ListService:getListsByUser]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "getListsByUser", userId, err }, "DB error");
     throw listServiceError("Failed to load lists. Please try again.", err);
   }
 }
@@ -114,10 +110,7 @@ export async function createList({
   userId: string;
   title: string;
 }): Promise<CreateListResult> {
-  console.info(
-    "[ListService:createList]",
-    `Creating list for user ${userId}, title: "${title}"`
-  );
+  log.info({ method: "createList", userId }, "Creating list");
 
   const attemptInsert = async (slug: string) => {
     return listRepository.insertList({
@@ -132,38 +125,33 @@ export async function createList({
     const slug = generateSlug();
     const row = await attemptInsert(slug);
 
-    console.info(
-      "[ListService:createList]",
-      `List created with id ${row.id}, slug ${row.slug}`
+    log.info(
+      { method: "createList", userId, listId: row.id, slug: row.slug },
+      "List created"
     );
 
     return { list: row };
   } catch (firstErr) {
     if (!isUniqueViolation(firstErr)) {
-      console.error(
-        "[ListService:createList]",
-        "DB error:",
-        firstErr instanceof Error ? firstErr.message : "Unknown error"
-      );
+      log.error({ method: "createList", userId, err: firstErr }, "DB error");
       throw listServiceError(
         "Failed to create list. Please try again.",
         firstErr
       );
     }
 
-    // Retry once on slug collision
-    console.warn(
-      "[ListService:createList]",
-      "Slug collision on first attempt, retrying with new slug"
+    log.warn(
+      { method: "createList", userId },
+      "Slug collision on first attempt, retrying"
     );
 
     try {
       const retrySlug = generateSlug();
       const row = await attemptInsert(retrySlug);
 
-      console.info(
-        "[ListService:createList]",
-        `List created on retry with id ${row.id}, slug ${row.slug}`
+      log.info(
+        { method: "createList", userId, listId: row.id, slug: row.slug },
+        "List created on retry"
       );
 
       return { list: row };
@@ -171,10 +159,9 @@ export async function createList({
       if (isUniqueViolation(retryErr)) {
         throw slugCollisionError(retryErr);
       }
-      console.error(
-        "[ListService:createList]",
-        "DB error on retry:",
-        retryErr instanceof Error ? retryErr.message : "Unknown error"
+      log.error(
+        { method: "createList", userId, err: retryErr },
+        "DB error on retry"
       );
       throw listServiceError(
         "Failed to create list. Please try again.",
@@ -206,10 +193,7 @@ export async function updateList({
   title?: string;
   description?: string;
 }): Promise<UpdateListResult> {
-  console.info(
-    "[ListService:updateList]",
-    `Updating list ${listId} for user ${userId}`
-  );
+  log.info({ method: "updateList", userId, listId }, "Updating list");
 
   try {
     const row = await listRepository.updateList({
@@ -223,16 +207,12 @@ export async function updateList({
       throw notFoundError();
     }
 
-    console.info("[ListService:updateList]", `List ${listId} updated`);
+    log.info({ method: "updateList", userId, listId }, "List updated");
 
     return { list: row };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
-    console.error(
-      "[ListService:updateList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "updateList", userId, listId, err }, "DB error");
     throw listServiceError("Failed to update list. Please try again.", err);
   }
 }
@@ -253,10 +233,7 @@ export async function deleteList({
   listId: string;
   userId: string;
 }): Promise<DeleteListResult> {
-  console.info(
-    "[ListService:deleteList]",
-    `Soft-deleting list ${listId} for user ${userId}`
-  );
+  log.info({ method: "deleteList", userId, listId }, "Soft-deleting list");
 
   try {
     const row = await listRepository.softDeleteList({ listId, userId });
@@ -265,16 +242,12 @@ export async function deleteList({
       throw notFoundError();
     }
 
-    console.info("[ListService:deleteList]", `List ${listId} soft-deleted`);
+    log.info({ method: "deleteList", userId, listId }, "List soft-deleted");
 
     return { success: true };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
-    console.error(
-      "[ListService:deleteList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "deleteList", userId, listId, err }, "DB error");
     throw listServiceError("Failed to delete list. Please try again.", err);
   }
 }
@@ -295,10 +268,7 @@ export async function publishList({
   listId: string;
   userId: string;
 }): Promise<PublishListResult> {
-  console.info(
-    "[ListService:publishList]",
-    `Publishing list ${listId} for user ${userId}`
-  );
+  log.info({ method: "publishList", userId, listId }, "Publishing list");
 
   try {
     const row = await listRepository.publishList({ listId, userId });
@@ -309,16 +279,12 @@ export async function publishList({
 
     const vanitySlug = await userRepository.getVanitySlugByUserId(userId);
 
-    console.info("[ListService:publishList]", `List ${listId} published`);
+    log.info({ method: "publishList", userId, listId }, "List published");
 
     return { list: { ...row, vanitySlug: vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
-    console.error(
-      "[ListService:publishList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "publishList", userId, listId, err }, "DB error");
     throw listServiceError("Failed to publish list. Please try again.", err);
   }
 }
@@ -339,10 +305,7 @@ export async function unpublishList({
   listId: string;
   userId: string;
 }): Promise<UnpublishListResult> {
-  console.info(
-    "[ListService:unpublishList]",
-    `Unpublishing list ${listId} for user ${userId}`
-  );
+  log.info({ method: "unpublishList", userId, listId }, "Unpublishing list");
 
   try {
     const row = await listRepository.unpublishList({ listId, userId });
@@ -353,16 +316,12 @@ export async function unpublishList({
 
     const vanitySlug = await userRepository.getVanitySlugByUserId(userId);
 
-    console.info("[ListService:unpublishList]", `List ${listId} unpublished`);
+    log.info({ method: "unpublishList", userId, listId }, "List unpublished");
 
     return { list: { ...row, vanitySlug: vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
-    console.error(
-      "[ListService:unpublishList]",
-      "DB error:",
-      err instanceof Error ? err.message : "Unknown error"
-    );
+    log.error({ method: "unpublishList", userId, listId, err }, "DB error");
     throw listServiceError("Failed to unpublish list. Please try again.", err);
   }
 }
