@@ -86,7 +86,9 @@ describe("EditPlaceDialog (places page)", () => {
 
   it("Save button disabled when form is clean (no changes)", () => {
     renderDialog();
-    expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).toBeDisabled();
   });
 
   it("Save button enabled after changing description", async () => {
@@ -94,7 +96,9 @@ describe("EditPlaceDialog (places page)", () => {
     renderDialog();
     const textarea = screen.getByLabelText<HTMLTextAreaElement>(/notes/i);
     await user.type(textarea, "Great coffee");
-    expect(screen.getByRole("button", { name: /save changes/i })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).not.toBeDisabled();
   });
 
   it("shows Unsaved changes badge when form is dirty", async () => {
@@ -124,8 +128,12 @@ describe("EditPlaceDialog (places page)", () => {
 
   it("hidden placeId input is present with no listId input", () => {
     renderDialog();
-    const placeIdInput = document.querySelector<HTMLInputElement>("input[name='placeId']");
-    const listIdInput = document.querySelector<HTMLInputElement>("input[name='listId']");
+    const placeIdInput = document.querySelector<HTMLInputElement>(
+      "input[name='placeId']"
+    );
+    const listIdInput = document.querySelector<HTMLInputElement>(
+      "input[name='listId']"
+    );
     expect(placeIdInput?.value).toBe("place-1");
     expect(listIdInput).toBeNull();
   });

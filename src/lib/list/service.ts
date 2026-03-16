@@ -114,14 +114,18 @@ export async function createList({
   userId: string;
   title: string;
 }): Promise<CreateListResult> {
-
   console.info(
     "[ListService:createList]",
     `Creating list for user ${userId}, title: "${title}"`
   );
 
   const attemptInsert = async (slug: string) => {
-    return listRepository.insertList({ userId, title, slug, isPublished: false });
+    return listRepository.insertList({
+      userId,
+      title,
+      slug,
+      isPublished: false,
+    });
   };
 
   try {
@@ -208,7 +212,12 @@ export async function updateList({
   );
 
   try {
-    const row = await listRepository.updateList({ listId, userId, title, description });
+    const row = await listRepository.updateList({
+      listId,
+      userId,
+      title,
+      description,
+    });
 
     if (!row) {
       throw notFoundError();

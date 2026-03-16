@@ -38,10 +38,11 @@ vi.mock("@/db", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
-              then: vi.fn().mockImplementation(
-                (cb: (rows: unknown[]) => unknown) =>
+              then: vi
+                .fn()
+                .mockImplementation((cb: (rows: unknown[]) => unknown) =>
                   mockSelectWhereCb().then(cb)
-              ),
+                ),
             }),
           }),
         }),
@@ -121,7 +122,10 @@ describe("Profile Actions Integration — Slug Uniqueness", () => {
 
   it("returns slug-taken error on race-condition DB unique violation (23505)", async () => {
     mockSelectWhereCb = async () => []; // Layer 1 passes
-    mockUpdateError = { code: "23505", detail: "Key (vanity_slug)=(race-slug) already exists." };
+    mockUpdateError = {
+      code: "23505",
+      detail: "Key (vanity_slug)=(race-slug) already exists.",
+    };
 
     const result = await updateSlugAction(
       initialState,

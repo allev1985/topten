@@ -22,7 +22,12 @@ import type {
 import { publicServiceError } from "./service/errors";
 export { PublicServiceError } from "./service/errors";
 
-export type { PublicProfile, PublicListSummary, PublicListDetail, PublicPlaceEntry };
+export type {
+  PublicProfile,
+  PublicListSummary,
+  PublicListDetail,
+  PublicPlaceEntry,
+};
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -125,7 +130,10 @@ export const getPublicListDetail = cache(
     );
 
     try {
-      const result = await publicRepository.getPublicListDetail({ userId, listSlug });
+      const result = await publicRepository.getPublicListDetail({
+        userId,
+        listSlug,
+      });
 
       if (result) {
         console.info(

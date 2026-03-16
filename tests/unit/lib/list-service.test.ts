@@ -151,7 +151,9 @@ describe("List Service", () => {
     });
 
     it("retries on first unique-violation and returns the list on success", async () => {
-      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      const uniqueViolation = Object.assign(new Error("unique"), {
+        code: "23505",
+      });
       mockInsertList
         .mockRejectedValueOnce(uniqueViolation)
         .mockResolvedValueOnce(fullListRow);
@@ -163,7 +165,9 @@ describe("List Service", () => {
     });
 
     it("throws SLUG_COLLISION when both attempts hit a unique-violation", async () => {
-      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      const uniqueViolation = Object.assign(new Error("unique"), {
+        code: "23505",
+      });
       mockInsertList.mockRejectedValue(uniqueViolation);
 
       await expect(
@@ -184,7 +188,9 @@ describe("List Service", () => {
     });
 
     it("throws SERVICE_ERROR when retry fails with a non-unique DB error", async () => {
-      const uniqueViolation = Object.assign(new Error("unique"), { code: "23505" });
+      const uniqueViolation = Object.assign(new Error("unique"), {
+        code: "23505",
+      });
       mockInsertList
         .mockRejectedValueOnce(uniqueViolation)
         .mockRejectedValueOnce(new Error("deadlock detected"));
@@ -200,7 +206,12 @@ describe("List Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("updateList", () => {
     it("updates title and returns updated list", async () => {
-      const updatedRow = { id: LIST_ID, title: "New Title", description: null, updatedAt: NOW };
+      const updatedRow = {
+        id: LIST_ID,
+        title: "New Title",
+        description: null,
+        updatedAt: NOW,
+      };
       mockUpdateList.mockResolvedValue(updatedRow);
 
       const result = await updateList({
@@ -277,7 +288,12 @@ describe("List Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("publishList", () => {
     it("publishes the list and returns updated status", async () => {
-      const row = { id: LIST_ID, isPublished: true, publishedAt: NOW, slug: "a1b2" };
+      const row = {
+        id: LIST_ID,
+        isPublished: true,
+        publishedAt: NOW,
+        slug: "a1b2",
+      };
       mockPublishList.mockResolvedValue(row);
 
       const result = await publishList({ listId: LIST_ID, userId: USER_ID });
@@ -307,7 +323,12 @@ describe("List Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("unpublishList", () => {
     it("unpublishes the list and clears publishedAt", async () => {
-      const row = { id: LIST_ID, isPublished: false, publishedAt: null, slug: "a1b2" };
+      const row = {
+        id: LIST_ID,
+        isPublished: false,
+        publishedAt: null,
+        slug: "a1b2",
+      };
       mockUnpublishList.mockResolvedValue(row);
 
       const result = await unpublishList({ listId: LIST_ID, userId: USER_ID });

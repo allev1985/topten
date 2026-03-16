@@ -47,7 +47,9 @@ describe("LandingPageClient - Accessibility", () => {
   describe("decorative elements", () => {
     it("provides an accessible label for the brand logo", () => {
       const { container } = render(<LandingPageClient />);
-      expect(container.querySelector('[aria-label="myfaves"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('[aria-label="myfaves"]')
+      ).toBeInTheDocument();
     });
   });
 

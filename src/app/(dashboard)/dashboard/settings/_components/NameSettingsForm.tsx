@@ -27,7 +27,8 @@ export function NameSettingsForm({ initialName }: NameSettingsFormProps) {
   const { state, formAction } = useFormState(updateNameAction);
 
   // Reflect the latest saved value on success, otherwise use the initial prop.
-  const currentName = state.isSuccess && state.data ? state.data.name : initialName;
+  const currentName =
+    state.isSuccess && state.data ? state.data.name : initialName;
 
   return (
     <Card>
@@ -45,7 +46,10 @@ export function NameSettingsForm({ initialName }: NameSettingsFormProps) {
 
           {state.isSuccess && (
             <Alert>
-              <AlertDescription role="status" aria-label="Name updated successfully.">
+              <AlertDescription
+                role="status"
+                aria-label="Name updated successfully."
+              >
                 Name updated successfully.
               </AlertDescription>
             </Alert>

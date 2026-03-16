@@ -53,7 +53,6 @@ export async function getSlugConflict({
   vanitySlug: string;
   userId: string;
 }): Promise<boolean> {
-
   const rows = await db
     .select({ id: users.id })
     .from(users)
@@ -84,7 +83,6 @@ export async function updateUserName({
   userId: string;
   name: string;
 }): Promise<void> {
-
   await db
     .update(users)
     .set({ name, updatedAt: new Date() })
@@ -107,7 +105,6 @@ export async function updateUserSlug({
   userId: string;
   vanitySlug: string;
 }): Promise<void> {
-
   await db
     .update(users)
     .set({ vanitySlug, updatedAt: new Date() })

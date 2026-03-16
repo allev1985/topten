@@ -50,9 +50,7 @@ export function notFoundError(originalError?: unknown): PlaceServiceError {
 /**
  * Factory: place is already attached to the target list.
  */
-export function alreadyInListError(
-  originalError?: unknown
-): PlaceServiceError {
+export function alreadyInListError(originalError?: unknown): PlaceServiceError {
   return new PlaceServiceError(
     "ALREADY_IN_LIST",
     "This place is already in the list.",

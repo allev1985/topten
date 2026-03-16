@@ -14,7 +14,9 @@ describe("LandingPageClient", () => {
   describe("hero text content", () => {
     it("displays the brand logo", () => {
       const { container } = render(<LandingPageClient />);
-      expect(container.querySelector('[aria-label="myfaves"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('[aria-label="myfaves"]')
+      ).toBeInTheDocument();
     });
 
     it("displays the headline as h1", () => {

@@ -228,15 +228,21 @@ describe("Place Service", () => {
       mockGetPlaceByGoogleId.mockResolvedValue(null);
       mockGetListOwnership.mockResolvedValue(false);
 
-      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "NOT_FOUND" });
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({
+        code: "NOT_FOUND",
+      });
     });
 
     it("throws SERVICE_ERROR when transaction insert fails", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(null);
       mockGetListOwnership.mockResolvedValue(true);
-      mockCreatePlaceWithListAttachment.mockRejectedValue(new Error("constraint violation"));
+      mockCreatePlaceWithListAttachment.mockRejectedValue(
+        new Error("constraint violation")
+      );
 
-      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({
+        code: "SERVICE_ERROR",
+      });
     });
 
     it("passes the provided googlePlaceId to the insert", async () => {
@@ -246,11 +252,17 @@ describe("Place Service", () => {
       mockCreatePlaceWithListAttachment.mockImplementation(
         (params: { googlePlaceId: string }) => {
           capturedGooglePlaceId = params.googlePlaceId;
-          return Promise.resolve({ place: fullPlaceRow, listPlaceId: LIST_PLACE_ID });
+          return Promise.resolve({
+            place: fullPlaceRow,
+            listPlaceId: LIST_PLACE_ID,
+          });
         }
       );
 
-      await createPlace({ ...newPlaceParams, googlePlaceId: "ChIJprovided_by_api" });
+      await createPlace({
+        ...newPlaceParams,
+        googlePlaceId: "ChIJprovided_by_api",
+      });
 
       expect(capturedGooglePlaceId).toBe("ChIJprovided_by_api");
     });
@@ -289,15 +301,23 @@ describe("Place Service", () => {
     it("propagates ALREADY_IN_LIST when reusing a place already attached to the list", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
       mockGetListOwnership.mockResolvedValue(true);
-      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: null });
+      mockGetListPlaceRow.mockResolvedValue({
+        id: LIST_PLACE_ID,
+        deletedAt: null,
+      });
 
-      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({ code: "ALREADY_IN_LIST" });
+      await expect(createPlace(newPlaceParams)).rejects.toMatchObject({
+        code: "ALREADY_IN_LIST",
+      });
     });
 
     // ── soft-deleted place ───────────────────────────────────────────────────
 
     it("restores a soft-deleted place (standalone) without inserting", async () => {
-      const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
+      const deletedPlace = {
+        ...fullPlaceRow,
+        deletedAt: new Date("2024-01-01"),
+      };
       const restoredPlace = { ...fullPlaceRow, deletedAt: null };
       mockGetPlaceByGoogleId.mockResolvedValue(deletedPlace);
       mockRestorePlace.mockResolvedValue(restoredPlace);
@@ -317,7 +337,10 @@ describe("Place Service", () => {
     });
 
     it("restores a soft-deleted place and attaches it to a list", async () => {
-      const deletedPlace = { ...fullPlaceRow, deletedAt: new Date("2024-01-01") };
+      const deletedPlace = {
+        ...fullPlaceRow,
+        deletedAt: new Date("2024-01-01"),
+      };
       const restoredPlace = { ...fullPlaceRow, deletedAt: null };
       mockGetPlaceByGoogleId.mockResolvedValue(deletedPlace);
       mockRestorePlace.mockResolvedValue(restoredPlace);
@@ -365,7 +388,10 @@ describe("Place Service", () => {
 
     it("throws ALREADY_IN_LIST when place is already attached", async () => {
       mockGetListOwnership.mockResolvedValue(true);
-      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: null });
+      mockGetListPlaceRow.mockResolvedValue({
+        id: LIST_PLACE_ID,
+        deletedAt: null,
+      });
 
       await expect(
         addExistingPlaceToList({
@@ -378,7 +404,10 @@ describe("Place Service", () => {
 
     it("restores a previously removed place instead of inserting a duplicate", async () => {
       mockGetListOwnership.mockResolvedValue(true);
-      mockGetListPlaceRow.mockResolvedValue({ id: LIST_PLACE_ID, deletedAt: new Date("2024-01-01") });
+      mockGetListPlaceRow.mockResolvedValue({
+        id: LIST_PLACE_ID,
+        deletedAt: new Date("2024-01-01"),
+      });
       mockGetMaxPosition.mockResolvedValue(2);
       mockRestoreListPlace.mockResolvedValue(undefined);
 
@@ -561,7 +590,9 @@ describe("Place Service", () => {
     });
 
     it("includes places with activeListCount = 0", async () => {
-      mockGetAllPlacesByUser.mockResolvedValue([{ ...placeWithCount, activeListCount: 0 }]);
+      mockGetAllPlacesByUser.mockResolvedValue([
+        { ...placeWithCount, activeListCount: 0 },
+      ]);
 
       const result = await getAllPlacesByUser({ userId: USER_ID });
 
@@ -571,7 +602,9 @@ describe("Place Service", () => {
     it("throws SERVICE_ERROR on DB failure", async () => {
       mockGetAllPlacesByUser.mockRejectedValue(new Error("connection timeout"));
 
-      await expect(getAllPlacesByUser({ userId: USER_ID })).rejects.toMatchObject({
+      await expect(
+        getAllPlacesByUser({ userId: USER_ID })
+      ).rejects.toMatchObject({
         code: "SERVICE_ERROR",
       });
     });
@@ -636,7 +669,9 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("deletePlace", () => {
     it("soft-deletes the place and cascades to list attachments", async () => {
-      mockDeletePlaceWithCascade.mockResolvedValue({ deletedListPlaceCount: 2 });
+      mockDeletePlaceWithCascade.mockResolvedValue({
+        deletedListPlaceCount: 2,
+      });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
 
@@ -644,7 +679,9 @@ describe("Place Service", () => {
     });
 
     it("returns 0 cascaded rows when place is not attached to any list", async () => {
-      mockDeletePlaceWithCascade.mockResolvedValue({ deletedListPlaceCount: 0 });
+      mockDeletePlaceWithCascade.mockResolvedValue({
+        deletedListPlaceCount: 0,
+      });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
 
@@ -668,7 +705,9 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure during cascade", async () => {
-      mockDeletePlaceWithCascade.mockRejectedValue(new Error("connection lost"));
+      mockDeletePlaceWithCascade.mockRejectedValue(
+        new Error("connection lost")
+      );
 
       await expect(
         deletePlace({ placeId: PLACE_ID, userId: USER_ID })

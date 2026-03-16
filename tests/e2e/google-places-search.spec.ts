@@ -52,7 +52,9 @@ test.describe.skip("Google Places Search — Add Place (US1/US2)", () => {
   test("typing ≥3 chars triggers suggestions dropdown", async ({ page }) => {
     await page.getByRole("button", { name: /new place/i }).click();
     await page.getByLabel(/search for a place/i).fill("Nobu");
-    await expect(page.getByRole("listbox", { name: /place suggestions/i })).toBeVisible({
+    await expect(
+      page.getByRole("listbox", { name: /place suggestions/i })
+    ).toBeVisible({
       timeout: 3000,
     });
   });
@@ -68,8 +70,12 @@ test.describe.skip("Google Places Search — Add Place (US1/US2)", () => {
     await suggestions.waitFor({ state: "visible", timeout: 3000 });
     await suggestions.getByRole("option").first().click();
 
-    await expect(page.locator("input[name='googlePlaceId']")).not.toHaveValue("");
-    await expect(page.getByRole("button", { name: /add place/i })).toBeEnabled();
+    await expect(page.locator("input[name='googlePlaceId']")).not.toHaveValue(
+      ""
+    );
+    await expect(
+      page.getByRole("button", { name: /add place/i })
+    ).toBeEnabled();
   });
 
   test("submitting the form creates the place and closes the dialog", async ({

@@ -40,7 +40,7 @@ export function ProfileHeader({
           />
         ) : (
           <div
-            className="flex h-20 w-20 items-center justify-center rounded-full bg-muted text-xl font-semibold text-muted-foreground"
+            className="bg-muted text-muted-foreground flex h-20 w-20 items-center justify-center rounded-full text-xl font-semibold"
             aria-label={`${name}'s avatar`}
           >
             {initials}
@@ -50,8 +50,8 @@ export function ProfileHeader({
 
       <div className="min-w-0 flex-1">
         <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
-        <p className="text-sm text-muted-foreground">@{vanitySlug}</p>
-        {bio && <p className="mt-2 text-sm text-foreground">{bio}</p>}
+        <p className="text-muted-foreground text-sm">@{vanitySlug}</p>
+        {bio && <p className="text-foreground mt-2 text-sm">{bio}</p>}
       </div>
     </header>
   );

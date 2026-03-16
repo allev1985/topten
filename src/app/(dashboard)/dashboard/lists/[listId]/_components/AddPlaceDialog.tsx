@@ -2,12 +2,8 @@
 
 import type { JSX } from "react";
 import { useState, useTransition } from "react";
-import {
-  addExistingPlaceToListAction,
-} from "@/actions/place-actions";
-import type {
-  AddExistingPlaceSuccessData,
-} from "@/actions/place-actions";
+import { addExistingPlaceToListAction } from "@/actions/place-actions";
+import type { AddExistingPlaceSuccessData } from "@/actions/place-actions";
 import type { ActionState } from "@/types/forms";
 import type { PlaceSummary } from "@/types/place";
 import { Button } from "@/components/ui/button";

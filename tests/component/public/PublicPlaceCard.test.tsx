@@ -35,9 +35,7 @@ describe("PublicPlaceCard", () => {
 
   it("renders the place address", () => {
     render(<PublicPlaceCard place={basePlace} rank={1} />);
-    expect(
-      screen.getByText("1 Main Street, London")
-    ).toBeInTheDocument();
+    expect(screen.getByText("1 Main Street, London")).toBeInTheDocument();
   });
 
   it("renders the rank number", () => {

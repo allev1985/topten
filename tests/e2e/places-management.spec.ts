@@ -56,7 +56,9 @@ test.describe.skip("My Places — Add a place (US3)", () => {
     await expect(page.getByText(/not in any list/i)).toBeVisible();
   });
 
-  test("submitting with empty name shows validation error", async ({ page }) => {
+  test("submitting with empty name shows validation error", async ({
+    page,
+  }) => {
     await page.getByRole("button", { name: /new place/i }).click();
     await page.getByLabel(/address/i).fill("1 Test Street");
     await page.getByRole("button", { name: /add place/i }).click();
@@ -148,7 +150,10 @@ test.describe.skip("My Places — Delete a place (US2)", () => {
   });
 
   test("delete affordance opens a confirmation dialog", async ({ page }) => {
-    await page.getByRole("button", { name: /delete/i }).first().click();
+    await page
+      .getByRole("button", { name: /delete/i })
+      .first()
+      .click();
 
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText(/cannot be undone/i)).toBeVisible();
@@ -157,19 +162,23 @@ test.describe.skip("My Places — Delete a place (US2)", () => {
   test("confirmation dialog states how many lists the place belongs to", async ({
     page,
   }) => {
-    await page.getByRole("button", { name: /delete/i }).first().click();
+    await page
+      .getByRole("button", { name: /delete/i })
+      .first()
+      .click();
 
     // Should mention list count impact (e.g. "1 list" or "0 lists")
-    await expect(
-      page.getByText(/list|no lists/i).first()
-    ).toBeVisible();
+    await expect(page.getByText(/list|no lists/i).first()).toBeVisible();
   });
 
   test("dismissing the confirmation dialog leaves the place intact", async ({
     page,
   }) => {
     const placeNames = await page.getByRole("heading").allTextContents();
-    await page.getByRole("button", { name: /delete/i }).first().click();
+    await page
+      .getByRole("button", { name: /delete/i })
+      .first()
+      .click();
     await page.getByRole("button", { name: /cancel/i }).click();
 
     // Same places still visible
@@ -181,12 +190,12 @@ test.describe.skip("My Places — Delete a place (US2)", () => {
   test("confirming deletion removes the place from My Places", async ({
     page,
   }) => {
-    const placeName = await page
-      .getByRole("heading")
-      .first()
-      .textContent();
+    const placeName = await page.getByRole("heading").first().textContent();
 
-    await page.getByRole("button", { name: /delete/i }).first().click();
+    await page
+      .getByRole("button", { name: /delete/i })
+      .first()
+      .click();
     await page.getByRole("button", { name: /delete place/i }).click();
 
     await expect(page.getByText(placeName!)).not.toBeVisible();

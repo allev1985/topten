@@ -1,7 +1,10 @@
 import type { JSX } from "react";
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth/service";
-import { getPlacesByList, getAvailablePlacesForList } from "@/lib/place/service";
+import {
+  getPlacesByList,
+  getAvailablePlacesForList,
+} from "@/lib/place/service";
 import { PlaceServiceError } from "@/lib/place/service/errors";
 import { getListsByUser } from "@/lib/list/service";
 import { PlaceList } from "./_components/PlaceList";
@@ -60,7 +63,9 @@ export default async function ListDetailPage({
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">{list.title}</h1>
         {list.description && (
-          <p className="text-muted-foreground mt-2 text-sm">{list.description}</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {list.description}
+          </p>
         )}
       </div>
 

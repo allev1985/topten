@@ -56,7 +56,12 @@ const PLACE_NO_PHOTO = {
 function successSearch(
   places: GooglePlaceResult[] = [PLACE_WITH_PHOTO]
 ): ActionState<SearchPlacesSuccessData> {
-  return { data: { results: places }, error: null, fieldErrors: {}, isSuccess: true };
+  return {
+    data: { results: places },
+    error: null,
+    fieldErrors: {},
+    isSuccess: true,
+  };
 }
 
 function failSearch(error: string): ActionState<SearchPlacesSuccessData> {
@@ -66,7 +71,9 @@ function failSearch(error: string): ActionState<SearchPlacesSuccessData> {
 function renderForm(props?: Partial<Parameters<typeof CreatePlaceForm>[0]>) {
   const onSuccess = vi.fn();
   const onCancel = vi.fn();
-  render(<CreatePlaceForm onSuccess={onSuccess} onCancel={onCancel} {...props} />);
+  render(
+    <CreatePlaceForm onSuccess={onSuccess} onCancel={onCancel} {...props} />
+  );
   return { onSuccess, onCancel };
 }
 
@@ -74,7 +81,9 @@ function renderForm(props?: Partial<Parameters<typeof CreatePlaceForm>[0]>) {
 
 describe("CreatePlaceForm", () => {
   const mockSearch = vi.mocked(placeActions.searchPlacesAction);
-  const mockResolvePhoto = vi.mocked(placeActions.resolveGooglePlacePhotoAction);
+  const mockResolvePhoto = vi.mocked(
+    placeActions.resolveGooglePlacePhotoAction
+  );
 
   beforeEach(() => {
     mockState = { data: null, error: null, fieldErrors: {}, isSuccess: false };
@@ -130,7 +139,9 @@ describe("CreatePlaceForm", () => {
     renderForm();
     await user.type(screen.getByLabelText(/search for a place/i), "Nobu");
     await waitFor(() =>
-      expect(screen.getByRole("listbox", { name: /place suggestions/i })).toBeTruthy()
+      expect(
+        screen.getByRole("listbox", { name: /place suggestions/i })
+      ).toBeTruthy()
     );
   }, 3000);
 
@@ -149,11 +160,18 @@ describe("CreatePlaceForm", () => {
   }, 3000);
 
   it("falls back to 'Search failed.' when action returns no error string", async () => {
-    mockSearch.mockResolvedValue({ data: null, error: null, fieldErrors: {}, isSuccess: false });
+    mockSearch.mockResolvedValue({
+      data: null,
+      error: null,
+      fieldErrors: {},
+      isSuccess: false,
+    });
     const user = userEvent.setup();
     renderForm();
     await user.type(screen.getByLabelText(/search for a place/i), "Nobu");
-    await waitFor(() => expect(screen.getByText(/search failed/i)).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText(/search failed/i)).toBeTruthy()
+    );
   }, 3000);
 
   // ── Place selection ────────────────────────────────────────────────────────
@@ -164,12 +182,16 @@ describe("CreatePlaceForm", () => {
     renderForm();
     await user.type(screen.getByLabelText(/search for a place/i), "Nobu");
     await waitFor(() =>
-      expect(screen.getByRole("listbox", { name: /place suggestions/i })).toBeTruthy()
+      expect(
+        screen.getByRole("listbox", { name: /place suggestions/i })
+      ).toBeTruthy()
     );
     const listbox = screen.getByRole("listbox", { name: /place suggestions/i });
     await user.click(within(listbox).getAllByRole("button")[0]!);
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /add place/i })).not.toBeDisabled()
+      expect(
+        screen.getByRole("button", { name: /add place/i })
+      ).not.toBeDisabled()
     );
   }, 3000);
 
@@ -178,7 +200,9 @@ describe("CreatePlaceForm", () => {
     renderForm();
     await user.type(screen.getByLabelText(/search for a place/i), "Nobu");
     await waitFor(() =>
-      expect(screen.getByRole("listbox", { name: /place suggestions/i })).toBeTruthy()
+      expect(
+        screen.getByRole("listbox", { name: /place suggestions/i })
+      ).toBeTruthy()
     );
     const listbox = screen.getByRole("listbox", { name: /place suggestions/i });
     await user.click(within(listbox).getAllByRole("button")[0]!);

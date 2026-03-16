@@ -1,7 +1,13 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useRef, useCallback, useActionState, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useActionState,
+  useEffect,
+} from "react";
 import {
   createPlaceAction,
   searchPlacesAction,
@@ -251,7 +257,7 @@ export function CreatePlaceForm({
 
       {/* Selected place summary (read-only) */}
       {selectedPlace && (
-        <div className="rounded-md border p-3 space-y-1">
+        <div className="space-y-1 rounded-md border p-3">
           <p className="text-sm font-medium">{selectedPlace.name}</p>
           <p className="text-muted-foreground text-sm">
             {selectedPlace.formattedAddress}
@@ -267,7 +273,9 @@ export function CreatePlaceForm({
         <div className="space-y-2">
           <Label htmlFor="place-description">
             Notes{" "}
-            <span className="text-muted-foreground font-normal">(optional)</span>
+            <span className="text-muted-foreground font-normal">
+              (optional)
+            </span>
           </Label>
           <Textarea
             id="place-description"
@@ -303,4 +311,3 @@ export function CreatePlaceForm({
     </form>
   );
 }
-

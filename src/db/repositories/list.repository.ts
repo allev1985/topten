@@ -52,7 +52,9 @@ export type DeletedListRow = { id: string };
  * @param userId - The authenticated user's UUID
  * @returns Array of list summary rows ordered by createdAt DESC
  */
-export async function getListsByUser(userId: string): Promise<ListSummaryRow[]> {
+export async function getListsByUser(
+  userId: string
+): Promise<ListSummaryRow[]> {
   return db
     .select({
       id: lists.id,
@@ -112,7 +114,6 @@ export async function updateList({
   title?: string;
   description?: string;
 }): Promise<UpdatedListRow | null> {
-
   const updateValues: Partial<{
     title: string;
     description: string;

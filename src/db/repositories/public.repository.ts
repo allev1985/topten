@@ -98,7 +98,6 @@ export async function getPublicListDetail({
   userId: string;
   listSlug: string;
 }): Promise<PublicListDetail | null> {
-
   // Step 1: Fetch the list header
   const listRows = await db
     .select({
@@ -129,7 +128,9 @@ export async function getPublicListDetail({
       name: places.name,
       address: places.address,
       description: places.description,
-      heroImageUrl: sql<string | null>`COALESCE(${listPlaces.heroImageUrl}, ${places.heroImageUrl})`,
+      heroImageUrl: sql<
+        string | null
+      >`COALESCE(${listPlaces.heroImageUrl}, ${places.heroImageUrl})`,
       position: listPlaces.position,
     })
     .from(listPlaces)

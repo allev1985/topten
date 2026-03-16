@@ -4,10 +4,7 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  getPublicProfile,
-  getPublicListDetail,
-} from "@/lib/public/service";
+import { getPublicProfile, getPublicListDetail } from "@/lib/public/service";
 import { PublicPlaceList } from "@/components/public/PublicPlaceList";
 
 interface ListPageProps {
@@ -88,18 +85,20 @@ export default async function PublicListPage({
       <nav className="mb-6">
         <Link
           href={`/@${vanitySlug}`}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
         >
           ← Back to {profile.name}&apos;s lists
         </Link>
       </nav>
 
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{listDetail.title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {listDetail.title}
+        </h1>
         {listDetail.description && (
-          <p className="mt-2 text-muted-foreground">{listDetail.description}</p>
+          <p className="text-muted-foreground mt-2">{listDetail.description}</p>
         )}
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm">
           Updated{" "}
           {listDetail.updatedAt.toLocaleDateString("en-US", {
             year: "numeric",
