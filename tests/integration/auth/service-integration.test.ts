@@ -55,7 +55,9 @@ describe("Auth Service Integration Tests", () => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabaseClient();
     vi.mocked(supabaseServer.createClient).mockResolvedValue(
-      mockSupabase as any
+      mockSupabase as unknown as Awaited<
+        ReturnType<typeof supabaseServer.createClient>
+      >
     );
   });
 
