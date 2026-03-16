@@ -2,7 +2,7 @@
  * List Service
  *
  * Centralised service for all list domain operations.
- * Owns all direct DB access for the list domain.
+ * Delegates all DB access to the list and user repositories.
  * Used by list server actions — never called from client code.
  *
  * Public API:
@@ -19,11 +19,8 @@
  * @module list/service
  */
 
-import { eq, and, isNull, desc, count } from "drizzle-orm";
-import { db } from "@/db";
-import { lists } from "@/db/schema/list";
-import { listPlaces } from "@/db/schema/listPlace";
-import { users } from "@/db/schema/user";
+import * as listRepository from "@/db/repositories/list.repository";
+import * as userRepository from "@/db/repositories/user.repository";
 import {
   ListServiceError,
   notFoundError,
@@ -77,24 +74,7 @@ export async function getListsByUser(userId: string): Promise<ListSummary[]> {
   );
 
   try {
-    const rows = await db
-      .select({
-        id: lists.id,
-        title: lists.title,
-        slug: lists.slug,
-        description: lists.description,
-        isPublished: lists.isPublished,
-        createdAt: lists.createdAt,
-        placeCount: count(listPlaces.id),
-      })
-      .from(lists)
-      .leftJoin(
-        listPlaces,
-        and(eq(listPlaces.listId, lists.id), isNull(listPlaces.deletedAt))
-      )
-      .where(and(eq(lists.userId, userId), isNull(lists.deletedAt)))
-      .groupBy(lists.id)
-      .orderBy(desc(lists.createdAt));
+    const rows = await listRepository.getListsByUser(userId);
 
     console.info(
       "[ListService:getListsByUser]",
@@ -139,18 +119,7 @@ export async function createList(params: {
   );
 
   const attemptInsert = async (slug: string) => {
-    const rows = await db
-      .insert(lists)
-      .values({
-        userId,
-        title,
-        slug,
-        isPublished: false,
-      })
-      .returning();
-    const row = rows[0];
-    if (!row) throw listServiceError("Insert returned no row.", null);
-    return row;
+    return listRepository.insertList({ userId, title, slug, isPublished: false });
   };
 
   try {
@@ -212,10 +181,6 @@ export async function createList(params: {
 /**
  * Update a list's title and/or description.
  *
- * Verifies ownership + non-deleted status before writing.
- * Only the fields provided in params are updated; slug is never modified.
- * updatedAt is always refreshed.
- *
  * @param params.listId      - The list's UUID
  * @param params.userId      - The authenticated user's id (ownership check)
  * @param params.title       - Optional new title
@@ -230,47 +195,23 @@ export async function updateList(params: {
   title?: string;
   description?: string;
 }): Promise<UpdateListResult> {
-  const { listId, userId, title, description } = params;
+  const { listId, userId } = params;
 
   console.info(
     "[ListService:updateList]",
     `Updating list ${listId} for user ${userId}`
   );
 
-  const updateValues: Partial<{
-    title: string;
-    description: string;
-    updatedAt: Date;
-  }> = { updatedAt: new Date() };
-
-  if (title !== undefined) updateValues.title = title;
-  if (description !== undefined) updateValues.description = description;
-
   try {
-    const rows = await db
-      .update(lists)
-      .set(updateValues)
-      .where(
-        and(
-          eq(lists.id, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt)
-        )
-      )
-      .returning({
-        id: lists.id,
-        title: lists.title,
-        description: lists.description,
-        updatedAt: lists.updatedAt,
-      });
+    const row = await listRepository.updateList(params);
 
-    if (rows.length === 0) {
+    if (!row) {
       throw notFoundError();
     }
 
     console.info("[ListService:updateList]", `List ${listId} updated`);
 
-    return { list: rows[0]! };
+    return { list: row };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     console.error(
@@ -284,10 +225,6 @@ export async function updateList(params: {
 
 /**
  * Soft-delete a list by setting deletedAt to the current timestamp.
- *
- * Verifies ownership + non-deleted status before writing.
- * This operation is idempotent: re-deleting an already-deleted list
- * returns NOT_FOUND (filtered by deletedAt IS NULL).
  *
  * @param params.listId - The list's UUID
  * @param params.userId - The authenticated user's id (ownership check)
@@ -307,20 +244,9 @@ export async function deleteList(params: {
   );
 
   try {
-    const now = new Date();
-    const rows = await db
-      .update(lists)
-      .set({ deletedAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(lists.id, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt)
-        )
-      )
-      .returning({ id: lists.id });
+    const row = await listRepository.softDeleteList(params);
 
-    if (rows.length === 0) {
+    if (!row) {
       throw notFoundError();
     }
 
@@ -341,12 +267,9 @@ export async function deleteList(params: {
 /**
  * Publish a list (isPublished = true, publishedAt = now).
  *
- * Verifies ownership + non-deleted status. Attempting to publish
- * an already-deleted list throws NOT_FOUND.
- *
  * @param params.listId - The list's UUID
  * @param params.userId - The authenticated user's id
- * @returns PublishListResult with updated isPublished and publishedAt
+ * @returns PublishListResult with updated isPublished, publishedAt, and vanitySlug
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
@@ -362,37 +285,17 @@ export async function publishList(params: {
   );
 
   try {
-    const now = new Date();
-    const rows = await db
-      .update(lists)
-      .set({ isPublished: true, publishedAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(lists.id, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt)
-        )
-      )
-      .returning({
-        id: lists.id,
-        isPublished: lists.isPublished,
-        publishedAt: lists.publishedAt,
-        slug: lists.slug,
-      });
+    const row = await listRepository.publishList(params);
 
-    if (rows.length === 0) {
+    if (!row) {
       throw notFoundError();
     }
 
-    const userRows = await db
-      .select({ vanitySlug: users.vanitySlug })
-      .from(users)
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-      .limit(1);
+    const vanitySlug = await userRepository.getVanitySlugByUserId(userId);
 
     console.info("[ListService:publishList]", `List ${listId} published`);
 
-    return { list: { ...rows[0]!, vanitySlug: userRows[0]?.vanitySlug ?? null } };
+    return { list: { ...row, vanitySlug: vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     console.error(
@@ -406,9 +309,6 @@ export async function publishList(params: {
 
 /**
  * Unpublish a list (isPublished = false, publishedAt = null).
- *
- * Verifies ownership + non-deleted status. Attempting to unpublish
- * an already-deleted list throws NOT_FOUND.
  *
  * @param params.listId - The list's UUID
  * @param params.userId - The authenticated user's id
@@ -428,37 +328,17 @@ export async function unpublishList(params: {
   );
 
   try {
-    const now = new Date();
-    const rows = await db
-      .update(lists)
-      .set({ isPublished: false, publishedAt: null, updatedAt: now })
-      .where(
-        and(
-          eq(lists.id, listId),
-          eq(lists.userId, userId),
-          isNull(lists.deletedAt)
-        )
-      )
-      .returning({
-        id: lists.id,
-        isPublished: lists.isPublished,
-        publishedAt: lists.publishedAt,
-        slug: lists.slug,
-      });
+    const row = await listRepository.unpublishList(params);
 
-    if (rows.length === 0) {
+    if (!row) {
       throw notFoundError();
     }
 
-    const userRows = await db
-      .select({ vanitySlug: users.vanitySlug })
-      .from(users)
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-      .limit(1);
+    const vanitySlug = await userRepository.getVanitySlugByUserId(userId);
 
     console.info("[ListService:unpublishList]", `List ${listId} unpublished`);
 
-    return { list: { ...rows[0]!, vanitySlug: userRows[0]?.vanitySlug ?? null } };
+    return { list: { ...row, vanitySlug: vanitySlug ?? null } };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     console.error(

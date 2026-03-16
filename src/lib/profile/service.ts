@@ -2,15 +2,13 @@
  * Profile Service
  *
  * Centralised service for user profile mutations.
- * Owns all direct DB access for the profile domain.
+ * Delegates all DB access to the profile repository.
  * Used by profile server actions — never called from client code.
  *
  * @module profile/service
  */
 
-import { eq, ne, and, isNull } from "drizzle-orm";
-import { db } from "@/db";
-import { users } from "@/db/schema/user";
+import * as profileRepository from "@/db/repositories/profile.repository";
 import {
   ProfileServiceError,
   slugTakenError,
@@ -38,13 +36,7 @@ export async function getProfileForSettings(
   );
 
   try {
-    const rows = await db
-      .select({ name: users.name, vanitySlug: users.vanitySlug })
-      .from(users)
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-      .limit(1);
-
-    return rows[0] ?? null;
+    return await profileRepository.getSettingsProfile(userId);
   } catch (err) {
     console.error(
       "[ProfileService:getProfileForSettings]",
@@ -73,10 +65,7 @@ export async function updateName(
   console.info("[ProfileService:updateName]", `Updating name for user ${userId}`);
 
   try {
-    await db
-      .update(users)
-      .set({ name, updatedAt: new Date() })
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+    await profileRepository.updateUserName({ userId, name });
 
     console.info("[ProfileService:updateName]", `Name updated for user ${userId}`);
 
@@ -101,9 +90,6 @@ export async function updateName(
  *              between the pre-check and the write, it is caught and mapped to
  *              the same human-friendly SLUG_TAKEN error.
  *
- * The current user's own unchanged slug is never treated as a conflict because
- * the uniqueness query excludes the current user's row.
- *
  * @param userId      - The authenticated user's id (FK to auth.users)
  * @param vanitySlug  - The new slug (already validated by the caller)
  * @returns UpdateSlugResult with the saved slug
@@ -120,19 +106,9 @@ export async function updateSlug(
   );
 
   // Layer 1: Application pre-check
-  const existing = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(
-      and(
-        eq(users.vanitySlug, vanitySlug),
-        ne(users.id, userId),
-        isNull(users.deletedAt)
-      )
-    )
-    .limit(1);
+  const isTaken = await profileRepository.getSlugConflict({ vanitySlug, userId });
 
-  if (existing.length > 0) {
+  if (isTaken) {
     console.info(
       "[ProfileService:updateSlug]",
       `Slug "${vanitySlug}" already taken (pre-check)`
@@ -142,10 +118,7 @@ export async function updateSlug(
 
   try {
     // Layer 2: Write with race-condition catch
-    await db
-      .update(users)
-      .set({ vanitySlug, updatedAt: new Date() })
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+    await profileRepository.updateUserSlug({ userId, vanitySlug });
 
     console.info(
       "[ProfileService:updateSlug]",
