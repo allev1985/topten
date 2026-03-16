@@ -115,8 +115,8 @@ export function createServiceLogger(service: string): ServiceLogger {
     const ctx = getLogContext();
     const span = getActiveSpanIds();
     return {
-      ...span,
       ...ctx,
+      ...span,
       ...fields,
     };
   }
