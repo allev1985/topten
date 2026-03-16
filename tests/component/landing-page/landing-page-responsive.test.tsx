@@ -21,7 +21,9 @@ describe("LandingPageClient - Responsive Layout", () => {
     it("renders two columns inside the grid", () => {
       const { container } = render(<LandingPageClient />);
       const gridContainer = container.querySelector(".grid");
-      const columns = gridContainer?.children;
+
+      expect(gridContainer).not.toBeNull();
+      const columns = gridContainer!.children;
 
       expect(columns).toHaveLength(2);
     });
