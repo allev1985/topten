@@ -26,7 +26,7 @@ export function PublicListGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {lists.map((list) => (
         <PublicListCard key={list.id} list={list} vanitySlug={vanitySlug} />
       ))}

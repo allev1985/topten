@@ -23,14 +23,14 @@ export default function DashboardShellLayout({
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar — fixed left */}
-      <aside className="bg-background fixed top-0 left-0 hidden h-screen w-64 border-r lg:block">
+      <aside className="bg-background fixed top-0 left-0 hidden h-screen w-64 lg:block">
         <Suspense fallback={<div className="p-6">Loading…</div>}>
           <DashboardSidebar />
         </Suspense>
       </aside>
 
       {/* Mobile Navigation Header */}
-      <nav className="bg-background fixed top-0 right-0 left-0 z-50 border-b lg:hidden">
+      <nav className="bg-background fixed top-0 right-0 left-0 z-50 lg:hidden">
         <div className="p-4">
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>

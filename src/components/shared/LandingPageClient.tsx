@@ -43,7 +43,7 @@ export default function LandingPageClient() {
                 aria-label="myfaves"
               >
                 <span className="text-foreground">my</span>
-                <span className="text-violet-500 dark:text-violet-300">
+                <span className="text-violet-700">
                   faves
                 </span>
               </span>

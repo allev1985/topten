@@ -37,7 +37,7 @@ export function PlaceCard({ place, actions }: PlaceCardProps): JSX.Element {
           <div className="flex items-center gap-2">
             <p className="truncate font-medium">{place.name}</p>
             {place.activeListCount !== undefined && (
-              <Badge variant="secondary" className="shrink-0 text-xs">
+              <Badge variant="outline" className="shrink-0 text-xs">
                 {place.activeListCount === 0
                   ? "Not in any list"
                   : place.activeListCount === 1
