@@ -87,7 +87,6 @@ export function SignupForm({ variant = "card", onSuccess }: SignupFormProps) {
           required
           autoComplete="email"
           placeholder="Enter your email"
-
           aria-invalid={state.fieldErrors.email?.[0] ? "true" : undefined}
           aria-describedby={
             state.fieldErrors.email?.[0] ? "email-error" : undefined
@@ -113,7 +112,6 @@ export function SignupForm({ variant = "card", onSuccess }: SignupFormProps) {
           required
           autoComplete="new-password"
           placeholder="Create a password"
-
           onChange={handlePasswordChange}
           aria-invalid={state.fieldErrors.password?.[0] ? "true" : undefined}
           aria-describedby={
