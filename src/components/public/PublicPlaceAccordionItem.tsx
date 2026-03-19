@@ -48,13 +48,13 @@ export function PublicPlaceAccordionItem({
   const nameAndAddress = (
     <div className="flex items-start justify-between gap-2 px-3 py-2">
       <div className="min-w-0 text-left">
-        <p className="leading-snug font-semibold text-black">{place.name}</p>
-        <p className="mt-0.5 text-xs leading-snug text-black/70">
+        <p className="leading-snug font-semibold text-foreground">{place.name}</p>
+        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
           {place.address}
         </p>
       </div>
       {hasContent && (
-        <ChevronDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-black/50 transition-transform duration-200 group-data-[state=open]/card:rotate-180" />
+        <ChevronDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/card:rotate-180" />
       )}
     </div>
   );
