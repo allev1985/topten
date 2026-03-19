@@ -94,7 +94,9 @@ body {
 }
 
 a {
-  color: inherit;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
 }
 
 @keyframes collapsible-down {
