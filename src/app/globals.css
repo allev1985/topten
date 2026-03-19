@@ -63,28 +63,6 @@
   [data-slot="textarea"] {
     background-color: #ffffff;
   }
-
-  :root {
-    --background: #ffffff;
-    --foreground: #000000;
-    --card: #ffffff;
-    --card-foreground: #000000;
-    --popover: #ffffff;
-    --popover-foreground: #000000;
-    --primary: #6D28D9;
-    --primary-foreground: #ffffff;
-    --secondary: rgba(139, 92, 246, 0.2);
-    --secondary-foreground: #C4B5FD;
-    --muted: #F3F4F6;
-    --muted-foreground: #000000;
-    --accent: rgba(139, 92, 246, 0.2);
-    --accent-foreground: #C4B5FD;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #fafafa;
-    --border: rgba(255, 255, 255, 0.08);
-    --input: #1F2937;
-    --ring: #6D28D9;
-  }
 }
 
 body {
