@@ -55,13 +55,13 @@ export function DashboardSidebar(): JSX.Element {
   return (
     <div className="flex h-full flex-col">
       {/* Logo/Branding */}
-      <div className="border-b p-6">
+      <div className="p-6">
         <span
-          className="font-serif text-xl leading-none tracking-tight select-none"
+          className="font-serif text-3xl leading-none tracking-tight select-none"
           aria-label="myfaves"
         >
           <span className="text-foreground">my</span>
-          <span className="text-violet-500 dark:text-violet-300">faves</span>
+          <span className="text-violet-700">faves</span>
         </span>
       </div>
 
@@ -139,7 +139,7 @@ export function DashboardSidebar(): JSX.Element {
       </nav>
 
       {/* Sign Out Button at Bottom */}
-      <div className="border-t p-4">
+      <div className="p-4">
         <Button
           variant="ghost"
           onClick={handleSignOut}

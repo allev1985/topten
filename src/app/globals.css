@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F9FAFB;
-  --foreground: #111827;
+  --background: #ffffff;
+  --foreground: #000000;
 
   /* myfaves brand design tokens */
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #000000;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #8B5CF6;
+  --popover-foreground: #000000;
+  --primary: #6D28D9;
   --primary-foreground: #ffffff;
   --secondary: #EDE9FE;
-  --secondary-foreground: #8B5CF6;
+  --secondary-foreground: #6D28D9;
   --muted: #F3F4F6;
-  --muted-foreground: #6B7280;
+  --muted-foreground: #000000;
   --accent: #EDE9FE;
-  --accent-foreground: #8B5CF6;
+  --accent-foreground: #6D28D9;
   --destructive: #ef4444;
   --destructive-foreground: #fafafa;
   --border: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #8B5CF6;
+  --ring: #6D28D9;
   --radius: 0.625rem;
 
   /* myfaves brand typography */
@@ -59,26 +59,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111827;
-    --foreground: #ffffff;
-    --card: #1F2937;
-    --card-foreground: #ffffff;
-    --popover: #1F2937;
-    --popover-foreground: #ffffff;
-    --primary: #8B5CF6;
-    --primary-foreground: #ffffff;
-    --secondary: rgba(139, 92, 246, 0.2);
-    --secondary-foreground: #C4B5FD;
-    --muted: #1F2937;
-    --muted-foreground: rgba(255, 255, 255, 0.45);
-    --accent: rgba(139, 92, 246, 0.2);
-    --accent-foreground: #C4B5FD;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #fafafa;
-    --border: rgba(255, 255, 255, 0.08);
-    --input: #1F2937;
-    --ring: #C4B5FD;
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    background-color: #ffffff;
   }
 }
 
@@ -86,6 +69,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--app-font-sans);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
 }
 
 @keyframes collapsible-down {

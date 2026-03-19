@@ -24,7 +24,7 @@ export function PublicPlaceList({ places }: PublicPlaceListProps): JSX.Element {
   }
 
   return (
-    <div className="grid items-start gap-4 sm:grid-cols-2">
+    <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {places.map((place) => (
         <PublicPlaceAccordionItem key={place.id} place={place} />
       ))}

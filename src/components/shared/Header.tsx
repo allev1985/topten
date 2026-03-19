@@ -19,11 +19,11 @@ export default function Header({ onLogin, onSignup }: HeaderProps) {
           aria-label="myfaves home"
         >
           <span
-            className="font-serif text-2xl leading-none tracking-tight select-none"
+            className="font-serif text-3xl leading-none tracking-tight select-none"
             aria-label="myfaves"
           >
             <span className="text-foreground">my</span>
-            <span className="text-violet-500 dark:text-violet-300">faves</span>
+            <span className="text-violet-700">faves</span>
           </span>
         </Link>
 
