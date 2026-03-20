@@ -177,6 +177,16 @@ export async function sendMFACode(): Promise<void> {
 
     log.info({ method: "sendMFACode" }, "MFA code sent");
   } catch (error) {
+    if (error instanceof AuthServiceError) throw error;
+
+    if (isInvalidMFASessionError(error)) {
+      throw new AuthServiceError(
+        "INVALID_MFA_SESSION",
+        "No active login session. Please log in again.",
+        error
+      );
+    }
+
     log.error({ method: "sendMFACode", err: error }, "Failed to send MFA code");
     throw authServiceError("Failed to send verification code", error);
   }

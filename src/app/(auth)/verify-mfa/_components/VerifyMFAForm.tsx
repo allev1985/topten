@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "@/hooks/use-form-state";
 import { verifyMFAAction, sendMFACodeAction } from "@/actions/auth-actions";
@@ -15,25 +15,14 @@ interface VerifyMFAFormProps {
 
 /**
  * MFA verification form.
- * Auto-sends the email code on mount, then prompts the user to enter it.
+ * The code is sent server-side by the page component before this mounts,
+ * so no auto-send useEffect is needed here.
  */
 export function VerifyMFAForm({ redirectTo }: VerifyMFAFormProps) {
   const router = useRouter();
   const { state, formAction } = useFormState(verifyMFAAction);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [codeSent, setCodeSent] = useState(false);
   const [resending, setResending] = useState(false);
-
-  // Auto-send the code when the page first mounts
-  useEffect(() => {
-    sendMFACodeAction().then((result) => {
-      if (result.error) {
-        setSendError(result.error);
-      } else {
-        setCodeSent(true);
-      }
-    });
-  }, []);
 
   useEffect(() => {
     if (state.isSuccess && state.data?.redirectTo) {
@@ -47,8 +36,6 @@ export function VerifyMFAForm({ redirectTo }: VerifyMFAFormProps) {
     const result = await sendMFACodeAction();
     if (result.error) {
       setSendError(result.error);
-    } else {
-      setCodeSent(true);
     }
     setResending(false);
   };
@@ -59,12 +46,6 @@ export function VerifyMFAForm({ redirectTo }: VerifyMFAFormProps) {
         <Alert variant="destructive">
           <AlertDescription>{sendError}</AlertDescription>
         </Alert>
-      )}
-
-      {codeSent && !sendError && (
-        <p className="text-muted-foreground text-sm">
-          A 6-digit code has been sent to your email address.
-        </p>
       )}
 
       <form action={formAction} className="space-y-5">

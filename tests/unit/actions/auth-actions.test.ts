@@ -110,6 +110,9 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "invalid-email",
         password: "ValidPass123!@#",
+        confirmPassword: "ValidPass123!@#",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       const result = await signupAction(initialState, formData);
@@ -123,6 +126,9 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "test@example.com",
         password: "weak",
+        confirmPassword: "weak",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       const result = await signupAction(initialState, formData);
@@ -136,6 +142,9 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "",
         password: "ValidPass123!@#",
+        confirmPassword: "ValidPass123!@#",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       const result = await signupAction(initialState, formData);
@@ -148,6 +157,9 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "test@example.com",
         password: "",
+        confirmPassword: "",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       const result = await signupAction(initialState, formData);
@@ -170,17 +182,19 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "test@example.com",
         password: "ValidPass123!@#",
+        confirmPassword: "ValidPass123!@#",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       await expect(signupAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/verify-email"
       );
 
-      // name falls back to email when no name field is provided
       expect(mockSignup).toHaveBeenCalledWith(
         "test@example.com",
         "ValidPass123!@#",
-        "test@example.com"
+        "Test User"
       );
     });
 
@@ -190,6 +204,9 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         email: "existing@example.com",
         password: "ValidPass123!@#",
+        confirmPassword: "ValidPass123!@#",
+        name: "Test User",
+        vanitySlug: "test-user",
       });
 
       await expect(signupAction(initialState, formData)).rejects.toThrow(

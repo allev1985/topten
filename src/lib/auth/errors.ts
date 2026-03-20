@@ -139,11 +139,20 @@ export function isTooManyMFAAttemptsError(err: unknown): boolean {
 
 /**
  * Detect invalid/missing two-factor session cookie errors.
+ * BetterAuth uses "INVALID_TWO_FACTOR_COOKIE" as the machine code but
+ * "Invalid two factor cookie" as the human-readable message — check both.
  */
 export function isInvalidMFASessionError(err: unknown): boolean {
   if (err instanceof Error) {
     const msg = err.message.toUpperCase();
-    return msg.includes("INVALID_TWO_FACTOR_COOKIE");
+    const bodyCode = (err as unknown as Record<string, unknown>)?.body as
+      | Record<string, unknown>
+      | undefined;
+    return (
+      msg.includes("INVALID_TWO_FACTOR_COOKIE") ||
+      msg.includes("INVALID TWO FACTOR COOKIE") ||
+      bodyCode?.code === "INVALID_TWO_FACTOR_COOKIE"
+    );
   }
   return false;
 }

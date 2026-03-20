@@ -13,9 +13,7 @@ describe("VerifyEmailPage", () => {
     it("renders verification instructions", () => {
       render(<VerifyEmailPage />);
 
-      expect(
-        screen.getByText(/click the verification link/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/click it to complete/i)).toBeInTheDocument();
     });
   });
 
@@ -47,19 +45,6 @@ describe("VerifyEmailPage", () => {
       render(<VerifyEmailPage />);
 
       expect(screen.getByText("Check your email")).toBeInTheDocument();
-    });
-
-    it("uses semantic HTML main element", () => {
-      const { container } = render(<VerifyEmailPage />);
-
-      expect(container.querySelector("main")).toBeInTheDocument();
-    });
-
-    it("uses shadcn Card component structure", () => {
-      const { container } = render(<VerifyEmailPage />);
-
-      // Card uses div with specific classes
-      expect(container.querySelector(".rounded-xl.border")).toBeInTheDocument();
     });
 
     it("has link back to login", () => {

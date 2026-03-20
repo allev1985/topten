@@ -1,8 +1,10 @@
 import type { JSX } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { VerifyMFAForm } from "./_components/VerifyMFAForm";
 import { config } from "@/lib/config/client";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
+import { sendMFACode, getSession } from "@/lib/auth";
 
 interface VerifyMFAPageProps {
   searchParams: Promise<{ redirectTo?: string }>;
@@ -11,7 +13,11 @@ interface VerifyMFAPageProps {
 /**
  * MFA verification page
  * Shown after successful password login when the user has MFA enabled.
- * Auto-sends a 6-digit code to the user's email on load.
+ *
+ * Access rules:
+ *  - Already authenticated → redirect to destination (nothing to verify)
+ *  - No valid two-factor cookie (not mid-login) → redirect to /login
+ *  - Valid two-factor cookie → send code and show form
  */
 export default async function VerifyMFAPage({
   searchParams,
@@ -21,6 +27,17 @@ export default async function VerifyMFAPage({
     params.redirectTo && isValidRedirect(params.redirectTo)
       ? params.redirectTo
       : config.auth.redirectRoutes.default;
+
+  const session = await getSession();
+  if (session.authenticated) {
+    redirect(redirectTo);
+  }
+
+  try {
+    await sendMFACode();
+  } catch {
+    redirect("/login");
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">

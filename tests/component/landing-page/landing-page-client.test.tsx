@@ -3,10 +3,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LandingPageClient from "@/components/shared/LandingPageClient";
 
+const mockPush = vi.fn();
+
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -43,7 +45,7 @@ describe("LandingPageClient", () => {
   });
 
   describe("hero section interactions", () => {
-    it("opens signup modal when hero CTA is clicked", async () => {
+    it("navigates to /signup when hero CTA is clicked", async () => {
       const user = userEvent.setup();
       render(<LandingPageClient />);
 
@@ -52,9 +54,7 @@ describe("LandingPageClient", () => {
       });
       await user.click(ctaButton);
 
-      // Signup modal should be visible
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-      expect(screen.getByText("Create your account")).toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalledWith("/signup");
     });
   });
 
