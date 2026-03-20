@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { getProfileForSettings } from "@/lib/profile";
 import { SlugSettingsForm } from "./_components/SlugSettingsForm";
 import { NameSettingsForm } from "./_components/NameSettingsForm";
-import { PasswordChangeForm } from "./password/password-change-form";
+import { PasswordChangeForm } from "@/components/dashboard/settings/password-change-form";
 
 /**
  * Settings page — single unified page for profile and security settings.

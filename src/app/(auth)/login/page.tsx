@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { LoginForm } from "./login-form";
+import { LoginForm } from "@/components/auth/login-form";
 
 interface LoginPageProps {
   searchParams: Promise<{

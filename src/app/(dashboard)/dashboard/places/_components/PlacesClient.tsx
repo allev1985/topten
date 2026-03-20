@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { PlaceCard } from "@/components/dashboard/places/PlaceCard";
 import { AddPlaceDialog } from "./AddPlaceDialog";
-import { EditPlaceDialog } from "./EditPlaceDialog";
+import { EditPlaceDialog } from "@/components/dashboard/places/EditPlaceDialog";
 import { DeletePlaceDialog } from "./DeletePlaceDialog";
 
 interface PlacesClientProps {

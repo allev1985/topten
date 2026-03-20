@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock LoginForm to isolate integration tests
-vi.mock("@/app/(auth)/login/login-form", () => ({
+vi.mock("@/components/auth/login-form", () => ({
   LoginForm: ({
     onSuccess,
     redirectTo,
