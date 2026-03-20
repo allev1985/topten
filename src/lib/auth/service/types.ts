@@ -3,16 +3,8 @@
  * @module auth/service/types
  */
 
-/**
- * Minimal user shape returned from auth service methods.
- * Consumers should not depend on BetterAuth's internal User type directly.
- */
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-}
+import type { AuthUser } from "@/types/auth";
+export type { AuthUser };
 
 /**
  * Result of a successful signup operation
