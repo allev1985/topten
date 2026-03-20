@@ -40,7 +40,7 @@ vi.mock("@/lib/config", async (importOriginal) => {
 
 // Mock auth service (auto-mock)
 vi.mock("@/lib/auth/service");
-vi.mock("@/lib/auth/service/errors", () => ({
+vi.mock("@/lib/auth/errors", () => ({
   AuthServiceError: class AuthServiceError extends Error {
     public readonly code: string;
     public readonly originalError?: unknown;
