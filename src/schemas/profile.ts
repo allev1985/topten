@@ -13,20 +13,25 @@ export const updateNameSchema = z.object({
 });
 
 /**
- * Schema for updating the user's vanity slug (profile URL).
- * Enforces format: lowercase alphanumeric and hyphens only,
+ * Shared vanity slug field used by both signupSchema and updateSlugSchema.
+ * Canonical rules: lowercase alphanumeric and hyphens only,
  * must start and end with an alphanumeric character, 4–50 chars.
  */
+export const vanitySlugField = z
+  .string({ message: "Profile URL is required" })
+  .min(1, "Profile URL is required")
+  .min(4, "URL must be at least 4 characters")
+  .max(50, "URL must be 50 characters or fewer")
+  .regex(
+    /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/,
+    "URL can only contain lowercase letters, numbers, and hyphens, and must start and end with a letter or number"
+  );
+
+/**
+ * Schema for updating the user's vanity slug (profile URL).
+ */
 export const updateSlugSchema = z.object({
-  vanitySlug: z
-    .string()
-    .min(1, "Profile URL is required")
-    .min(4, "URL must be at least 4 characters")
-    .max(50, "URL must be 50 characters or fewer")
-    .regex(
-      /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/,
-      "URL can only contain lowercase letters, numbers, and hyphens, and must start and end with a letter or number"
-    ),
+  vanitySlug: vanitySlugField,
 });
 
 /**
