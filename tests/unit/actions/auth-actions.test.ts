@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { User } from "@supabase/supabase-js";
 import {
   signupAction,
   loginAction,
@@ -8,23 +7,22 @@ import {
   passwordChangeAction,
 } from "@/actions/auth-actions";
 
-// Mock Next.js navigation
+// Mock Next.js navigation — simulate Next.js's digest format so isRedirect checks pass
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {
-    throw new Error(`REDIRECT:${url}`);
+    const err = new Error(`REDIRECT:${url}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (err as any).digest = `NEXT_REDIRECT;replace;${url};307;`;
+    throw err;
   }),
 }));
 
-// Mock Next.js cookies
+// Mock Next.js headers
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(() =>
-    Promise.resolve({
-      getAll: () => [{ name: "session", value: "mock-session-value" }],
-    })
-  ),
+  headers: vi.fn().mockResolvedValue(new Headers()),
 }));
 
-// Mock config - use importOriginal to preserve schema dependencies
+// Mock config — preserve schema dependencies via importOriginal
 vi.mock("@/lib/config", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/config")>();
   return {
@@ -40,7 +38,7 @@ vi.mock("@/lib/config", async (importOriginal) => {
   };
 });
 
-// Mock auth service
+// Mock auth service (auto-mock)
 vi.mock("@/lib/auth/service");
 vi.mock("@/lib/auth/service/errors", () => ({
   AuthServiceError: class AuthServiceError extends Error {
@@ -57,49 +55,34 @@ vi.mock("@/lib/auth/service/errors", () => ({
   isEmailNotVerifiedError: vi.fn(),
 }));
 
+// Mock logging
+vi.mock("@/lib/services/logging", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
 // Import after mocking
 import {
   signup,
-  // logout is not used in these tests (covered by signOutAction tests)
+  login,
   resetPassword,
   updatePassword,
+  changePassword,
   getSession,
 } from "@/lib/auth/service";
-import {
-  AuthServiceError,
-  isEmailNotVerifiedError,
-} from "@/lib/auth/service/errors";
+import { AuthServiceError } from "@/lib/auth/service/errors";
 
-// Get typed mock references
+// Typed mock references
 const mockSignup = vi.mocked(signup);
-// mockLogout is not used in these tests (covered by signOutAction tests)
+const mockLogin = vi.mocked(login);
 const mockResetPassword = vi.mocked(resetPassword);
 const mockUpdatePassword = vi.mocked(updatePassword);
+const mockChangePassword = vi.mocked(changePassword);
 const mockGetSession = vi.mocked(getSession);
-const mockIsEmailNotVerifiedError = vi.mocked(isEmailNotVerifiedError);
-
-// Mock fetch globally (still used by other actions)
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-// Mock Supabase client
-const mockSignInWithPassword = vi.fn();
-const mockGetUser = vi.fn();
-const mockSignOut = vi.fn();
-const mockUpdateUser = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(() =>
-    Promise.resolve({
-      auth: {
-        signInWithPassword: mockSignInWithPassword,
-        getUser: mockGetUser,
-        signOut: mockSignOut,
-        updateUser: mockUpdateUser,
-      },
-    })
-  ),
-}));
 
 // Helper to create FormData
 function createFormData(data: Record<string, string>): FormData {
@@ -110,14 +93,12 @@ function createFormData(data: Record<string, string>): FormData {
   return formData;
 }
 
-// Default initial state for server actions - using 'as' to match action expectations
 const initialState = {
   data: null,
   error: null,
   fieldErrors: {},
   isSuccess: false,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
+} satisfies import("@/types/forms").ActionState<unknown>;
 
 describe("Auth Actions", () => {
   beforeEach(() => {
@@ -178,8 +159,12 @@ describe("Auth Actions", () => {
     it("redirects to verify-email on successful signup", async () => {
       mockSignup.mockResolvedValue({
         requiresEmailConfirmation: true,
-        user: { id: "123", email: "test@example.com" } as Partial<User> as User,
-        session: null,
+        user: {
+          id: "123",
+          email: "test@example.com",
+          name: "test@example.com",
+          emailVerified: false,
+        },
       });
 
       const formData = createFormData({
@@ -191,9 +176,11 @@ describe("Auth Actions", () => {
         "REDIRECT:/verify-email"
       );
 
+      // name falls back to email when no name field is provided
       expect(mockSignup).toHaveBeenCalledWith(
         "test@example.com",
-        "ValidPass123!@#"
+        "ValidPass123!@#",
+        "test@example.com"
       );
     });
 
@@ -205,7 +192,6 @@ describe("Auth Actions", () => {
         password: "ValidPass123!@#",
       });
 
-      // Should still redirect (same response for existing email)
       await expect(signupAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/verify-email"
       );
@@ -238,13 +224,9 @@ describe("Auth Actions", () => {
     });
 
     it("returns error for invalid credentials", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        data: { user: null, session: null },
-        error: {
-          message: "Invalid login credentials",
-          status: 400,
-        },
-      });
+      mockLogin.mockRejectedValue(
+        new AuthServiceError("INVALID_CREDENTIALS", "Invalid email or password")
+      );
 
       const formData = createFormData({
         email: "test@example.com",
@@ -259,12 +241,13 @@ describe("Auth Actions", () => {
     });
 
     it("redirects to dashboard on successful login", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        data: {
-          user: { id: "user-123", email: "test@example.com" },
-          session: { access_token: "token-123" },
+      mockLogin.mockResolvedValue({
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          name: "Test User",
+          emailVerified: true,
         },
-        error: null,
       });
 
       const formData = createFormData({
@@ -276,19 +259,20 @@ describe("Auth Actions", () => {
         "REDIRECT:/dashboard"
       );
 
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "ValidPass123!@#",
-      });
+      expect(mockLogin).toHaveBeenCalledWith(
+        "test@example.com",
+        "ValidPass123!@#"
+      );
     });
 
     it("redirects to specified redirectTo on successful login", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        data: {
-          user: { id: "user-123", email: "test@example.com" },
-          session: { access_token: "token-123" },
+      mockLogin.mockResolvedValue({
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          name: "Test User",
+          emailVerified: true,
         },
-        error: null,
       });
 
       const formData = createFormData({
@@ -303,12 +287,13 @@ describe("Auth Actions", () => {
     });
 
     it("ignores invalid redirectTo and uses default", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        data: {
-          user: { id: "user-123", email: "test@example.com" },
-          session: { access_token: "token-123" },
+      mockLogin.mockResolvedValue({
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          name: "Test User",
+          emailVerified: true,
         },
-        error: null,
       });
 
       const formData = createFormData({
@@ -317,24 +302,15 @@ describe("Auth Actions", () => {
         redirectTo: "https://evil.com",
       });
 
-      // Should use default redirect since evil.com is not valid
       await expect(loginAction(initialState, formData)).rejects.toThrow(
         "REDIRECT:/dashboard"
       );
     });
 
     it("returns error for unverified email", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        data: { user: null, session: null },
-        error: {
-          message: "Email not confirmed",
-          status: 400,
-          code: "email_not_confirmed",
-        },
-      });
-
-      // Mock the error check to return true for email not verified
-      mockIsEmailNotVerifiedError.mockReturnValue(true);
+      mockLogin.mockRejectedValue(
+        new AuthServiceError("EMAIL_NOT_CONFIRMED", "Email not verified")
+      );
 
       const formData = createFormData({
         email: "unverified@example.com",
@@ -361,9 +337,7 @@ describe("Auth Actions", () => {
     });
 
     it("returns success message regardless of email existence", async () => {
-      mockResetPassword.mockResolvedValue({
-        success: true,
-      });
+      mockResetPassword.mockResolvedValue({ success: true });
 
       const formData = createFormData({
         email: "test@example.com",
@@ -375,19 +349,16 @@ describe("Auth Actions", () => {
       expect(result.data?.message).toBe(
         "If an account exists, a password reset email has been sent"
       );
-
       expect(mockResetPassword).toHaveBeenCalledWith(
         "test@example.com",
         expect.objectContaining({
-          redirectTo: expect.stringContaining("/auth/password/update"),
+          redirectTo: expect.stringContaining("/reset-password"),
         })
       );
     });
 
     it("returns same success message even if email does not exist", async () => {
-      mockResetPassword.mockResolvedValue({
-        success: true,
-      });
+      mockResetPassword.mockResolvedValue({ success: true });
 
       const formData = createFormData({
         email: "nonexistent@example.com",
@@ -395,7 +366,6 @@ describe("Auth Actions", () => {
 
       const result = await passwordResetRequestAction(initialState, formData);
 
-      // Should still return success for user enumeration protection
       expect(result.isSuccess).toBe(true);
       expect(result.data?.message).toBe(
         "If an account exists, a password reset email has been sent"
@@ -430,7 +400,7 @@ describe("Auth Actions", () => {
       expect(result.fieldErrors.password).toBeDefined();
     });
 
-    it("returns error when session has expired", async () => {
+    it("returns error when reset link has expired", async () => {
       mockUpdatePassword.mockRejectedValue(
         new AuthServiceError(
           "SERVICE_ERROR",
@@ -441,24 +411,24 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         password: "ValidPass123!@#",
         confirmPassword: "ValidPass123!@#",
+        token: "expired-token",
       });
 
       const result = await passwordUpdateAction(initialState, formData);
 
       expect(result.isSuccess).toBe(false);
       expect(result.error).toBe(
-        "Session has expired. Please request a new reset link."
+        "Reset link has expired. Please request a new one."
       );
     });
 
     it("redirects to login on successful password update", async () => {
-      mockUpdatePassword.mockResolvedValue({
-        success: true,
-      });
+      mockUpdatePassword.mockResolvedValue({ success: true });
 
       const formData = createFormData({
         password: "ValidPass123!@#",
         confirmPassword: "ValidPass123!@#",
+        token: "valid-reset-token",
       });
 
       await expect(
@@ -467,7 +437,7 @@ describe("Auth Actions", () => {
 
       expect(mockUpdatePassword).toHaveBeenCalledWith(
         "ValidPass123!@#",
-        expect.objectContaining({})
+        "valid-reset-token"
       );
     });
 
@@ -479,6 +449,7 @@ describe("Auth Actions", () => {
       const formData = createFormData({
         password: "ValidPass123!@#",
         confirmPassword: "ValidPass123!@#",
+        token: "valid-reset-token",
       });
 
       const result = await passwordUpdateAction(initialState, formData);
@@ -546,25 +517,18 @@ describe("Auth Actions", () => {
       const result = await passwordChangeAction(initialState, formData);
 
       expect(result.isSuccess).toBe(false);
-      expect(result.error).toBe("Authentication required");
+      expect(result.error).toBe("You must be logged in to perform this action");
     });
 
     it("returns error when current password is incorrect", async () => {
-      // Mock authenticated session
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: {
-          expiresAt: "2025-12-08T00:00:00.000Z",
-          isExpiringSoon: false,
-        },
+        session: { expiresAt: new Date(Date.now() + 3600000).toISOString() },
       });
-
-      // Mock incorrect password verification
-      mockSignInWithPassword.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: "Invalid credentials" },
-      });
+      mockChangePassword.mockRejectedValue(
+        new AuthServiceError("SERVICE_ERROR", "Current password is incorrect")
+      );
 
       const formData = createFormData({
         currentPassword: "WrongPass123!@#",
@@ -579,29 +543,12 @@ describe("Auth Actions", () => {
     });
 
     it("returns success on successful password change", async () => {
-      // Mock authenticated session
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: {
-          expiresAt: "2025-12-08T00:00:00.000Z",
-          isExpiringSoon: false,
-        },
+        session: { expiresAt: new Date(Date.now() + 3600000).toISOString() },
       });
-
-      // Mock correct password verification
-      mockSignInWithPassword.mockResolvedValue({
-        data: {
-          user: { id: "123", email: "test@example.com" },
-          session: { access_token: "token" },
-        },
-        error: null,
-      });
-
-      // Mock successful password update
-      mockUpdatePassword.mockResolvedValue({
-        success: true,
-      });
+      mockChangePassword.mockResolvedValue({ success: true });
 
       const formData = createFormData({
         currentPassword: "OldPass123!@#",
@@ -616,27 +563,12 @@ describe("Auth Actions", () => {
     });
 
     it("returns error when password update fails", async () => {
-      // Mock authenticated session
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
-        session: {
-          expiresAt: "2025-12-08T00:00:00.000Z",
-          isExpiringSoon: false,
-        },
+        session: { expiresAt: new Date(Date.now() + 3600000).toISOString() },
       });
-
-      // Mock correct password verification
-      mockSignInWithPassword.mockResolvedValue({
-        data: {
-          user: { id: "123", email: "test@example.com" },
-          session: { access_token: "token" },
-        },
-        error: null,
-      });
-
-      // Mock password update failure
-      mockUpdatePassword.mockRejectedValue(
+      mockChangePassword.mockRejectedValue(
         new AuthServiceError("SERVICE_ERROR", "Update failed")
       );
 

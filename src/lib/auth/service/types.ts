@@ -3,54 +3,37 @@
  * @module auth/service/types
  */
 
-import type { User } from "@supabase/supabase-js";
+/**
+ * Minimal user shape returned from auth service methods.
+ * Consumers should not depend on BetterAuth's internal User type directly.
+ */
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+}
 
 /**
  * Result of a successful signup operation
  */
 export interface SignupResult {
-  /**
-   * Whether email confirmation is required
-   * True when email verification is enabled in Supabase settings
-   */
+  /** Whether email confirmation is required before the user can log in */
   requiresEmailConfirmation: boolean;
-  /**
-   * User object from Supabase (may be null if email confirmation required)
-   */
-  user: User | null;
-  /**
-   * Session token (only present if no email confirmation required)
-   */
-  session: {
-    access_token: string;
-    refresh_token: string;
-  } | null;
+  user: AuthUser | null;
 }
 
 /**
  * Result of a successful login operation
  */
 export interface LoginResult {
-  /**
-   * Authenticated user object
-   */
-  user: User;
-  /**
-   * Session tokens
-   */
-  session: {
-    access_token: string;
-    refresh_token: string;
-  };
+  user: AuthUser;
 }
 
 /**
  * Result of a successful logout operation
  */
 export interface LogoutResult {
-  /**
-   * Always true if logout succeeded
-   */
   success: true;
 }
 
@@ -59,8 +42,8 @@ export interface LogoutResult {
  */
 export interface ResetPasswordResult {
   /**
-   * Always true if reset email request was processed
-   * Note: Does not indicate whether email exists (enumeration protection)
+   * Always true — enumeration protection means we never reveal whether
+   * the email exists in the system.
    */
   success: true;
 }
@@ -69,71 +52,19 @@ export interface ResetPasswordResult {
  * Result of a successful password update
  */
 export interface UpdatePasswordResult {
-  /**
-   * Always true if password was updated successfully
-   */
   success: true;
 }
 
 /**
- * Session information with expiry details
+ * Current session state
  */
 export interface SessionResult {
-  /**
-   * Whether a valid session exists
-   */
   authenticated: boolean;
-  /**
-   * User information if authenticated
-   */
   user: {
     id: string;
-    email?: string;
+    email: string;
   } | null;
-  /**
-   * Session expiry information if authenticated
-   */
   session: {
     expiresAt: string | null;
-    isExpiringSoon: boolean;
   } | null;
 }
-
-/**
- * Result of a session refresh operation
- */
-export interface RefreshSessionResult {
-  /**
-   * Session expiry information
-   */
-  session: {
-    access_token: string;
-    refresh_token: string;
-    expiresAt: string | null;
-  };
-}
-
-/**
- * Result of a successful email verification operation
- */
-export interface VerifyEmailResult {
-  /**
-   * Authenticated user object from Supabase
-   */
-  user: User;
-  /**
-   * Session tokens created during verification
-   */
-  session: {
-    access_token: string;
-    refresh_token: string;
-  };
-}
-
-/**
- * Email verification function signature
- */
-export type VerifyEmailFunction = (
-  token_hash: string,
-  type: "email"
-) => Promise<VerifyEmailResult>;

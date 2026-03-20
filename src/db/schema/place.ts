@@ -1,9 +1,9 @@
 import {
   pgTable,
   uuid,
+  text,
   varchar,
   decimal,
-  text,
   timestamp,
   index,
   uniqueIndex,
@@ -14,7 +14,7 @@ export const places = pgTable(
   "places",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => users.id),
     googlePlaceId: varchar("google_place_id", { length: 255 }).notNull(),

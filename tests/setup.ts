@@ -8,9 +8,8 @@ vi.mock("server-only", () => ({}));
 
 // Provide baseline env vars so modules that import config don't throw.
 // Individual tests that need to control env state use vi.resetModules() + dynamic imports.
-process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://test.supabase.co";
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
-process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
+process.env.AUTH_SECRET ??= "test-secret-32-chars-long-minimum!";
+process.env.NEXT_PUBLIC_APP_URL ??= "http://localhost:3000";
 process.env.DATABASE_URL ??= "postgresql://test";
 
 // Cleanup after each test

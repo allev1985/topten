@@ -36,7 +36,7 @@ export async function getPublicProfileBySlug(
       id: users.id,
       name: users.name,
       bio: users.bio,
-      avatarUrl: users.avatarUrl,
+      avatarUrl: users.image,
       vanitySlug: users.vanitySlug,
     })
     .from(users)

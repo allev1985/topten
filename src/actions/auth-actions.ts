@@ -8,49 +8,37 @@ import {
   passwordUpdateSchema,
 } from "@/schemas/auth";
 import type { ActionState } from "@/types/forms";
-import { config, getAppUrl } from "@/lib/config";
+import { config } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { maskEmail } from "@/lib/utils/formatting/email";
-import { isEmailNotVerifiedError } from "@/lib/auth/service/errors";
 import {
   signup,
+  login,
   logout,
   resetPassword,
   updatePassword,
+  changePassword,
 } from "@/lib/auth/service";
 import { AuthServiceError } from "@/lib/auth/service/errors";
-import { createClient } from "@/lib/supabase/server";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import { createServiceLogger } from "@/lib/services/logging";
 
 const log = createServiceLogger("auth-actions");
 
-/**
- * Signup action success data
- */
 export interface SignupSuccessData {
   message: string;
   redirectTo: string;
 }
 
-/**
- * Login action success data
- */
 export interface LoginSuccessData {
   redirectTo: string;
 }
 
-/**
- * Password reset request success data
- */
 export interface PasswordResetRequestSuccessData {
   message: string;
 }
 
-/**
- * Password update success data
- */
 export interface PasswordUpdateSuccessData {
   message: string;
   redirectTo?: string;
@@ -58,8 +46,6 @@ export interface PasswordUpdateSuccessData {
 
 /**
  * Signup server action
- * Creates a new user account with email/password
- * Calls auth service signup() method directly
  */
 export async function signupAction(
   _prevState: ActionState<SignupSuccessData>,
@@ -67,8 +53,8 @@ export async function signupAction(
 ): Promise<ActionState<SignupSuccessData>> {
   const email = formData.get("email");
   const password = formData.get("password");
+  const name = formData.get("name") ?? email; // fall back to email if no name field
 
-  // Validate input (for immediate feedback - service will re-validate)
   const result = signupSchema.safeParse({ email, password });
 
   if (!result.success) {
@@ -81,9 +67,13 @@ export async function signupAction(
   }
 
   try {
-    await signup(result.data.email, result.data.password);
+    await signup(
+      result.data.email,
+      result.data.password,
+      typeof name === "string" ? name : result.data.email
+    );
   } catch (err) {
-    // Log errors but still redirect for enumeration protection
+    // Log internally but still redirect — enumeration protection
     log.error(
       { method: "signupAction", err },
       "Signup error (redirecting for enumeration protection)"
@@ -96,8 +86,6 @@ export async function signupAction(
 
 /**
  * Login server action
- * Authenticates user with email/password
- * Directly calls Supabase to ensure cookies are properly set
  */
 export async function loginAction(
   _prevState: ActionState<LoginSuccessData>,
@@ -111,7 +99,6 @@ export async function loginAction(
       ? redirectToValue
       : undefined;
 
-  // Validate input
   const result = loginSchema.safeParse({ email, password, redirectTo });
 
   if (!result.success) {
@@ -124,45 +111,18 @@ export async function loginAction(
   }
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-
     log.info(
       { method: "loginAction", email: maskEmail(result.data.email) },
       "Login attempt"
     );
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: result.data.email,
-      password: result.data.password,
-    });
-
-    if (error) {
-      log.error(
-        {
-          method: "loginAction",
-          email: maskEmail(result.data.email),
-          err: error,
-        },
-        "Login failed"
-      );
-
-      return {
-        data: null,
-        error: isEmailNotVerifiedError(error)
-          ? "Please verify your email before logging in"
-          : "Invalid email or password",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
+    await login(result.data.email, result.data.password);
 
     log.info(
       { method: "loginAction", email: maskEmail(result.data.email) },
       "Login successful"
     );
 
-    // Get validated redirect URL
     const targetUrl =
       result.data.redirectTo && isValidRedirect(result.data.redirectTo)
         ? result.data.redirectTo
@@ -170,17 +130,25 @@ export async function loginAction(
 
     redirect(targetUrl);
   } catch (err) {
-    // Check if this is a redirect (Next.js throws for redirect)
     const isRedirect =
-      (typeof err === "object" &&
-        err !== null &&
-        "digest" in err &&
-        typeof (err as { digest: string }).digest === "string" &&
-        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
-      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      typeof (err as { digest: string }).digest === "string" &&
+      (err as { digest: string }).digest.startsWith("NEXT_REDIRECT");
 
-    if (isRedirect) {
-      throw err;
+    if (isRedirect) throw err;
+
+    if (err instanceof AuthServiceError) {
+      return {
+        data: null,
+        error:
+          err.code === "EMAIL_NOT_CONFIRMED"
+            ? "Please verify your email before logging in"
+            : "Invalid email or password",
+        fieldErrors: {},
+        isSuccess: false,
+      };
     }
 
     log.error({ method: "loginAction", err }, "Unexpected error");
@@ -196,8 +164,6 @@ export async function loginAction(
 
 /**
  * Password reset request server action
- * Sends password reset email
- * Uses Auth Service resetPassword() directly
  */
 export async function passwordResetRequestAction(
   _prevState: ActionState<PasswordResetRequestSuccessData>,
@@ -205,7 +171,6 @@ export async function passwordResetRequestAction(
 ): Promise<ActionState<PasswordResetRequestSuccessData>> {
   const email = formData.get("email");
 
-  // Validate input
   const result = passwordResetSchema.safeParse({ email });
 
   if (!result.success) {
@@ -217,45 +182,23 @@ export async function passwordResetRequestAction(
     };
   }
 
-  try {
-    // Call Auth Service directly
-    await resetPassword(result.data.email, {
-      redirectTo: `${getAppUrl()}/auth/password/update`,
-    });
+  // resetPassword() always returns success (enumeration protection)
+  await resetPassword(result.data.email, {
+    redirectTo: "/reset-password",
+  });
 
-    // Always return success for user enumeration protection
-    return {
-      data: {
-        message: "If an account exists, a password reset email has been sent",
-      },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
-  } catch (err) {
-    log.error(
-      { method: "passwordResetRequestAction", err },
-      "Error (returning success for enumeration protection)"
-    );
-
-    // Still return success for enumeration protection
-    return {
-      data: {
-        message: "If an account exists, a password reset email has been sent",
-      },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
-  }
+  return {
+    data: {
+      message: "If an account exists, a password reset email has been sent",
+    },
+    error: null,
+    fieldErrors: {},
+    isSuccess: true,
+  };
 }
 
 /**
- * Password update server action
- * Updates password using reset token (unauthenticated flow)
- * Uses Auth Service updatePassword() directly
- *
- * Supports OTP token authentication from password reset email links
+ * Password update server action (unauthenticated — from reset email link)
  */
 export async function passwordUpdateAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -263,10 +206,8 @@ export async function passwordUpdateAction(
 ): Promise<ActionState<PasswordUpdateSuccessData>> {
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
-  const tokenHashValue = formData.get("token_hash");
-  const typeValue = formData.get("type");
+  const token = formData.get("token");
 
-  // Validate password matches
   if (password !== confirmPassword) {
     return {
       data: null,
@@ -276,7 +217,6 @@ export async function passwordUpdateAction(
     };
   }
 
-  // Validate password requirements
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -288,65 +228,40 @@ export async function passwordUpdateAction(
     };
   }
 
-  // Extract token_hash and type if provided (OTP authentication from reset email)
-  const token_hash =
-    typeof tokenHashValue === "string" && tokenHashValue
-      ? tokenHashValue
-      : undefined;
-  const type =
-    typeof typeValue === "string" && typeValue
-      ? (typeValue as "recovery" | "email")
-      : undefined;
+  if (!token || typeof token !== "string") {
+    return {
+      data: null,
+      error: "Invalid reset link. Please request a new password reset.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
 
   try {
-    // Call Auth Service directly
-    await updatePassword(result.data.password, {
-      ...(token_hash && { token_hash }),
-      ...(type && { type }),
-    });
-
-    // Success - redirect to login
+    await updatePassword(result.data.password, token);
     redirect("/login");
   } catch (err) {
-    // Check if this is a redirect (Next.js throws for redirect)
-    // Support both Next.js digest format and test mock format
     const isRedirect =
-      (typeof err === "object" &&
-        err !== null &&
-        "digest" in err &&
-        typeof (err as { digest: string }).digest === "string" &&
-        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
-      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      typeof (err as { digest: string }).digest === "string" &&
+      (err as { digest: string }).digest.startsWith("NEXT_REDIRECT");
 
-    if (isRedirect) {
-      throw err;
-    }
+    if (isRedirect) throw err;
 
-    // Handle AuthServiceError
     if (err instanceof AuthServiceError) {
-      // Check for expired token or authentication errors
-      if (
-        err.message.includes("expired") ||
-        err.message.includes("Authentication failed")
-      ) {
-        return {
-          data: null,
-          error: "Session has expired. Please request a new reset link.",
-          fieldErrors: {},
-          isSuccess: false,
-        };
-      }
-
       return {
         data: null,
-        error: err.message || "Failed to update password. Please try again.",
+        error: err.message.includes("expired")
+          ? "Reset link has expired. Please request a new one."
+          : err.message,
         fieldErrors: {},
         isSuccess: false,
       };
     }
 
     log.error({ method: "passwordUpdateAction", err }, "Unexpected error");
-
     return {
       data: null,
       error: "Failed to update password. Please try again.",
@@ -357,9 +272,7 @@ export async function passwordUpdateAction(
 }
 
 /**
- * Password change server action
- * Changes password for authenticated user (requires current password)
- * Uses Auth Service getSession() and updatePassword() directly
+ * Password change server action (authenticated — settings page)
  */
 export async function passwordChangeAction(
   _prevState: ActionState<PasswordUpdateSuccessData>,
@@ -369,7 +282,6 @@ export async function passwordChangeAction(
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
 
-  // Validate current password is provided
   if (!currentPassword || typeof currentPassword !== "string") {
     return {
       data: null,
@@ -379,7 +291,6 @@ export async function passwordChangeAction(
     };
   }
 
-  // Validate password matches
   if (password !== confirmPassword) {
     return {
       data: null,
@@ -389,7 +300,6 @@ export async function passwordChangeAction(
     };
   }
 
-  // Validate password requirements
   const result = passwordUpdateSchema.safeParse({ password });
 
   if (!result.success) {
@@ -401,59 +311,30 @@ export async function passwordChangeAction(
     };
   }
 
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
+  }
+
   try {
-    // First, get the current user's session to retrieve their email
-    const auth = await requireAuth();
-
-    if ("error" in auth || !auth.email) {
-      return {
-        data: null,
-        error: "Authentication required",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
-
-    // Verify current password by attempting to sign in with Supabase client
-    const supabase = await createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: auth.email,
-      password: currentPassword,
-    });
-
-    if (signInError) {
-      return {
-        data: null,
-        error: "Current password is incorrect",
-        fieldErrors: {},
-        isSuccess: false,
-      };
-    }
-
-    // Update password using Auth Service
-    await updatePassword(result.data.password);
-
+    await changePassword(currentPassword, result.data.password);
     return {
-      data: {
-        message: "Password updated successfully",
-      },
+      data: { message: "Password updated successfully" },
       error: null,
       fieldErrors: {},
       isSuccess: true,
     };
   } catch (err) {
-    // Handle AuthServiceError
     if (err instanceof AuthServiceError) {
       return {
         data: null,
-        error: err.message || "Failed to update password. Please try again.",
+        error: err.message,
         fieldErrors: {},
         isSuccess: false,
       };
     }
 
     log.error({ method: "passwordChangeAction", err }, "Unexpected error");
-
     return {
       data: null,
       error: "Failed to update password. Please try again.",
@@ -465,28 +346,21 @@ export async function passwordChangeAction(
 
 /**
  * Sign out server action
- * Terminates the user's authenticated session and redirects to home page
- * Calls auth service logout() method directly
  */
 export async function signOutAction(): Promise<void> {
   try {
     await logout();
     redirect("/");
   } catch (err) {
-    // Check if this is a redirect (Next.js throws for redirect)
     const isRedirect =
-      (typeof err === "object" &&
-        err !== null &&
-        "digest" in err &&
-        typeof (err as { digest: string }).digest === "string" &&
-        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")) ||
-      (err instanceof Error && err.message.startsWith("REDIRECT:"));
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      typeof (err as { digest: string }).digest === "string" &&
+      (err as { digest: string }).digest.startsWith("NEXT_REDIRECT");
 
-    if (isRedirect) {
-      throw err;
-    }
+    if (isRedirect) throw err;
 
     log.error({ method: "signOutAction", err }, "Sign-out error");
-    // Don't redirect on error - let component handle it
   }
 }

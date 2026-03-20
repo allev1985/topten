@@ -1,6 +1,0 @@
--- This migration has been superseded by the Drizzle migration:
--- src/db/migrations/0000_initial_schema.sql
---
--- Table creation, RLS policies, and the auth.users trigger are all
--- managed there. This file is kept as a placeholder so the Supabase
--- CLI migration history remains intact.

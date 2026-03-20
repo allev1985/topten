@@ -4,28 +4,7 @@
  */
 
 /**
- * Supabase authentication error shape
- * Represents the structure of error objects returned by Supabase Auth API
- */
-interface SupabaseAuthError {
-  message: string;
-  status?: number;
-  code?: string;
-}
-
-/**
- * Known Supabase session error codes
- * Used to detect session-related errors
- */
-export const SESSION_ERROR_CODES = [
-  "session_expired",
-  "invalid_session",
-  "no_session",
-] as const;
-
-/**
  * Service-specific error codes
- * These are internal codes used within the service layer
  */
 export type ServiceErrorCode =
   | "INVALID_CREDENTIALS"
@@ -36,7 +15,6 @@ export type ServiceErrorCode =
 
 /**
  * Authentication service error class
- * Used internally within the service layer
  */
 export class AuthServiceError extends Error {
   public readonly code: ServiceErrorCode;
@@ -54,9 +32,6 @@ export class AuthServiceError extends Error {
   }
 }
 
-/**
- * Factory function for invalid credentials error
- */
 export function invalidCredentialsError(
   originalError?: unknown
 ): AuthServiceError {
@@ -67,9 +42,6 @@ export function invalidCredentialsError(
   );
 }
 
-/**
- * Factory function for email not confirmed error
- */
 export function emailNotConfirmedError(
   originalError?: unknown
 ): AuthServiceError {
@@ -80,9 +52,6 @@ export function emailNotConfirmedError(
   );
 }
 
-/**
- * Factory function for service error
- */
 export function serviceError(
   message?: string,
   originalError?: unknown
@@ -95,58 +64,38 @@ export function serviceError(
 }
 
 /**
- * Check if a Supabase error indicates an unverified email
- *
- * Supabase returns status 400 with code 'email_not_confirmed' for unverified emails.
- * This helper provides a consistent way to detect this error condition.
- *
- * @param error - The error object from Supabase auth
- * @returns true if the error indicates an unverified email
+ * Detect invalid credential errors from BetterAuth responses.
+ * BetterAuth returns status 401 with "Invalid email or password" message.
  */
-export function isEmailNotVerifiedError(
-  error: SupabaseAuthError | null | undefined
-): boolean {
-  if (!error) return false;
-
-  return (
-    error.code === "email_not_confirmed" ||
-    (error.status === 400 &&
-      error.message.toLowerCase().includes("not confirmed"))
-  );
+export function isInvalidCredentialsError(err: unknown): boolean {
+  if (err instanceof Error) {
+    return (
+      err.message.toLowerCase().includes("invalid email or password") ||
+      err.message.toLowerCase().includes("invalid credentials")
+    );
+  }
+  return false;
 }
 
 /**
- * Check if a Supabase error indicates an expired token
- *
- * @param error - The error object from Supabase auth
- * @returns true if the error indicates an expired token
+ * Detect unverified email errors from BetterAuth responses.
  */
-export function isExpiredTokenError(
-  error: SupabaseAuthError | null | undefined
-): boolean {
-  if (!error) return false;
-
-  return (
-    error.code === "token_expired" ||
-    error.code === "otp_expired" ||
-    error.message.toLowerCase().includes("expired")
-  );
+export function isEmailNotVerifiedError(err: unknown): boolean {
+  if (err instanceof Error) {
+    return (
+      err.message.toLowerCase().includes("email not verified") ||
+      err.message.toLowerCase().includes("verify your email")
+    );
+  }
+  return false;
 }
 
 /**
- * Check if a Supabase error indicates a session-related error
- *
- * @param error - The error object from Supabase auth
- * @returns true if the error indicates a session error
+ * Detect expired token errors.
  */
-export function isSessionError(
-  error: SupabaseAuthError | null | undefined
-): boolean {
-  if (!error) return false;
-
-  return (
-    SESSION_ERROR_CODES.includes(
-      error.code as (typeof SESSION_ERROR_CODES)[number]
-    ) || error.message?.toLowerCase().includes("session")
-  );
+export function isExpiredTokenError(err: unknown): boolean {
+  if (err instanceof Error) {
+    return err.message.toLowerCase().includes("expired");
+  }
+  return false;
 }
