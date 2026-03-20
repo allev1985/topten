@@ -28,7 +28,7 @@ import type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
-} from "./service/types";
+} from "@/types/auth";
 
 const log = createServiceLogger("auth-service");
 

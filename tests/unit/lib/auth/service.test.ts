@@ -16,7 +16,7 @@ import type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
-} from "@/lib/auth/service/types";
+} from "@/types/auth";
 
 // Mock next/headers
 vi.mock("next/headers", () => ({
