@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // pino and thread-stream use Node.js-only APIs (worker_threads, fs) that
+  // cannot be bundled for the browser. Marking them as server-external tells
+  // Next.js / Turbopack to leave them as native require() calls at runtime
+  // instead of attempting to bundle them into the client graph.
+  serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
   async rewrites() {
     return [
       {
