@@ -1,9 +1,20 @@
 # Authentication & Session Management — Security Architecture Review
 
 **Branch:** `security/auth-review`
-**Date:** 2026-03-20
+**Initial review:** 2026-03-20
+**Re-assessed:** 2026-03-20
 **Scope:** Sign-in / login flows, MFA, session lifecycle, password reset, route protection
 **Reviewer role:** Senior AppSec engineer — Zero Trust / OWASP focus
+
+### Fix status at re-assessment
+
+| Issue | Original severity | Status |
+|---|---|---|
+| #1 — No HTTP security headers | CRITICAL | PARTIALLY RESOLVED — enforced headers shipped; CSP in report-only |
+| #2 — No rate limiting | CRITICAL | **OPEN** |
+| #3 — Session not revoked on password change | HIGH | RESOLVED |
+| #4 — MFA bypass for legacy users | HIGH | **OPEN** |
+| #5 — Fragile error detection | HIGH | **OPEN** |
 
 ---
 
@@ -280,77 +291,59 @@ The following five issues are ranked by the combination of **exploitability** an
 
 ### Critical Issue #1 — No HTTP Security Headers
 
-**Severity:** CRITICAL
+**Original severity:** CRITICAL — **Status: PARTIALLY RESOLVED**
 **OWASP:** A05 Security Misconfiguration
 **CWE:** CWE-693 (Protection Mechanism Failure)
+**Commit:** `a25a952`
 
-**What can go wrong:**
+#### What was fixed
 
-`next.config.ts` defines no `headers()` function. Every HTTP response is served without:
+`next.config.ts` now ships the following on every response:
 
-- `Content-Security-Policy` — no browser-level containment of XSS
-- `Strict-Transport-Security` — no HTTPS enforcement, susceptible to SSL-strip
-- `X-Frame-Options` — application can be embedded in iframes (clickjacking)
-- `X-Content-Type-Options` — MIME-type sniffing attacks possible
-- `Referrer-Policy` — full URL (including tokens in query strings) can leak in Referer headers
-- `Permissions-Policy` — no restriction on camera, microphone, geolocation APIs
+| Header | Value | Effect |
+|---|---|---|
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | Forces HTTPS for 1 year across all subdomains |
+| `X-Content-Type-Options` | `nosniff` | Blocks MIME-sniffing attacks |
+| `X-Frame-Options` | `DENY` | Blocks clickjacking on login/settings pages |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Prevents password-reset tokens leaking in `Referer` to cross-origin resources |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Disables unused browser APIs |
+| `poweredByHeader: false` | (config flag) | Removes `X-Powered-By: Next.js` fingerprinting header |
+| `Content-Security-Policy-Report-Only` | (see below) | CSP violations visible in DevTools without blocking functionality |
 
-The absence of CSP is the most severe gap. If any reflected or stored XSS vulnerability exists — including in any third-party script loaded by Next.js — an attacker can inject a script that exfiltrates the session cookie or performs authenticated actions on behalf of the user. Because the session cookie is `HttpOnly`, direct JavaScript access is blocked; however, a script can still make authenticated server action requests from the victim's browser without needing the raw cookie value.
+The CSP report-only policy covers the full origin set used by the app:
 
-Additionally, password reset tokens are passed as query parameters in the reset URL (`/reset-password?token=...`). Without `Referrer-Policy: no-referrer` or `strict-origin-when-cross-origin`, this token can leak in the `Referer` header to any third-party resource loaded on the reset page.
-
-**Recommended fix:**
-
-Add a `headers()` block to `next.config.ts`:
-
-```typescript
-async headers() {
-  return [
-    {
-      source: "/(.*)",
-      headers: [
-        {
-          key: "Strict-Transport-Security",
-          value: "max-age=63072000; includeSubDomains; preload",
-        },
-        {
-          key: "X-Content-Type-Options",
-          value: "nosniff",
-        },
-        {
-          key: "X-Frame-Options",
-          value: "DENY",
-        },
-        {
-          key: "Referrer-Policy",
-          value: "strict-origin-when-cross-origin",
-        },
-        {
-          key: "Permissions-Policy",
-          value: "camera=(), microphone=(), geolocation=()",
-        },
-        // CSP requires audit of all inline scripts/styles first — see note below
-        {
-          key: "Content-Security-Policy",
-          value: [
-            "default-src 'self'",
-            "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'", // tighten after nonce audit
-            "img-src 'self' https://maps.googleapis.com https://lh3.googleusercontent.com https://streetviewpixels-pa.googleapis.com data:",
-            "connect-src 'self'",
-            "frame-ancestors 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-            "object-src 'none'",
-          ].join("; "),
-        },
-      ],
-    },
-  ];
-},
+```
+default-src 'self';
+script-src 'self' 'unsafe-inline';
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+font-src 'self' https://fonts.gstatic.com;
+img-src 'self' data: https://maps.googleapis.com https://lh3.googleusercontent.com
+        https://streetviewpixels-pa.googleapis.com https://placehold.co;
+connect-src 'self';
+frame-src 'none';
+frame-ancestors 'none';
+base-uri 'self';
+form-action 'self';
+object-src 'none';
 ```
 
-> **Note on CSP:** audit all pages for `'unsafe-inline'` script usage before enabling a strict `script-src`. Use `Content-Security-Policy-Report-Only` first to identify violations without breaking functionality.
+#### Residual risk
+
+**`'unsafe-inline'` in `script-src`** — the enforced CSP cannot yet restrict inline scripts because Next.js App Router emits inline `<script>` tags for RSC payloads and hydration data. These require a per-request nonce to remove `'unsafe-inline'`. Without a strict `script-src`, an XSS payload can still run arbitrary JavaScript — it cannot directly read the `HttpOnly` session cookie, but it can make authenticated server action requests from the victim's browser.
+
+This is the remaining HIGH-severity residual after this fix.
+
+#### Remaining work (ordered)
+
+1. **Observe CSP violations** — open DevTools → Console on each major page. The `Content-Security-Policy-Report-Only` header will report any origin or directive violations. Optionally add a `report-uri` endpoint to collect them centrally.
+
+2. **Add nonce infrastructure** (`next.config.ts` step 2 comment):
+   - Generate a cryptographically random nonce per request in `proxy.ts`
+   - Pass it via a response header (e.g. `x-nonce`) to layout components
+   - Set `nonce` on all `<script>` and `<style>` tags in `src/app/layout.tsx`
+   - Replace `'unsafe-inline'` with `'nonce-{nonce}'` in both `script-src` and `style-src`
+
+3. **Promote to enforced CSP** — once violation count reaches zero and nonces are in place, rename `Content-Security-Policy-Report-Only` to `Content-Security-Policy` and add `preload` to HSTS once the domain is on the preload list.
 
 ---
 
@@ -402,41 +395,30 @@ Separate limits should apply per endpoint type:
 
 ### Critical Issue #3 — Active Session Token Not Rotated on Password Change
 
-**Severity:** HIGH
+**Original severity:** HIGH — **Status: RESOLVED**
 **OWASP:** A07 Identification and Authentication Failures
 **CWE:** CWE-384 (Session Fixation)
+**Commits:** `9627560`
 
-**What can go wrong:**
+#### What was fixed
 
-`changePassword()` (`service.ts:395-398`) calls BetterAuth with `revokeOtherSessions: true`:
+`changePassword()` in `service.ts` now calls `auth.api.signOut()` immediately after a successful password change, revoking the current session and clearing the session cookie:
 
 ```typescript
+// service.ts — changePassword()
 await auth.api.changePassword({
   body: { currentPassword, newPassword, revokeOtherSessions: true },
   headers: h,
 });
+// Revoke the current session too. revokeOtherSessions only terminates
+// concurrent sessions — signOut is required to invalidate the token that
+// is active right now and clear the session cookie.
+await auth.api.signOut({ headers: h });
 ```
 
-This terminates all *other* active sessions. However, the **current session token is not rotated** — the same token remains active and valid after the password change completes.
+`passwordChangeAction()` in `auth-actions.ts` now redirects to `/login?notice=password_changed` instead of returning a success state. The login page maps this query param to a human-readable confirmation message rendered above the form.
 
-The standard attack scenario:
-
-1. Attacker obtains a valid session token (via XSS, network interception, log exposure, or shared device)
-2. Victim notices suspicious activity and changes their password
-3. Victim expects that changing the password terminates all access
-4. Attacker's stolen token is still valid — `revokeOtherSessions` did not include the current session
-
-This is a direct violation of OWASP A07: session tokens must be rotated on any privilege or authentication state change.
-
-**Recommended fix:**
-
-After a successful password change, explicitly invalidate the current session and issue a new one. Since BetterAuth does not expose a direct "rotate session" API, the correct sequence is:
-
-1. Call `auth.api.changePassword({ revokeOtherSessions: true })` — revokes others
-2. Call `auth.api.signOut()` — revokes current session and clears cookie
-3. Immediately re-authenticate the user silently (or redirect to login with a `?sessionExpired=passwordChange` hint)
-
-Alternatively, pass a BetterAuth option to revoke ALL sessions including the current one, then force re-login. This introduces a small UX friction that should be communicated to the user ("Your password has been changed. Please log in again.").
+**Result:** An attacker holding a stolen session token loses access the moment the legitimate user changes their password. All sessions — concurrent and current — are terminated before the redirect to login.
 
 ---
 
@@ -550,20 +532,36 @@ throw new AuthServiceError(
 
 ## 8. STRIDE Threat Summary
 
-| Threat | Component | Category | Severity | Control Present | Gap |
+| Threat | Component | Category | Severity | Status | Notes |
 |---|---|---|---|---|---|
-| Session token theft via XSS | All pages | Tampering / Info Disclosure | CRITICAL | `HttpOnly` cookie | No CSP — scripts can make authenticated requests |
-| Password brute force | `loginAction` | Elevation of Privilege | CRITICAL | None at app level | No rate limiting |
-| MFA code brute force | `verifyMFAAction` | Elevation of Privilege | HIGH | BetterAuth internal (undocumented) | No app-level throttle; undetectable if BetterAuth limit silent |
-| Session persistence after password change | `changePassword` | Spoofing | HIGH | `revokeOtherSessions: true` (others only) | Current session not rotated |
-| MFA bypass for legacy users | `loginAction` | Elevation of Privilege | HIGH | `twoFactorEnabled: true` for new users | Not backfilled; no server-side verification |
-| Error state misclassification | `errors.ts` | Information Disclosure / DoS | HIGH | Typed `AuthServiceErrorCode` | String-match detection brittle |
-| Clickjacking login form | `/login`, `/signup` | Tampering | MEDIUM | None | No `X-Frame-Options` or `frame-ancestors` CSP |
-| Password reset token in Referer header | `/reset-password?token=...` | Information Disclosure | MEDIUM | None | No `Referrer-Policy` header |
-| Account enumeration via timing | `loginAction` | Information Disclosure | MEDIUM | Generic error message | No artificial constant-time delay |
-| Replay of expired session cookie | `proxy.ts` | Spoofing | LOW | Pages do full DB verify | Edge layer passes expired cookie through |
-| `placehold.co` image domain in production | `next.config.ts:28` | Info Disclosure | LOW | TODO comment present | Dev-only domain active in production builds |
+| Session token theft via XSS | All pages | Tampering / Info Disclosure | CRITICAL | PARTIAL | `HttpOnly` cookie in place; CSP in report-only — `'unsafe-inline'` still permits XSS script execution |
+| Password brute force | `loginAction` | Elevation of Privilege | CRITICAL | **OPEN** | No application-level rate limiting |
+| MFA code brute force | `verifyMFAAction` | Elevation of Privilege | HIGH | **OPEN** | Relies on undocumented BetterAuth internal limit; no app-level throttle |
+| Session persistence after password change | `changePassword` | Spoofing | HIGH | RESOLVED | `signOut()` now called after `changePassword()`; redirects to login (commit `9627560`) |
+| MFA bypass for legacy users | `loginAction` | Elevation of Privilege | HIGH | **OPEN** | `twoFactorEnabled` not backfilled for pre-existing users; no server-side MFA verification |
+| Error state misclassification | `errors.ts` | Information Disclosure / Elevation | HIGH | **OPEN** | String-match detection brittle; `TOO_MANY_MFA_ATTEMPTS` miss = silent brute-force |
+| Clickjacking login/settings | `/login`, `/signup`, `/settings` | Tampering | MEDIUM | RESOLVED | `X-Frame-Options: DENY` enforced (commit `a25a952`) |
+| Password reset token in Referer | `/reset-password?token=...` | Information Disclosure | MEDIUM | RESOLVED | `Referrer-Policy: strict-origin-when-cross-origin` enforced (commit `a25a952`) |
+| Account enumeration via timing | `loginAction` | Information Disclosure | MEDIUM | PARTIAL | Generic error messages in place; no artificial constant-time delay added |
+| Replay of expired session cookie | `proxy.ts` | Spoofing | LOW | ACCEPTED | Edge checks presence only; full DB verify at page level is the correct control |
+| `placehold.co` in production | `next.config.ts` | Info Disclosure | LOW | **OPEN** | TODO comment present; not yet gated to non-production |
+| `X-Powered-By` fingerprinting | All responses | Info Disclosure | LOW | RESOLVED | `poweredByHeader: false` (commit `a25a952`) |
 
 ---
 
-*This document should be revisited after each of the five critical issues above is resolved, and kept current whenever the BetterAuth version or auth configuration changes.*
+## 9. Open Items — Prioritised Work List
+
+| Priority | Item | Issue | Effort |
+|---|---|---|---|
+| P0 | Backfill `twoFactorEnabled = true` for all existing verified users (SQL migration) | #4 | Low |
+| P0 | Add defensive MFA bypass check in `service.ts` `login()` | #4 | Low |
+| P1 | Implement rate limiting on login, MFA verify, password reset | #2 | Medium |
+| P1 | Add `verifyMFACode()` fallback to session-termination on unclassified errors | #5 | Low |
+| P1 | Pin BetterAuth to `~1.5.5` and add CI tests for error detection stability | #5 | Low |
+| P2 | Add nonce infrastructure in `proxy.ts` and thread to layout `<script>` tags | #1 | High |
+| P2 | Promote `Content-Security-Policy-Report-Only` → `Content-Security-Policy` | #1 | Low (after nonces) |
+| P3 | Gate `placehold.co` image domain to non-production builds | — | Low |
+
+---
+
+*Last updated: 2026-03-20 (re-assessment after fixes for issues #1 and #3). Revisit whenever the BetterAuth version or auth configuration changes.*
