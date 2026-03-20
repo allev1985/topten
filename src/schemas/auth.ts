@@ -40,6 +40,19 @@ export const signupSchema = z.object({
       .email("Invalid email format")
   ),
   password: passwordField,
+  name: z
+    .string({ message: "Name is required" })
+    .min(1, "Name is required")
+    .max(255, "Name is too long")
+    .trim(),
+  vanitySlug: z
+    .string({ message: "Profile URL is required" })
+    .min(2, "URL must be at least 2 characters")
+    .max(50, "URL must be 50 characters or fewer")
+    .regex(
+      /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/,
+      "URL can only contain lowercase letters, numbers, and hyphens, and must start and end with a letter or number"
+    ),
 });
 
 /**

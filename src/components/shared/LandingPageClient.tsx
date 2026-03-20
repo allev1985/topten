@@ -1,36 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/shared/Header";
 import LoginModal from "@/components/shared/LoginModal";
-import SignupModal from "@/components/shared/SignupModal";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPageClient() {
+  const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
   const handleLogin = () => {
     setIsLoginModalOpen(true);
   };
 
-  const openSignupModal = () => {
-    setIsSignupModalOpen(true);
+  const handleSignup = () => {
+    router.push("/signup");
   };
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
-      <Header onLogin={handleLogin} onSignup={openSignupModal} />
+      <Header onLogin={handleLogin} onSignup={handleSignup} />
 
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         redirectTo="/dashboard"
-      />
-
-      <SignupModal
-        isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
       />
 
       <main className="flex flex-1 items-center px-4 py-8 md:px-8 lg:py-0">
@@ -63,7 +58,7 @@ export default function LandingPageClient() {
                 <Button
                   variant="default"
                   size="lg"
-                  onClick={openSignupModal}
+                  onClick={handleSignup}
                   className="min-h-[44px] font-semibold"
                 >
                   Create Your First List

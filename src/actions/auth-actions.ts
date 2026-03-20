@@ -20,6 +20,7 @@ import {
   changePassword,
   AuthServiceError,
 } from "@/lib/auth";
+import { isSlugAvailable, updateSlug } from "@/lib/profile";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import { createServiceLogger } from "@/lib/services/logging";
@@ -53,9 +54,20 @@ export async function signupAction(
 ): Promise<ActionState<SignupSuccessData>> {
   const email = formData.get("email");
   const password = formData.get("password");
-  const name = formData.get("name") ?? email; // fall back to email if no name field
+  const confirmPassword = formData.get("confirmPassword");
+  const name = formData.get("name");
+  const vanitySlug = formData.get("vanitySlug");
 
-  const result = signupSchema.safeParse({ email, password });
+  if (password !== confirmPassword) {
+    return {
+      data: null,
+      error: null,
+      fieldErrors: { confirmPassword: ["Passwords do not match"] },
+      isSuccess: false,
+    };
+  }
+
+  const result = signupSchema.safeParse({ email, password, name, vanitySlug });
 
   if (!result.success) {
     return {
@@ -66,18 +78,51 @@ export async function signupAction(
     };
   }
 
+  // Pre-check slug before creating the user — safe to surface this error
+  // (does not reveal whether the email already exists)
   try {
-    await signup(
+    const slugFree = await isSlugAvailable(result.data.vanitySlug);
+    if (!slugFree) {
+      return {
+        data: null,
+        error: null,
+        fieldErrors: { vanitySlug: ["This profile URL is already taken"] },
+        isSuccess: false,
+      };
+    }
+  } catch (err) {
+    log.warn(
+      { method: "signupAction", err },
+      "Slug availability check failed — proceeding with signup"
+    );
+  }
+
+  let userId: string | undefined;
+  try {
+    const signupResult = await signup(
       result.data.email,
       result.data.password,
-      typeof name === "string" ? name : result.data.email
+      result.data.name
     );
+    userId = signupResult.user?.id ?? undefined;
   } catch (err) {
     // Log internally but still redirect — enumeration protection
     log.error(
       { method: "signupAction", err },
       "Signup error (redirecting for enumeration protection)"
     );
+  }
+
+  // Best-effort: override the auto-generated slug with the user's chosen one
+  if (userId) {
+    try {
+      await updateSlug(userId, result.data.vanitySlug);
+    } catch (err) {
+      log.warn(
+        { method: "signupAction", userId, err },
+        "Post-signup slug update failed — auto-generated slug retained"
+      );
+    }
   }
 
   // Always redirect to verify-email page (user enumeration protection)

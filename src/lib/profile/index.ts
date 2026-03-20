@@ -3,7 +3,12 @@
  * @module lib/profile
  */
 
-export { getProfileForSettings, updateName, updateSlug } from "./service";
+export {
+  getProfileForSettings,
+  updateName,
+  updateSlug,
+  isSlugAvailable,
+} from "./service";
 
 export { ProfileServiceError } from "./errors";
 

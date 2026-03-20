@@ -15,13 +15,13 @@ export const updateNameSchema = z.object({
 /**
  * Schema for updating the user's vanity slug (profile URL).
  * Enforces format: lowercase alphanumeric and hyphens only,
- * must start and end with an alphanumeric character, 2–50 chars.
+ * must start and end with an alphanumeric character, 4–50 chars.
  */
 export const updateSlugSchema = z.object({
   vanitySlug: z
     .string()
     .min(1, "Profile URL is required")
-    .min(2, "URL must be at least 2 characters")
+    .min(4, "URL must be at least 4 characters")
     .max(50, "URL must be 50 characters or fewer")
     .regex(
       /^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/,

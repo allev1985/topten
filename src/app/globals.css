@@ -72,9 +72,8 @@ body {
 }
 
 a {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 0.1em;
+  color: inherit;
+  text-decoration: none;
 }
 
 @keyframes collapsible-down {

@@ -10,10 +10,37 @@ import {
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
-import { updateName, updateSlug, ProfileServiceError } from "@/lib/profile";
+import {
+  updateName,
+  updateSlug,
+  isSlugAvailable,
+  ProfileServiceError,
+} from "@/lib/profile";
 
 // Re-export success data types so consumers can import from one place
 export type { UpdateNameSuccessData, UpdateSlugSuccessData };
+
+/**
+ * Check slug availability action (public — no auth required)
+ * Used during signup for real-time slug uniqueness feedback.
+ *
+ * @param vanitySlug - The slug to check
+ * @returns { available: boolean }
+ */
+export async function checkSlugAvailabilityAction(
+  vanitySlug: string
+): Promise<{ available: boolean; reason?: "invalid_format" | "taken" }> {
+  const result = updateSlugSchema.safeParse({ vanitySlug });
+  if (!result.success) {
+    return { available: false, reason: "invalid_format" };
+  }
+  try {
+    const available = await isSlugAvailable(result.data.vanitySlug);
+    return { available, reason: available ? undefined : "taken" };
+  } catch {
+    return { available: false };
+  }
+}
 
 /**
  * Update Name server action
