@@ -57,7 +57,7 @@ export function LoginForm({
   const formContent = (
     <form action={formAction} className="space-y-4">
       {notice && (
-        <Alert>
+        <Alert role="status" aria-live="polite">
           <AlertDescription>{notice}</AlertDescription>
         </Alert>
       )}
