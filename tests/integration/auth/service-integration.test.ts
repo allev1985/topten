@@ -90,8 +90,8 @@ describe("Auth Service Integration Tests", () => {
         TEST_CREDENTIALS.password
       );
 
-      expect(loginResult.user.id).toBe(testUser.id);
-      expect(loginResult.user.email).toBe(TEST_CREDENTIALS.email);
+      expect(loginResult.user!.id).toBe(testUser.id);
+      expect(loginResult.user!.email).toBe(TEST_CREDENTIALS.email);
     });
   });
 
@@ -122,7 +122,7 @@ describe("Auth Service Integration Tests", () => {
         "NewPassword123!"
       );
 
-      expect(loginResult.user.id).toBe(testUser.id);
+      expect(loginResult.user!.id).toBe(testUser.id);
     });
   });
 
@@ -138,7 +138,7 @@ describe("Auth Service Integration Tests", () => {
         TEST_CREDENTIALS.password
       );
 
-      expect(loginResult.user.id).toBe(testUser.id);
+      expect(loginResult.user!.id).toBe(testUser.id);
 
       // Step 2: Get session
       mockAuthApi.getSession.mockResolvedValue(mockSession);
@@ -186,7 +186,7 @@ describe("Auth Service Integration Tests", () => {
         "NewPassword456!"
       );
 
-      expect(loginResult.user.id).toBe(testUser.id);
+      expect(loginResult.user!.id).toBe(testUser.id);
     });
   });
 
@@ -216,7 +216,7 @@ describe("Auth Service Integration Tests", () => {
         TEST_CREDENTIALS.password
       );
 
-      expect(loginResult.user.id).toBe(consistentUserId);
+      expect(loginResult.user!.id).toBe(consistentUserId);
 
       // Get session
       mockAuthApi.getSession.mockResolvedValue(

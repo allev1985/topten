@@ -11,6 +11,8 @@ export {
   updatePassword,
   changePassword,
   getSession,
+  sendMFACode,
+  verifyMFACode,
 } from "./service";
 
 export { AuthServiceError } from "./errors";
@@ -27,4 +29,5 @@ export type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
+  VerifyMFAResult,
 } from "./types";

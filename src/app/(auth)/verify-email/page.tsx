@@ -39,7 +39,7 @@ export default function VerifyEmailPage(): JSX.Element {
           </div>
 
           <div className="text-muted-foreground space-y-1 text-sm">
-            <p className="font-medium text-foreground">
+            <p className="text-foreground font-medium">
               Didn&apos;t receive the email?
             </p>
             <ul className="space-y-1">

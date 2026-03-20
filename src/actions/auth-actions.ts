@@ -18,6 +18,8 @@ import {
   resetPassword,
   updatePassword,
   changePassword,
+  sendMFACode,
+  verifyMFACode,
   AuthServiceError,
 } from "@/lib/auth";
 import { isSlugAvailable, updateSlug } from "@/lib/profile";
@@ -43,6 +45,10 @@ export interface PasswordResetRequestSuccessData {
 export interface PasswordUpdateSuccessData {
   message: string;
   redirectTo?: string;
+}
+
+export interface VerifyMFASuccessData {
+  redirectTo: string;
 }
 
 /**
@@ -161,7 +167,16 @@ export async function loginAction(
       "Login attempt"
     );
 
-    await login(result.data.email, result.data.password);
+    const loginResult = await login(result.data.email, result.data.password);
+
+    if (loginResult.requiresMFA) {
+      // two-factor cookie is now set — redirect to MFA verification
+      const target =
+        result.data.redirectTo && isValidRedirect(result.data.redirectTo)
+          ? result.data.redirectTo
+          : config.auth.redirectRoutes.default;
+      redirect(`/verify-mfa?redirectTo=${encodeURIComponent(target)}`);
+    }
 
     log.info(
       { method: "loginAction", email: maskEmail(result.data.email) },
@@ -387,6 +402,77 @@ export async function passwordChangeAction(
       isSuccess: false,
     };
   }
+}
+
+/**
+ * Send MFA code server action
+ * Triggers BetterAuth to generate and email a one-time code to the user.
+ * Requires the two-factor cookie set during the password-login step.
+ */
+export async function sendMFACodeAction(): Promise<{ error?: string }> {
+  try {
+    await sendMFACode();
+    return {};
+  } catch (err) {
+    log.error({ method: "sendMFACodeAction", err }, "Failed to send MFA code");
+    return { error: "Failed to send verification code. Please try again." };
+  }
+}
+
+/**
+ * Verify MFA code server action
+ * Validates the submitted code and, on success, creates a full session.
+ */
+export async function verifyMFAAction(
+  _prevState: ActionState<VerifyMFASuccessData>,
+  formData: FormData
+): Promise<ActionState<VerifyMFASuccessData>> {
+  const code = formData.get("code");
+  const redirectTo = formData.get("redirectTo");
+
+  if (!code || typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
+    return {
+      data: null,
+      error: null,
+      fieldErrors: { code: ["Enter the 6-digit code from your email"] },
+      isSuccess: false,
+    };
+  }
+
+  try {
+    await verifyMFACode(code.trim());
+  } catch (err) {
+    if (err instanceof AuthServiceError) {
+      const sessionExpired =
+        err.code === "INVALID_MFA_SESSION" ||
+        err.code === "MFA_CODE_EXPIRED" ||
+        err.code === "TOO_MANY_MFA_ATTEMPTS";
+
+      return {
+        data: null,
+        error: sessionExpired
+          ? `${err.message} Please log in again.`
+          : err.message,
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    log.error({ method: "verifyMFAAction", err }, "Unexpected error");
+    return {
+      data: null,
+      error: "Something went wrong. Please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
+  const targetUrl =
+    typeof redirectTo === "string" && isValidRedirect(redirectTo)
+      ? redirectTo
+      : config.auth.redirectRoutes.default;
+
+  redirect(targetUrl);
 }
 
 /**

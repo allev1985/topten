@@ -123,8 +123,8 @@ describe("AuthService", () => {
 
       const result: LoginResult = await login(testEmail, testPassword);
 
-      expect(result.user.id).toBe("user-123");
-      expect(result.user.email).toBe(testEmail);
+      expect(result.user!.id).toBe("user-123");
+      expect(result.user!.email).toBe(testEmail);
     });
 
     it("throws AuthServiceError when no user returned", async () => {

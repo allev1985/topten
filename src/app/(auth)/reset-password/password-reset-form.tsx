@@ -74,9 +74,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
             autoComplete="new-password"
             placeholder="Enter your new password"
             onChange={handlePasswordChange}
-            aria-invalid={
-              state.fieldErrors.password?.[0] ? "true" : undefined
-            }
+            aria-invalid={state.fieldErrors.password?.[0] ? "true" : undefined}
             aria-describedby={
               [
                 state.fieldErrors.password?.[0] ? "password-error" : null,

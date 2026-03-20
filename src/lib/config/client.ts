@@ -32,6 +32,7 @@ export const config = {
       "/login",
       "/signup",
       "/verify-email",
+      "/verify-mfa",
       "/forgot-password",
       "/reset-password",
       "/auth",

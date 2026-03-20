@@ -248,6 +248,7 @@ describe("Auth Actions", () => {
           name: "Test User",
           emailVerified: true,
         },
+        requiresMFA: false,
       });
 
       const formData = createFormData({
@@ -273,6 +274,7 @@ describe("Auth Actions", () => {
           name: "Test User",
           emailVerified: true,
         },
+        requiresMFA: false,
       });
 
       const formData = createFormData({
@@ -294,6 +296,7 @@ describe("Auth Actions", () => {
           name: "Test User",
           emailVerified: true,
         },
+        requiresMFA: false,
       });
 
       const formData = createFormData({

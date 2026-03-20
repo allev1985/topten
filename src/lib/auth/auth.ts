@@ -13,6 +13,7 @@
 import { betterAuth, type User } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { twoFactor } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { sendEmail } from "@/lib/services/email";
@@ -33,6 +34,7 @@ export const auth = betterAuth({
       session: schema.sessions,
       account: schema.accounts,
       verification: schema.verifications,
+      twoFactor: schema.twoFactors,
     },
   }),
 
@@ -117,14 +119,44 @@ export const auth = betterAuth({
             { method: "databaseHooks.user.create.before", vanitySlug },
             "Generated vanity slug"
           );
-          return { data: { ...user, vanitySlug } };
+          return { data: { ...user, vanitySlug, twoFactorEnabled: true } };
         },
       },
     },
   },
 
   plugins: [
-    // Required for cookie management in Next.js server actions + server components
+    // Email OTP MFA — mandatory for all users.
+    // After a successful password login, BetterAuth sets a two-factor cookie
+    // and returns { twoFactorRedirect: true }. The client then calls
+    // sendTwoFactorOTP (which sends the email) and verifyTwoFactorOTP
+    // (which creates the full session).
+    //
+    // IMPORTANT: twoFactor must be listed BEFORE nextCookies so that the
+    // twoFactor after-hook (which sets the two-factor cookie in responseHeaders)
+    // runs before the nextCookies after-hook (which flushes responseHeaders to
+    // the Next.js cookie store). Hooks execute in plugin-array order.
+    twoFactor({
+      otpOptions: {
+        period: 10, // minutes
+        sendOTP: async ({ user, otp }) => {
+          log.info(
+            { method: "sendMFAOTP", userId: user.id },
+            "Sending MFA verification code"
+          );
+          await sendEmail({
+            to: user.email,
+            subject: "Your myfaves login code",
+            html: `
+              <p>Your login verification code is:</p>
+              <p style="font-size:2rem;font-weight:bold;letter-spacing:0.2em">${otp}</p>
+              <p>This code expires in 10 minutes. If you didn't try to log in, you can ignore this email.</p>
+            `,
+            text: `Your myfaves login verification code is: ${otp}. Expires in 10 minutes.`,
+          });
+        },
+      },
+    }),
     nextCookies(),
   ],
 });
