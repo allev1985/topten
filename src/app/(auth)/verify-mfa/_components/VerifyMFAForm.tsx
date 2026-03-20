@@ -64,7 +64,7 @@ export function VerifyMFAForm({ redirectTo }: VerifyMFAFormProps) {
             name="code"
             type="text"
             inputMode="numeric"
-            pattern="\d{6}"
+            pattern="[0-9]{6}"
             maxLength={6}
             required
             autoComplete="one-time-code"
