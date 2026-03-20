@@ -382,7 +382,13 @@ export async function updatePassword(
 /**
  * Change password for an already-authenticated user.
  *
- * Verifies the current password before allowing the change.
+ * Verifies the current password before allowing the change, revokes all
+ * sessions (including the current one), and clears the session cookie.
+ * The caller must redirect the user to login after this returns.
+ *
+ * Revoking the current session is intentional: an attacker holding a stolen
+ * session token must not retain access after the legitimate user changes their
+ * password (OWASP A07 — session token rotation on privilege change).
  */
 export async function changePassword(
   currentPassword: string,
@@ -397,7 +403,15 @@ export async function changePassword(
       headers: h,
     });
 
-    log.info({ method: "changePassword" }, "Password changed successfully");
+    // Revoke the current session too. revokeOtherSessions only terminates
+    // concurrent sessions — signOut is required to invalidate the token that
+    // is active right now and clear the session cookie.
+    await auth.api.signOut({ headers: h });
+
+    log.info(
+      { method: "changePassword" },
+      "Password changed and current session revoked"
+    );
     return { success: true };
   } catch (error) {
     if (error instanceof AuthServiceError) throw error;

@@ -390,12 +390,6 @@ export async function passwordChangeAction(
 
   try {
     await changePassword(currentPassword, result.data.password);
-    return {
-      data: { message: "Password updated successfully" },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
   } catch (err) {
     if (err instanceof AuthServiceError) {
       return {
@@ -414,6 +408,11 @@ export async function passwordChangeAction(
       isSuccess: false,
     };
   }
+
+  // Session has been revoked by the service — redirect outside the try/catch
+  // so Next.js's NEXT_REDIRECT exception is never caught and suppressed.
+  // The user re-authenticates with the new password on the login page.
+  redirect("/login?notice=password_changed");
 }
 
 /**
