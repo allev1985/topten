@@ -8,14 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import Link from "next/link";
 
 export interface LoginFormProps {
   /**
@@ -129,27 +122,27 @@ export function LoginForm({
 
       <Button
         type="submit"
+        className="w-full"
         disabled={state.isPending}
         aria-busy={state.isPending}
       >
-        {state.isPending ? "Submitting..." : "Sign In"}
+        {state.isPending ? "Signing in…" : "Sign In"}
       </Button>
     </form>
   );
 
   const footerContent = (
-    <div className="flex flex-col items-start gap-2">
-      <p>
-        Don&apos;t have an account? <a href="/signup">Sign up</a>
+    <div className="space-y-3 text-sm">
+      <p className="text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="text-foreground">
+          Sign up
+        </Link>
       </p>
       <p>
-        <a href="/forgot-password">Forgot your password?</a>
-      </p>
-      <hr className="w-full" />
-      <p>
-        <button type="button" disabled>
-          Sign in with Google (coming soon)
-        </button>
+        <Link href="/forgot-password" className="text-muted-foreground">
+          Forgot your password?
+        </Link>
       </p>
     </div>
   );
@@ -164,17 +157,9 @@ export function LoginForm({
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{formContent}</CardContent>
-      <CardFooter className="flex-col items-start gap-2">
-        {footerContent}
-      </CardFooter>
-    </Card>
+    <div className="space-y-5">
+      {formContent}
+      {footerContent}
+    </div>
   );
 }

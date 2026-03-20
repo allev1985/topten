@@ -1,11 +1,8 @@
 "use client";
 
-import { useFormState } from "@/hooks/use-form-state";
-import { updateSlugAction } from "@/actions/profile-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -21,89 +18,42 @@ interface SlugSettingsFormProps {
 }
 
 /**
- * Form section for updating the user's vanity slug (Profile URL).
- * Provides inline validation and feedback without page navigation.
+ * Display-only section for the user's vanity slug (Profile URL).
+ * Changing the profile URL is currently disabled.
  */
 export function SlugSettingsForm({ initialSlug }: SlugSettingsFormProps) {
-  const { state, formAction } = useFormState(updateSlugAction);
-
-  // The displayed slug reflects the latest saved value on success,
-  // otherwise falls back to the initial prop from the server.
-  const currentSlug =
-    state.isSuccess && state.data ? state.data.vanitySlug : initialSlug;
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Profile URL</CardTitle>
-        <CardDescription>
-          Customise the URL for your public lists page
-        </CardDescription>
+        <CardDescription>Your public profile address</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
-          {state.error && (
-            <Alert variant="destructive">
-              <AlertDescription>{state.error}</AlertDescription>
-            </Alert>
-          )}
-
-          {state.isSuccess && (
-            <Alert>
-              <AlertDescription
-                role="status"
-                aria-label="Profile URL updated successfully."
-              >
-                Profile URL updated successfully.
-              </AlertDescription>
-            </Alert>
-          )}
-
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="vanitySlug">Your profile URL</Label>
             <Input
-              key={currentSlug}
               id="vanitySlug"
-              name="vanitySlug"
               type="text"
-              defaultValue={currentSlug}
-              placeholder="your-unique-handle"
+              value={initialSlug}
+              readOnly
+              disabled
               autoComplete="off"
-              aria-invalid={
-                state.fieldErrors.vanitySlug?.[0] ? "true" : undefined
-              }
-              aria-describedby={
-                state.fieldErrors.vanitySlug?.[0]
-                  ? "vanitySlug-error"
-                  : "vanitySlug-hint"
-              }
+              aria-describedby="vanitySlug-hint"
             />
             <p id="vanitySlug-hint" className="text-muted-foreground text-sm">
               Your public page:{" "}
-              <span className="font-mono">/{currentSlug}</span>
+              <span className="font-mono">/{initialSlug}</span>
             </p>
-            {state.fieldErrors.vanitySlug?.[0] && (
-              <span
-                id="vanitySlug-error"
-                role="alert"
-                aria-label={state.fieldErrors.vanitySlug[0]}
-                className="text-destructive text-sm"
-              >
-                {state.fieldErrors.vanitySlug[0]}
-              </span>
-            )}
           </div>
 
-          <Button type="submit" disabled={state.isPending}>
-            {state.isPending ? "Saving…" : "Save Profile URL"}
+          <Button type="button" disabled>
+            Cannot change
           </Button>
-        </form>
+        </div>
       </CardContent>
       <CardFooter className="text-muted-foreground text-sm">
-        <p>
-          Only lowercase letters, numbers, and hyphens. Must start and end with
-          a letter or number.
-        </p>
+        <p>Contact support to change your profile URL.</p>
       </CardFooter>
     </Card>
   );
