@@ -1,12 +1,12 @@
 /**
  * Error handling for the Authentication Service
- * @module auth/service/errors
+ * @module lib/auth/errors
  */
 
 /**
  * Service-specific error codes
  */
-export type ServiceErrorCode =
+export type AuthServiceErrorCode =
   | "INVALID_CREDENTIALS"
   | "EMAIL_NOT_CONFIRMED"
   | "USER_EXISTS"
@@ -17,11 +17,11 @@ export type ServiceErrorCode =
  * Authentication service error class
  */
 export class AuthServiceError extends Error {
-  public readonly code: ServiceErrorCode;
+  public readonly code: AuthServiceErrorCode;
   public readonly originalError?: unknown;
 
   constructor(
-    code: ServiceErrorCode,
+    code: AuthServiceErrorCode,
     message: string,
     originalError?: unknown
   ) {
@@ -52,7 +52,7 @@ export function emailNotConfirmedError(
   );
 }
 
-export function serviceError(
+export function authServiceError(
   message?: string,
   originalError?: unknown
 ): AuthServiceError {

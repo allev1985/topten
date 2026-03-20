@@ -17,10 +17,10 @@ import {
   AuthServiceError,
   invalidCredentialsError,
   emailNotConfirmedError,
-  serviceError,
+  authServiceError,
   isInvalidCredentialsError,
   isEmailNotVerifiedError,
-} from "./service/errors";
+} from "./errors";
 import type {
   SignupResult,
   LoginResult,
@@ -28,7 +28,7 @@ import type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
-} from "@/types/auth";
+} from "./types";
 
 const log = createServiceLogger("auth-service");
 
@@ -88,7 +88,7 @@ export async function signup(
       { method: "signup", err: error },
       "Unexpected error during signup"
     );
-    throw serviceError("An unexpected error occurred during signup", error);
+    throw authServiceError("An unexpected error occurred during signup", error);
   }
 }
 
@@ -112,7 +112,7 @@ export async function login(
     });
 
     if (!result.user) {
-      throw serviceError("Login succeeded but no user was returned");
+      throw authServiceError("Login succeeded but no user was returned");
     }
 
     log.info(
@@ -139,7 +139,7 @@ export async function login(
     if (isEmailNotVerifiedError(error)) throw emailNotConfirmedError(error);
     if (isInvalidCredentialsError(error)) throw invalidCredentialsError(error);
 
-    throw serviceError("An unexpected error occurred during login", error);
+    throw authServiceError("An unexpected error occurred during login", error);
   }
 }
 
@@ -167,7 +167,7 @@ export async function logout(): Promise<LogoutResult> {
       { method: "logout", err: error },
       "Unexpected error during logout"
     );
-    throw serviceError("An unexpected error occurred during logout", error);
+    throw authServiceError("An unexpected error occurred during logout", error);
   }
 }
 
@@ -248,13 +248,13 @@ export async function updatePassword(
       error instanceof Error &&
       error.message.toLowerCase().includes("expired")
     ) {
-      throw serviceError(
+      throw authServiceError(
         "Authentication link has expired. Please request a new one.",
         error
       );
     }
 
-    throw serviceError("Failed to update password", error);
+    throw authServiceError("Failed to update password", error);
   }
 }
 
@@ -287,10 +287,10 @@ export async function changePassword(
     );
 
     if (isInvalidCredentialsError(error)) {
-      throw serviceError("Current password is incorrect", error);
+      throw authServiceError("Current password is incorrect", error);
     }
 
-    throw serviceError("Failed to change password", error);
+    throw authServiceError("Failed to change password", error);
   }
 }
 
@@ -328,7 +328,7 @@ export async function getSession(): Promise<SessionResult> {
       { method: "getSession", err: error },
       "Unexpected error during getSession"
     );
-    throw serviceError(
+    throw authServiceError(
       "An unexpected error occurred while getting session",
       error
     );

@@ -1,6 +1,6 @@
 /**
  * Type definitions for the Public Service
- * @module public/service/types
+ * @module lib/public/types
  */
 
 /**

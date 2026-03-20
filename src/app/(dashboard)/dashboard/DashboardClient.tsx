@@ -21,8 +21,7 @@ import {
   publishListAction,
   unpublishListAction,
 } from "@/actions/list-actions";
-import type { ListSummary } from "@/lib/list/service/types";
-import type { List } from "@/types/list";
+import type { ListSummary } from "@/lib/list/types";
 import { config } from "@/lib/config/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -51,18 +50,6 @@ function getFilterTabClassName(isActive: boolean): string {
   return `${base} ${isActive ? active : inactive}`;
 }
 
-function mapToList(summary: ListSummary): List {
-  return {
-    id: summary.id,
-    title: summary.title,
-    slug: summary.slug,
-    description: summary.description ?? undefined,
-    isPublished: summary.isPublished,
-    createdAt: summary.createdAt,
-    placeCount: summary.placeCount,
-  };
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 function DashboardContent({
@@ -78,16 +65,12 @@ function DashboardContent({
 
   const filter = (searchParams.get("filter") as FilterType) || "all";
 
-  const lists: List[] = useMemo(
-    () => initialLists.map(mapToList),
-    [initialLists]
-  );
-
   const filteredLists = useMemo(() => {
-    if (filter === "published") return lists.filter((l) => l.isPublished);
-    if (filter === "drafts") return lists.filter((l) => !l.isPublished);
-    return lists;
-  }, [lists, filter]);
+    if (filter === "published")
+      return initialLists.filter((l) => l.isPublished);
+    if (filter === "drafts") return initialLists.filter((l) => !l.isPublished);
+    return initialLists;
+  }, [initialLists, filter]);
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
@@ -122,7 +105,7 @@ function DashboardContent({
   // ── Edit dialog ─────────────────────────────────────────────────────────────
 
   const handleEdit = (listId: string) => {
-    const list = lists.find((l) => l.id === listId);
+    const list = initialLists.find((l) => l.id === listId);
     if (!list) return;
     setEditTarget({
       id: list.id,
@@ -140,7 +123,7 @@ function DashboardContent({
 
   const handlePublishToggle = async (listId: string) => {
     setActionError(null);
-    const list = lists.find((l) => l.id === listId);
+    const list = initialLists.find((l) => l.id === listId);
     if (!list) return;
 
     const formData = new FormData();

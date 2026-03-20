@@ -1,6 +1,6 @@
 /**
  * Type definitions for the Profile Service
- * @module profile/service/types
+ * @module lib/profile/types
  */
 
 /**

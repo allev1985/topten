@@ -1,6 +1,6 @@
 /**
  * Error handling for the Public Service
- * @module public/service/errors
+ * @module lib/public/errors
  */
 
 /**

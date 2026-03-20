@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { PublicListSummary } from "@/lib/public/service/types";
+import type { PublicListSummary } from "@/lib/public/types";
 import { PublicListCard } from "./PublicListCard";
 
 interface PublicListGridProps {

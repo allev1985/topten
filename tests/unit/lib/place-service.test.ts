@@ -9,13 +9,13 @@ import {
   deletePlaceFromList,
   deletePlace,
   PlaceServiceError,
-} from "@/lib/place/service";
+} from "@/lib/place";
 import {
   notFoundError,
   alreadyInListError,
   validationError,
   placeServiceError,
-} from "@/lib/place/service/errors";
+} from "@/lib/place/errors";
 
 // ─── Repository mock setup ────────────────────────────────────────────────────
 

@@ -18,17 +18,8 @@ import type {
   PublicProfile,
   PublicListSummary,
   PublicListDetail,
-  PublicPlaceEntry,
-} from "./service/types";
-import { publicServiceError } from "./service/errors";
-export { PublicServiceError } from "./service/errors";
-
-export type {
-  PublicProfile,
-  PublicListSummary,
-  PublicListDetail,
-  PublicPlaceEntry,
-};
+} from "./types";
+import { publicServiceError } from "./errors";
 
 const log = createServiceLogger("public-service");
 

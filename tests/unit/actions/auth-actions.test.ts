@@ -40,7 +40,7 @@ vi.mock("@/lib/config", async (importOriginal) => {
 
 // Mock auth service (auto-mock)
 vi.mock("@/lib/auth/service");
-vi.mock("@/lib/auth/service/errors", () => ({
+vi.mock("@/lib/auth/errors", () => ({
   AuthServiceError: class AuthServiceError extends Error {
     public readonly code: string;
     public readonly originalError?: unknown;
@@ -73,8 +73,8 @@ import {
   updatePassword,
   changePassword,
   getSession,
-} from "@/lib/auth/service";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+} from "@/lib/auth";
+import { AuthServiceError } from "@/lib/auth/errors";
 
 // Typed mock references
 const mockSignup = vi.mocked(signup);

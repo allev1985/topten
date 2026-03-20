@@ -28,7 +28,7 @@ import {
   alreadyInListError,
   placeServiceError,
   immutableFieldError,
-} from "./service/errors";
+} from "./errors";
 import { createServiceLogger } from "@/lib/services/logging";
 import type {
   PlaceSummary,
@@ -39,20 +39,7 @@ import type {
   RemovePlaceFromListResult,
   PlaceWithListCount,
   DeletePlaceResult,
-} from "./service/types";
-
-export type {
-  PlaceSummary,
-  PlaceRecord,
-  CreatePlaceResult,
-  AddExistingPlaceResult,
-  UpdatePlaceResult,
-  RemovePlaceFromListResult,
-  PlaceWithListCount,
-  DeletePlaceResult,
-};
-
-export { PlaceServiceError };
+} from "./types";
 
 const log = createServiceLogger("place-service");
 

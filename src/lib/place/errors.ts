@@ -1,6 +1,6 @@
 /**
  * Error handling for the Place Service
- * @module place/service/errors
+ * @module lib/place/errors
  */
 
 /**

@@ -1,4 +1,8 @@
-// Application auth types — no dependency on any auth library's internal types.
+/**
+ * Type definitions for the Auth Service
+ * Application auth types — no dependency on any auth library's internal types.
+ * @module lib/auth/types
+ */
 
 export interface AuthUser {
   id: string;

@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import type { PlaceWithListCount } from "@/lib/place/service";
+import type { PlaceWithListCount } from "@/lib/place";
 import { Button } from "@/components/ui/button";
 import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { PlaceCard } from "@/components/dashboard/places/PlaceCard";

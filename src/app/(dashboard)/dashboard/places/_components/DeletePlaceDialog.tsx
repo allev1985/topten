@@ -5,7 +5,7 @@ import { useActionState, useEffect } from "react";
 import { deletePlaceGlobalAction } from "@/actions/place-actions";
 import type { DeletePlaceGlobalSuccessData } from "@/actions/place-actions";
 import type { ActionState } from "@/types/forms";
-import type { PlaceWithListCount } from "@/lib/place/service";
+import type { PlaceWithListCount } from "@/lib/place";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

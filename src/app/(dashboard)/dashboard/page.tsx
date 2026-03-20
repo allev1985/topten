@@ -1,8 +1,7 @@
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/service";
-import { getListsByUser } from "@/lib/list/service";
-import { ListServiceError } from "@/lib/list/service/errors";
+import { getSession } from "@/lib/auth";
+import { getListsByUser, ListServiceError } from "@/lib/list";
 import { DashboardClient } from "./DashboardClient";
 
 /**

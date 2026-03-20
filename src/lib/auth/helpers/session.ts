@@ -6,7 +6,7 @@
  * any server context.
  */
 
-import type { SessionInfo } from "@/types/auth";
+import type { SessionInfo } from "@/lib/auth/types";
 import { config } from "@/lib/config/client";
 
 export interface BetterAuthSession {

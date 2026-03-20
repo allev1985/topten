@@ -7,8 +7,8 @@ import {
   updatePassword,
   changePassword,
   getSession,
-} from "@/lib/auth/service";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+} from "@/lib/auth";
+import { AuthServiceError } from "@/lib/auth/errors";
 import type {
   SignupResult,
   LoginResult,
@@ -16,7 +16,7 @@ import type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
-} from "@/types/auth";
+} from "@/lib/auth/types";
 
 // Mock next/headers
 vi.mock("next/headers", () => ({

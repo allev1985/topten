@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { updatePlace } from "@/lib/place/service";
+import { updatePlace } from "@/lib/place";
 
 // ─── DB mock ──────────────────────────────────────────────────────────────────
 

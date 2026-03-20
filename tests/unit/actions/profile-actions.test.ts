@@ -41,7 +41,7 @@ vi.mock("@/db", () => ({
 }));
 
 // Import after mocking
-import { getSession } from "@/lib/auth/service";
+import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 const mockGetSession = vi.mocked(getSession);

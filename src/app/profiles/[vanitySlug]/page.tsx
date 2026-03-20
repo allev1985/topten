@@ -3,10 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 export const revalidate = 60;
-import {
-  getPublicProfile,
-  getPublicListsForProfile,
-} from "@/lib/public/service";
+import { getPublicProfile, getPublicListsForProfile } from "@/lib/public";
 import { ProfileHeader } from "@/components/public/ProfileHeader";
 import { PublicListGrid } from "@/components/public/PublicListGrid";
 

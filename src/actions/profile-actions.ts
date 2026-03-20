@@ -10,11 +10,7 @@ import {
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
-import {
-  updateName,
-  updateSlug,
-  ProfileServiceError,
-} from "@/lib/profile/service";
+import { updateName, updateSlug, ProfileServiceError } from "@/lib/profile";
 
 // Re-export success data types so consumers can import from one place
 export type { UpdateNameSuccessData, UpdateSlugSuccessData };

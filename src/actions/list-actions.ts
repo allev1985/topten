@@ -11,8 +11,8 @@ import {
   deleteList,
   publishList,
   unpublishList,
-} from "@/lib/list/service";
-import { ListServiceError } from "@/lib/list/service/errors";
+  ListServiceError,
+} from "@/lib/list";
 
 // ─── Success data types ───────────────────────────────────────────────────────
 

@@ -7,7 +7,7 @@
 
 import { expect, vi } from "vitest";
 import type { Mock } from "vitest";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+import { AuthServiceError } from "@/lib/auth/errors";
 
 /**
  * Helper to assert that a function throws an AuthServiceError with expected properties

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { JSX } from "react";
-import { getSession } from "@/lib/auth/service";
-import { getProfileForSettings } from "@/lib/profile/service";
+import { getSession } from "@/lib/auth";
+import { getProfileForSettings } from "@/lib/profile";
 import { SlugSettingsForm } from "./_components/SlugSettingsForm";
 import { NameSettingsForm } from "./_components/NameSettingsForm";
 import { PasswordChangeForm } from "./password/password-change-form";
