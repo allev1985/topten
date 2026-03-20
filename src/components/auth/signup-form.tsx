@@ -259,7 +259,13 @@ export function SignupForm() {
                 ? "true"
                 : undefined
             }
-            aria-describedby="slug-hint slug-status"
+            aria-describedby={[
+              "slug-hint",
+              "slug-status",
+              state.fieldErrors.vanitySlug?.[0] ? "vanitySlug-error" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
           />
         </div>
         <span id="slug-status" aria-live="polite" className="text-sm">
@@ -281,7 +287,11 @@ export function SignupForm() {
           )}
         </span>
         {state.fieldErrors.vanitySlug?.[0] && (
-          <span role="alert" className="text-destructive text-sm">
+          <span
+            id="vanitySlug-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
             {state.fieldErrors.vanitySlug[0]}
           </span>
         )}
