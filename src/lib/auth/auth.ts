@@ -18,13 +18,13 @@ import * as schema from "@/db/schema";
 import { sendEmail } from "@/lib/services/email";
 import { generateVanitySlug } from "@/lib/utils/formatting/slug";
 import { createServiceLogger } from "@/lib/services/logging";
-import { config } from "@/lib/config/client";
+import { config } from "@/lib/config";
 
 const log = createServiceLogger("auth");
 
 export const auth = betterAuth({
-  secret: process.env.AUTH_SECRET,
-  baseURL: process.env.NEXT_PUBLIC_APP_URL,
+  secret: config.authSecret,
+  baseURL: config.appUrl,
 
   database: drizzleAdapter(db, {
     provider: "pg",

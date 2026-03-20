@@ -52,6 +52,8 @@ if (!parsed.success) {
 
 export const config = {
   ...clientConfig,
+  authSecret: parsed.data.AUTH_SECRET,
+  appUrl: parsed.data.NEXT_PUBLIC_APP_URL,
   db: {
     url: parsed.data.DATABASE_URL,
   },
@@ -76,5 +78,5 @@ export const config = {
  * Resolve the application base URL.
  */
 export function getAppUrl(requestOrigin?: string | null): string {
-  return requestOrigin ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+  return requestOrigin ?? config.appUrl;
 }
