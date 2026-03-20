@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import type { AuthUser, AuthError, AuthState, AuthResult } from "@/types/auth";
+import type { AuthUser, AuthError, AuthState, AuthResult } from "@/lib/auth/types";
 
 describe("Auth Types", () => {
   describe("AuthError interface", () => {

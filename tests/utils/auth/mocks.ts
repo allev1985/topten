@@ -5,7 +5,7 @@
  */
 
 import { vi } from "vitest";
-import type { AuthUser } from "@/types/auth";
+import type { AuthUser } from "@/lib/auth/types";
 
 /**
  * Creates a mock user object for testing
