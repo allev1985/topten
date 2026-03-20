@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { VerifyMFAForm } from "./_components/VerifyMFAForm";
-import { config } from "@/lib/config/client";
+import { config } from "@/lib/config";
 import { isValidRedirect } from "@/lib/utils/validation/redirect";
 import { sendMFACode, getSession } from "@/lib/auth";
 
