@@ -395,6 +395,15 @@ export async function passwordChangeAction(
     // confirmation message on the login page.
     redirect("/login?notice=password_changed");
   } catch (err) {
+    const isRedirect =
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      typeof (err as { digest: string }).digest === "string" &&
+      (err as { digest: string }).digest.startsWith("NEXT_REDIRECT");
+
+    if (isRedirect) throw err;
+
     if (err instanceof AuthServiceError) {
       return {
         data: null,

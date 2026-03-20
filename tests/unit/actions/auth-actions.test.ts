@@ -562,7 +562,7 @@ describe("Auth Actions", () => {
       expect(result.error).toBe("Current password is incorrect");
     });
 
-    it("returns success on successful password change", async () => {
+    it("redirects to login with notice on successful password change", async () => {
       mockGetSession.mockResolvedValue({
         authenticated: true,
         user: { id: "123", email: "test@example.com" },
@@ -576,10 +576,16 @@ describe("Auth Actions", () => {
         confirmPassword: "NewPass123!@#",
       });
 
-      const result = await passwordChangeAction(initialState, formData);
+      // changePassword now signs out the current session and redirects to login
+      // so the user re-authenticates with the new password (OWASP A07 / CWE-384).
+      await expect(
+        passwordChangeAction(initialState, formData)
+      ).rejects.toThrow("REDIRECT:/login?notice=password_changed");
 
-      expect(result.isSuccess).toBe(true);
-      expect(result.data?.message).toBe("Password updated successfully");
+      expect(mockChangePassword).toHaveBeenCalledWith(
+        "OldPass123!@#",
+        "NewPass123!@#"
+      );
     });
 
     it("returns error when password update fails", async () => {
