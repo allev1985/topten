@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LoginForm } from "@/app/(auth)/login/login-form";
+import { LoginForm } from "@/components/auth/login-form";
 import {
   Dialog,
   DialogContent,

@@ -52,28 +52,46 @@ To run a single test file: `pnpm test -- tests/unit/my-file.test.ts`
 ```
 React Components (Client/Server)
         ↓
-Server Actions (src/actions/)        ← form submission handlers
+Server Actions (src/actions/)           ← form submission handlers
         ↓
 Auth Service (src/lib/auth/service.ts)  ← centralised auth business logic
         ↓
-Supabase SDK (@supabase/ssr)
+BetterAuth (src/lib/auth/auth.ts)
         ↓
-Supabase (Postgres + Auth)
+Drizzle ORM + Postgres
 ```
 
-Authentication uses a **service-based architecture** — server actions call `src/lib/auth/service.ts` directly (no HTTP roundtrip). The only remaining API route is `GET /api/auth/verify` for Supabase email verification callbacks.
+Authentication uses a **service-based architecture** — server actions call `src/lib/auth/service.ts` directly (no HTTP roundtrip). The API route `POST|GET /api/auth/[...all]` is the BetterAuth catch-all handler.
 
 ### Key directories
 
-- `src/app/` — Next.js App Router pages and the single remaining API route
-- `src/actions/` — Server actions (`auth-actions.ts` is the main one)
-- `src/lib/auth/` — Auth service, middleware helpers, Supabase client wrappers
-- `src/lib/config/` — App-wide constants and route definitions
+- `src/app/` — Next.js App Router pages and layouts
+- `src/app/api/auth/[...all]/` — BetterAuth catch-all API route
+- `src/actions/` — Server actions (`auth-actions.ts`, `list-actions.ts`, `place-actions.ts`, `profile-actions.ts`)
+- `src/lib/auth/` — Auth service, BetterAuth config, middleware helpers
+- `src/lib/config/` — App-wide constants and route definitions (`index.ts` server, `client.ts` client-safe)
+- `src/lib/place/` — Place service and types
+- `src/lib/list/` — List service and types
+- `src/lib/profile/` — Profile service and types
+- `src/lib/services/logging/` — Structured pino logger and OpenTelemetry integration
+- `src/components/auth/` — Auth forms shared across pages and modals (`login-form.tsx`, `signup-form.tsx`)
+- `src/components/dashboard/` — Dashboard UI: list management, place management, settings forms, sidebar/header
+- `src/components/public/` — Public profile and list view components
+- `src/components/shared/` — App-wide components (Header, LoginModal, SignupModal)
 - `src/components/ui/` — **shadcn/ui generated components — never edit directly**
 - `src/db/schema/` — Drizzle ORM table definitions
 - `src/schemas/` — Zod validation schemas
 - `tests/` — `unit/`, `component/`, `integration/`, `e2e/`, `fixtures/`, `utils/`
 - `docs/decisions/` — Architecture Decision Records (ADRs)
+
+### Component conventions
+
+Components follow a **page-local / shared** split:
+
+- **`src/components/`** — any component used by more than one page or route, or by another shared component. Organised by domain: `auth/`, `dashboard/`, `dashboard/places/`, `dashboard/settings/`, `public/`, `shared/`.
+- **`src/app/**/_components/`** — components used by exactly one page. The underscore prefix prevents Next.js treating the folder as a route segment. Do not import from a `_components/` folder belonging to a different route.
+
+When a component grows to be needed in a second place, move it from `_components/` into the appropriate `src/components/` subdirectory and update imports.
 
 ### Data model
 
@@ -161,7 +179,7 @@ Copy `.env.example` to `.env.local` for local development.
 
 - **Unit** (`tests/unit/`) — business logic, utilities, hooks
 - **Component** (`tests/component/`) — React Testing Library, UI in isolation
-- **Integration** (`tests/integration/`) — auth flows, middleware, service-to-Supabase
+- **Integration** (`tests/integration/`) — auth flows, middleware, service-to-database
 - **E2E** (`tests/e2e/`) — Playwright, critical user journeys
 
 Vitest config: `vitest.config.ts` (jsdom, v8 coverage, excludes `src/db/migrations/` and `src/app/`).

@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { PasswordChangeForm } from "./password-change-form";
+import { PasswordChangeForm } from "@/components/dashboard/settings/password-change-form";
 
 /**
  * Password settings page

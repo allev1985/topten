@@ -1,5 +1,7 @@
 import type { JSX } from "react";
 import { redirect, notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import { getSession } from "@/lib/auth";
 import {
   getPlacesByList,

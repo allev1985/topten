@@ -1,6 +1,8 @@
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 import { getAllPlacesByUser, PlaceServiceError } from "@/lib/place";
 import { PlacesClient } from "./_components/PlacesClient";
 

@@ -17,7 +17,7 @@ import {
 import { deletePlaceAction } from "@/actions/place-actions";
 import { PlaceCard } from "@/components/dashboard/places/PlaceCard";
 import { AddPlaceDialog } from "./AddPlaceDialog";
-import { EditPlaceDialog } from "./EditPlaceDialog";
+import { EditPlaceDialog } from "@/components/dashboard/places/EditPlaceDialog";
 
 interface PlaceListProps {
   listId: string;
