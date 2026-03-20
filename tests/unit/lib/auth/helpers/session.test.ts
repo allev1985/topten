@@ -1,37 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   getSessionInfo,
-  isSessionExpired,
-  getSessionTimeRemaining,
   isSessionExpiringSoon,
+  type BetterAuthSession,
 } from "@/lib/auth/helpers/session";
-import { config } from "@/lib/config";
-import type { Session, User } from "@supabase/supabase-js";
+import { config } from "@/lib/config/client";
 
 describe("Session utilities", () => {
-  const mockUser: User = {
-    id: "user-123",
-    email: "test@example.com",
-    app_metadata: {},
-    user_metadata: {},
-    aud: "authenticated",
-    created_at: new Date().toISOString(),
-  };
-
-  const createMockSession = (
-    expiresInSeconds: number,
-    user: User | null = mockUser
-  ): Session => {
-    const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
-    return {
-      access_token: "mock-access-token",
-      refresh_token: "mock-refresh-token",
-      expires_in: expiresInSeconds,
-      expires_at: expiresAt,
-      token_type: "bearer",
-      user: user as User,
-    };
-  };
+  const createMockSession = (expiresInMs: number): BetterAuthSession => ({
+    user: { id: "user-123", email: "test@example.com", name: "Test User" },
+    session: { expiresAt: new Date(Date.now() + expiresInMs) },
+  });
 
   describe("config.auth.sessionExpiryThresholdMs", () => {
     it("equals 5 minutes in milliseconds", () => {
@@ -41,7 +20,7 @@ describe("Session utilities", () => {
 
   describe("getSessionInfo", () => {
     it("returns correct structure for valid session", () => {
-      const session = createMockSession(3600); // 1 hour from now
+      const session = createMockSession(3600 * 1000); // 1 hour
 
       const result = getSessionInfo(session);
 
@@ -54,7 +33,7 @@ describe("Session utilities", () => {
       expect(result.isExpiringSoon).toBe(false);
     });
 
-    it("returns correct structure for null session", () => {
+    it("returns invalid for null session", () => {
       const result = getSessionInfo(null);
 
       expect(result.isValid).toBe(false);
@@ -63,34 +42,18 @@ describe("Session utilities", () => {
       expect(result.isExpiringSoon).toBe(false);
     });
 
-    it("returns null user when session user is null", () => {
-      const session = createMockSession(3600, null);
-
-      const result = getSessionInfo(session);
-
-      expect(result.isValid).toBe(true);
-      expect(result.user).toBeNull();
-    });
-
-    it("calculates expiresAt from expires_at timestamp", () => {
-      const session = createMockSession(3600);
-
-      const result = getSessionInfo(session);
-
-      const expectedDate = new Date(session.expires_at! * 1000);
-      expect(result.expiresAt?.getTime()).toEqual(expectedDate.getTime());
-    });
-
-    it("sets isExpiringSoon true when within 5 minutes of expiry", () => {
-      const session = createMockSession(240); // 4 minutes from now
+    it("marks session expiring soon when within threshold", () => {
+      const threshold = config.auth.sessionExpiryThresholdMs;
+      const session = createMockSession(threshold - 30_000); // 30s before threshold
 
       const result = getSessionInfo(session);
 
       expect(result.isExpiringSoon).toBe(true);
     });
 
-    it("sets isExpiringSoon false when more than 5 minutes from expiry", () => {
-      const session = createMockSession(600); // 10 minutes from now
+    it("does not mark session expiring soon when well beyond threshold", () => {
+      const threshold = config.auth.sessionExpiryThresholdMs;
+      const session = createMockSession(threshold + 60_000); // 1 min beyond threshold
 
       const result = getSessionInfo(session);
 
@@ -98,183 +61,31 @@ describe("Session utilities", () => {
     });
   });
 
-  describe("isSessionExpired", () => {
-    let originalDateNow: () => number;
-
-    beforeEach(() => {
-      originalDateNow = Date.now;
-    });
-
-    afterEach(() => {
-      Date.now = originalDateNow;
-    });
-
-    it("returns true for null session", () => {
-      expect(isSessionExpired(null)).toBe(true);
-    });
-
-    it("returns true when session is expired", () => {
-      const session = createMockSession(-60); // Expired 1 minute ago
-
-      expect(isSessionExpired(session)).toBe(true);
-    });
-
-    it("returns false for valid non-expired session", () => {
-      const session = createMockSession(3600); // 1 hour from now
-
-      expect(isSessionExpired(session)).toBe(false);
-    });
-
-    it("returns true for session without expires_at", () => {
-      const session = createMockSession(3600);
-      delete (session as unknown as Record<string, unknown>).expires_at;
-
-      expect(isSessionExpired(session)).toBe(true);
-    });
-
-    it("returns true when expires_at is exactly now", () => {
-      const now = Date.now();
-      Date.now = () => now;
-
-      const session: Session = {
-        access_token: "mock-access-token",
-        refresh_token: "mock-refresh-token",
-        expires_in: 0,
-        expires_at: Math.floor(now / 1000),
-        token_type: "bearer",
-        user: mockUser,
-      };
-
-      expect(isSessionExpired(session)).toBe(true);
-    });
-  });
-
-  describe("getSessionTimeRemaining", () => {
-    let originalDateNow: () => number;
-
-    beforeEach(() => {
-      originalDateNow = Date.now;
-    });
-
-    afterEach(() => {
-      Date.now = originalDateNow;
-    });
-
-    it("returns 0 for null session", () => {
-      expect(getSessionTimeRemaining(null)).toBe(0);
-    });
-
-    it("returns 0 for expired session", () => {
-      const session = createMockSession(-60); // Expired 1 minute ago
-
-      expect(getSessionTimeRemaining(session)).toBe(0);
-    });
-
-    it("returns correct milliseconds for valid session", () => {
-      const now = Date.now();
-      Date.now = () => now;
-
-      const expiresInSeconds = 3600; // 1 hour
-      const session: Session = {
-        access_token: "mock-access-token",
-        refresh_token: "mock-refresh-token",
-        expires_in: expiresInSeconds,
-        expires_at: Math.floor(now / 1000) + expiresInSeconds,
-        token_type: "bearer",
-        user: mockUser,
-      };
-
-      const result = getSessionTimeRemaining(session);
-
-      // Account for sub-second timing differences due to floor operation
-      // expires_at is in seconds, so we expect ~expiresInSeconds * 1000 ± 999ms
-      expect(result).toBeGreaterThan(expiresInSeconds * 1000 - 1000);
-      expect(result).toBeLessThanOrEqual(expiresInSeconds * 1000);
-    });
-
-    it("returns 0 for session without expires_at", () => {
-      const session = createMockSession(3600);
-      delete (session as unknown as Record<string, unknown>).expires_at;
-
-      expect(getSessionTimeRemaining(session)).toBe(0);
-    });
-
-    it("never returns negative values", () => {
-      const session = createMockSession(-3600); // Expired 1 hour ago
-
-      expect(getSessionTimeRemaining(session)).toBe(0);
-    });
-  });
-
   describe("isSessionExpiringSoon", () => {
-    let originalDateNow: () => number;
+    it("returns true when expiry is within default threshold", () => {
+      const threshold = config.auth.sessionExpiryThresholdMs;
+      const expiresAt = new Date(Date.now() + threshold - 30_000);
 
-    beforeEach(() => {
-      originalDateNow = Date.now;
+      expect(isSessionExpiringSoon(expiresAt)).toBe(true);
     });
 
-    afterEach(() => {
-      Date.now = originalDateNow;
+    it("returns false when expiry is beyond threshold", () => {
+      const threshold = config.auth.sessionExpiryThresholdMs;
+      const expiresAt = new Date(Date.now() + threshold + 60_000);
+
+      expect(isSessionExpiringSoon(expiresAt)).toBe(false);
     });
 
-    it("returns false for null session", () => {
-      expect(isSessionExpiringSoon(null)).toBe(false);
+    it("returns false for already-expired date", () => {
+      const expiresAt = new Date(Date.now() - 1000);
+      expect(isSessionExpiringSoon(expiresAt)).toBe(false);
     });
 
-    it("returns true when within default 5-minute threshold", () => {
-      const session = createMockSession(240); // 4 minutes from now
+    it("respects a custom threshold", () => {
+      const customThresholdMs = 10_000; // 10 seconds
+      const expiresAt = new Date(Date.now() + 5_000); // 5s from now
 
-      expect(isSessionExpiringSoon(session)).toBe(true);
-    });
-
-    it("returns false when more than 5 minutes from expiry", () => {
-      const session = createMockSession(600); // 10 minutes from now
-
-      expect(isSessionExpiringSoon(session)).toBe(false);
-    });
-
-    it("returns false for already expired session", () => {
-      const session = createMockSession(-60); // Expired 1 minute ago
-
-      expect(isSessionExpiringSoon(session)).toBe(false);
-    });
-
-    it("uses custom threshold when provided", () => {
-      const session = createMockSession(900); // 15 minutes from now
-      const customThreshold = 20 * 60 * 1000; // 20 minutes
-
-      expect(isSessionExpiringSoon(session, customThreshold)).toBe(true);
-    });
-
-    it("returns false when custom threshold makes session not expiring soon", () => {
-      const session = createMockSession(240); // 4 minutes from now
-      const customThreshold = 60 * 1000; // 1 minute
-
-      expect(isSessionExpiringSoon(session, customThreshold)).toBe(false);
-    });
-
-    it("returns true exactly at threshold boundary", () => {
-      const now = Date.now();
-      Date.now = () => now;
-
-      const thresholdSeconds = config.auth.sessionExpiryThresholdMs / 1000;
-      const session: Session = {
-        access_token: "mock-access-token",
-        refresh_token: "mock-refresh-token",
-        expires_in: thresholdSeconds,
-        expires_at: Math.floor(now / 1000) + thresholdSeconds,
-        token_type: "bearer",
-        user: mockUser,
-      };
-
-      expect(isSessionExpiringSoon(session)).toBe(true);
-    });
-
-    it("returns false for session without expires_at", () => {
-      const session = createMockSession(240);
-      delete (session as unknown as Record<string, unknown>).expires_at;
-
-      expect(isSessionExpiringSoon(session)).toBe(false);
+      expect(isSessionExpiringSoon(expiresAt, customThresholdMs)).toBe(true);
     });
   });
 });

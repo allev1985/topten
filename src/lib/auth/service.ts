@@ -1,28 +1,26 @@
 /**
  * Authentication Service
  *
- * Centralized service for all authentication operations.
- * Used by Server Actions and other server-side code.
+ * Thin wrapper around BetterAuth's server API that adds structured logging
+ * and consistent error mapping. All server actions and server components
+ * call this service rather than auth.api directly.
  *
- * This module provides a clean abstraction over Supabase authentication,
- * handling common patterns like error mapping, logging, and session management.
- *
+ * @see docs/decisions/authentication.md
  * @module auth/service
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth/auth";
 import { maskEmail } from "@/lib/utils/formatting/email";
+import { createServiceLogger } from "@/lib/services/logging";
 import {
   AuthServiceError,
   invalidCredentialsError,
   emailNotConfirmedError,
   serviceError,
+  isInvalidCredentialsError,
   isEmailNotVerifiedError,
-  isExpiredTokenError,
-  isSessionError,
 } from "./service/errors";
-import { getSessionInfo } from "./helpers/session";
-import { createServiceLogger } from "@/lib/services/logging";
 import type {
   SignupResult,
   LoginResult,
@@ -30,83 +28,62 @@ import type {
   ResetPasswordResult,
   UpdatePasswordResult,
   SessionResult,
-  RefreshSessionResult,
-  VerifyEmailResult,
-} from "./service/types";
+} from "@/types/auth";
 
 const log = createServiceLogger("auth-service");
 
+async function getHeaders() {
+  return await headers();
+}
+
 /**
- * Sign up a new user with email and password
+ * Sign up a new user with email and password.
  *
- * Creates a new user account in Supabase and sends a verification email.
- * The behavior depends on Supabase email confirmation settings:
- * - If email confirmation is required: user is created but cannot log in until verified
- * - If email confirmation is disabled: user is created and automatically logged in
- *
- * @param email - User's email address
- * @param password - User's password (must meet password requirements)
- * @param options - Optional configuration
- * @param options.emailRedirectTo - URL to redirect to after email verification
- * @returns SignupResult with user and session information
- * @throws {AuthServiceError} If signup fails
+ * BetterAuth creates the user record, fires databaseHooks to auto-generate
+ * vanitySlug, then sends a verification email. The user cannot log in until
+ * their email is verified.
  */
 export async function signup(
   email: string,
   password: string,
-  options?: {
-    emailRedirectTo?: string;
-  }
+  name: string
 ): Promise<SignupResult> {
   try {
     log.info({ method: "signup", email: maskEmail(email) }, "Signup attempt");
 
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: options?.emailRedirectTo,
-      },
+    const h = await getHeaders();
+    const result = await auth.api.signUpEmail({
+      body: { email, password, name },
+      headers: h,
     });
 
-    if (error) {
-      log.error(
-        { method: "signup", email: maskEmail(email), err: error },
-        "Signup failed"
-      );
-      throw serviceError("Failed to create account", error);
-    }
-
-    // Supabase returns user even when email confirmation is required
-    // Session is null when confirmation is required
-    const requiresEmailConfirmation = !data.session;
+    const requiresEmailConfirmation = !result.user?.emailVerified;
 
     log.info(
       {
         method: "signup",
         email: maskEmail(email),
+        userId: result.user?.id,
         requiresEmailConfirmation,
-        userId: data.user?.id,
       },
       requiresEmailConfirmation
         ? "Signup successful, verification email sent"
-        : "Signup successful, user auto-confirmed"
+        : "Signup successful"
     );
 
     return {
       requiresEmailConfirmation,
-      user: data.user,
-      session: data.session
+      user: result.user
         ? {
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            emailVerified: result.user.emailVerified,
           }
         : null,
     };
   } catch (error) {
     if (error instanceof AuthServiceError) throw error;
-
     log.error(
       { method: "signup", err: error },
       "Unexpected error during signup"
@@ -116,18 +93,10 @@ export async function signup(
 }
 
 /**
- * Log in a user with email and password
+ * Log in a user with email and password.
  *
- * Authenticates the user and creates a new session.
- * Session cookies are automatically set by the Supabase client.
- *
- * @param email - User's email address
- * @param password - User's password
- * @returns LoginResult with user and session information
- * @throws {AuthServiceError} If login fails, including:
- *   - INVALID_CREDENTIALS: Wrong email or password
- *   - EMAIL_NOT_CONFIRMED: Email not yet verified
- *   - SERVICE_ERROR: Unexpected errors
+ * BetterAuth validates credentials, creates a session, and sets the session
+ * cookie via the nextCookies() plugin.
  */
 export async function login(
   email: string,
@@ -136,83 +105,60 @@ export async function login(
   try {
     log.info({ method: "login", email: maskEmail(email) }, "Login attempt");
 
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const h = await getHeaders();
+    const result = await auth.api.signInEmail({
+      body: { email, password },
+      headers: h,
     });
 
-    if (error) {
-      log.error(
-        { method: "login", email: maskEmail(email), err: error },
-        "Login failed"
-      );
-
-      if (isEmailNotVerifiedError(error)) {
-        throw emailNotConfirmedError(error);
-      }
-
-      throw invalidCredentialsError(error);
-    }
-
-    if (!data.user || !data.session) {
-      log.error(
-        { method: "login", email: maskEmail(email) },
-        "Login succeeded but session data is incomplete"
-      );
-      throw serviceError("Login succeeded but session data is incomplete");
+    if (!result.user) {
+      throw serviceError("Login succeeded but no user was returned");
     }
 
     log.info(
-      { method: "login", email: maskEmail(email), userId: data.user.id },
+      { method: "login", email: maskEmail(email), userId: result.user.id },
       "Login successful"
     );
 
     return {
-      user: data.user,
-      session: {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        emailVerified: result.user.emailVerified,
       },
     };
   } catch (error) {
     if (error instanceof AuthServiceError) throw error;
 
-    log.error({ method: "login", err: error }, "Unexpected error during login");
+    log.error(
+      { method: "login", email: maskEmail(email), err: error },
+      "Login failed"
+    );
+
+    if (isEmailNotVerifiedError(error)) throw emailNotConfirmedError(error);
+    if (isInvalidCredentialsError(error)) throw invalidCredentialsError(error);
+
     throw serviceError("An unexpected error occurred during login", error);
   }
 }
 
 /**
- * Log out the current user
+ * Log out the current user.
  *
- * Terminates the user's session and clears session cookies.
- * This operation is idempotent - it succeeds even if no session exists.
- *
- * @returns LogoutResult indicating success
- * @throws {AuthServiceError} Only if an unexpected error occurs
+ * Revokes the session and clears the session cookie.
+ * Idempotent — succeeds even if no session exists.
  */
 export async function logout(): Promise<LogoutResult> {
   try {
-    const supabase = await createClient();
+    const h = await getHeaders();
+    const session = await auth.api.getSession({ headers: h });
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      // Log but treat as success for idempotency — cookies are cleared regardless
-      log.warn(
-        { method: "logout", userId: user?.id, err: error },
-        "Logout Supabase API error (session cookies still cleared)"
-      );
-    }
+    await auth.api.signOut({ headers: h });
 
     log.info(
-      { method: "logout", userId: user?.id },
-      user ? "User logged out" : "Logout request (no active session)"
+      { method: "logout", userId: session?.user?.id },
+      session ? "User logged out" : "Logout request (no active session)"
     );
 
     return { success: true };
@@ -226,23 +172,14 @@ export async function logout(): Promise<LogoutResult> {
 }
 
 /**
- * Request a password reset email
+ * Request a password reset email.
  *
- * Sends a password reset email to the specified address.
- * This operation implements user enumeration protection - it always returns
- * success regardless of whether the email exists in the system.
- *
- * @param email - User's email address
- * @param options - Optional configuration
- * @param options.redirectTo - URL to redirect to after password reset
- * @returns ResetPasswordResult indicating the request was processed
- * @throws {AuthServiceError} Only if an unexpected error occurs
+ * Always returns success regardless of whether the email exists (enumeration
+ * protection). BetterAuth only sends an email if the account exists.
  */
 export async function resetPassword(
   email: string,
-  options?: {
-    redirectTo?: string;
-  }
+  options?: { redirectTo?: string }
 ): Promise<ResetPasswordResult> {
   try {
     log.info(
@@ -250,239 +187,140 @@ export async function resetPassword(
       "Password reset requested"
     );
 
-    const supabase = await createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: options?.redirectTo,
+    const h = await getHeaders();
+    await auth.api.requestPasswordReset({
+      body: {
+        email,
+        redirectTo: options?.redirectTo ?? "/reset-password",
+      },
+      headers: h,
     });
 
-    // Log errors internally but always return success for enumeration protection
-    if (error) {
-      log.warn(
-        { method: "resetPassword", email: maskEmail(email), err: error },
-        "Password reset Supabase error (returning success for enumeration protection)"
-      );
-    } else {
-      log.info(
-        { method: "resetPassword", email: maskEmail(email) },
-        "Password reset request processed"
-      );
-    }
+    log.info(
+      { method: "resetPassword", email: maskEmail(email) },
+      "Password reset request processed"
+    );
 
     return { success: true };
   } catch (error) {
-    log.error(
-      { method: "resetPassword", err: error },
-      "Unexpected error during password reset"
+    // Log internally but always return success for enumeration protection
+    log.warn(
+      { method: "resetPassword", email: maskEmail(email), err: error },
+      "Password reset error (returning success for enumeration protection)"
     );
-    throw serviceError(
-      "An unexpected error occurred during password reset",
-      error
-    );
+    return { success: true };
   }
 }
 
 /**
- * Update user password
+ * Update password using a reset token (unauthenticated flow).
  *
- * Updates the user's password with support for multiple authentication methods:
- * 1. OTP token - from password reset email (token_hash + type)
- * 2. Session - existing authenticated user
- *
- * The function automatically signs out the user after a successful password update
- * for security reasons.
- *
- * @param password - New password
- * @param options - Authentication options
- * @param options.token_hash - OTP token hash from password reset email
- * @param options.type - OTP token type ('recovery' or 'email')
- * @returns UpdatePasswordResult indicating success
- * @throws {AuthServiceError} If authentication fails or password update fails
+ * Called from the /reset-password page after the user clicks the email link.
+ * Signs the user out after success for security.
  */
 export async function updatePassword(
   password: string,
-  options?: {
-    token_hash?: string;
-    type?: "recovery" | "email";
-  }
+  token: string
 ): Promise<UpdatePasswordResult> {
   try {
-    const supabase = await createClient();
-
-    let userEmail: string | null = null;
-    let authMethod: "OTP" | "session" = "session";
-
-    // Authentication priority: OTP token → existing session
-
-    // 1. Try OTP token authentication if provided
-    if (options?.token_hash && options?.type) {
-      authMethod = "OTP";
-      log.debug(
-        { method: "updatePassword", authMethod, otpType: options.type },
-        "Attempting OTP token authentication"
-      );
-
-      const { data, error: otpError } = await supabase.auth.verifyOtp({
-        type: options.type,
-        token_hash: options.token_hash,
-      });
-
-      if (otpError) {
-        log.error(
-          { method: "updatePassword", authMethod, err: otpError },
-          "OTP authentication failed"
-        );
-
-        if (isExpiredTokenError(otpError)) {
-          throw serviceError(
-            "Authentication link has expired. Please request a new one.",
-            otpError
-          );
-        }
-
-        throw serviceError("Authentication failed", otpError);
-      }
-
-      userEmail = data.user?.email ?? null;
-    }
-    // 2. Fall back to existing session
-    else {
-      authMethod = "session";
-      log.debug(
-        { method: "updatePassword", authMethod },
-        "Attempting session-based authentication"
-      );
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        log.error(
-          { method: "updatePassword", authMethod, err: userError },
-          "Session authentication failed"
-        );
-        throw serviceError("Authentication required", userError);
-      }
-
-      userEmail = user.email ?? null;
-    }
-
     log.info(
-      {
-        method: "updatePassword",
-        authMethod,
-        email: maskEmail(userEmail ?? "unknown"),
-      },
-      "Password update requested"
+      { method: "updatePassword" },
+      "Password update requested via reset token"
     );
 
-    const { error: updateError } = await supabase.auth.updateUser({ password });
+    const h = await getHeaders();
+    await auth.api.resetPassword({
+      body: { newPassword: password, token },
+      headers: h,
+    });
 
-    if (updateError) {
-      log.error(
-        {
-          method: "updatePassword",
-          authMethod,
-          email: maskEmail(userEmail ?? "unknown"),
-          err: updateError,
-        },
-        "Password update failed"
-      );
-
-      if (isSessionError(updateError)) {
-        throw serviceError(
-          "Session has expired. Please log in again.",
-          updateError
-        );
-      }
-
-      throw serviceError("Failed to update password", updateError);
-    }
-
-    log.info(
-      {
-        method: "updatePassword",
-        authMethod,
-        email: maskEmail(userEmail ?? "unknown"),
-      },
-      "Password updated successfully"
-    );
-
-    // Sign out user after successful password update for security
-    try {
-      await supabase.auth.signOut();
-      log.info(
-        {
-          method: "updatePassword",
-          email: maskEmail(userEmail ?? "unknown"),
-        },
-        "User signed out after password update"
-      );
-    } catch (signOutError) {
-      // Password was already updated — don't fail the operation
-      log.warn(
-        { method: "updatePassword", err: signOutError },
-        "Sign-out failed after password update (password was still updated)"
-      );
-    }
-
+    log.info({ method: "updatePassword" }, "Password updated successfully");
     return { success: true };
   } catch (error) {
     if (error instanceof AuthServiceError) throw error;
 
     log.error(
       { method: "updatePassword", err: error },
-      "Unexpected error during password update"
+      "Password update failed"
     );
-    throw serviceError(
-      "An unexpected error occurred during password update",
-      error
-    );
+
+    if (
+      error instanceof Error &&
+      error.message.toLowerCase().includes("expired")
+    ) {
+      throw serviceError(
+        "Authentication link has expired. Please request a new one.",
+        error
+      );
+    }
+
+    throw serviceError("Failed to update password", error);
   }
 }
 
 /**
- * Get current session information
+ * Change password for an already-authenticated user.
  *
- * Retrieves the current user's session status and information.
- * This operation is idempotent and does not cause side effects.
- * Returns authenticated=false for unauthenticated requests (not an error).
+ * Verifies the current password before allowing the change.
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<UpdatePasswordResult> {
+  try {
+    log.info({ method: "changePassword" }, "Password change requested");
+
+    const h = await getHeaders();
+    await auth.api.changePassword({
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+      headers: h,
+    });
+
+    log.info({ method: "changePassword" }, "Password changed successfully");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AuthServiceError) throw error;
+
+    log.error(
+      { method: "changePassword", err: error },
+      "Password change failed"
+    );
+
+    if (isInvalidCredentialsError(error)) {
+      throw serviceError("Current password is incorrect", error);
+    }
+
+    throw serviceError("Failed to change password", error);
+  }
+}
+
+/**
+ * Get current session information.
  *
- * @returns SessionResult with authentication status and user info
- * @throws {AuthServiceError} Only if an unexpected error occurs
+ * Returns authenticated=false (not an error) when no session exists.
  */
 export async function getSession(): Promise<SessionResult> {
   try {
-    const supabase = await createClient();
+    const h = await getHeaders();
+    const session = await auth.api.getSession({ headers: h });
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const sessionInfo = getSessionInfo(session);
-
-    if (!sessionInfo.isValid || !session) {
+    if (!session?.user) {
       log.debug({ method: "getSession" }, "Session check: not authenticated");
-
-      return {
-        authenticated: false,
-        user: null,
-        session: null,
-      };
+      return { authenticated: false, user: null, session: null };
     }
 
     log.debug(
-      { method: "getSession", userId: sessionInfo.user?.id },
+      { method: "getSession", userId: session.user.id },
       "Session check: authenticated"
     );
 
     return {
       authenticated: true,
-      user: sessionInfo.user,
+      user: { id: session.user.id, email: session.user.email },
       session: {
-        expiresAt: sessionInfo.expiresAt?.toISOString() ?? null,
-        isExpiringSoon: sessionInfo.isExpiringSoon,
+        expiresAt: session.session.expiresAt
+          ? new Date(session.session.expiresAt).toISOString()
+          : null,
       },
     };
   } catch (error) {
@@ -492,147 +330,6 @@ export async function getSession(): Promise<SessionResult> {
     );
     throw serviceError(
       "An unexpected error occurred while getting session",
-      error
-    );
-  }
-}
-
-/**
- * Refresh the current session
- *
- * Refreshes the user's session using the refresh token.
- * Updates session cookies with new tokens.
- * Should be called before the access token expires to maintain authentication.
- *
- * @returns RefreshSessionResult with new session tokens and expiry
- * @throws {AuthServiceError} If refresh fails (e.g., expired refresh token)
- */
-export async function refreshSession(): Promise<RefreshSessionResult> {
-  try {
-    log.debug({ method: "refreshSession" }, "Session refresh requested");
-
-    const supabase = await createClient();
-
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.refreshSession();
-
-    if (error) {
-      log.error(
-        { method: "refreshSession", err: error },
-        "Session refresh failed"
-      );
-      throw serviceError("Session has expired. Please log in again.", error);
-    }
-
-    if (!session) {
-      log.error(
-        { method: "refreshSession" },
-        "No session returned after refresh"
-      );
-      throw serviceError("Session has expired. Please log in again.");
-    }
-
-    const expiresAt = session.expires_at
-      ? new Date(session.expires_at * 1000).toISOString()
-      : null;
-
-    log.info(
-      { method: "refreshSession", expiresAt },
-      "Session refreshed successfully"
-    );
-
-    return {
-      session: {
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        expiresAt,
-      },
-    };
-  } catch (error) {
-    if (error instanceof AuthServiceError) throw error;
-
-    log.error(
-      { method: "refreshSession", err: error },
-      "Unexpected error during session refresh"
-    );
-    throw serviceError(
-      "An unexpected error occurred during session refresh",
-      error
-    );
-  }
-}
-
-/**
- * Verify a user's email address using an OTP token
- *
- * Verifies email using a token from the verification email and creates an authenticated session.
- * This function is used in the email verification flow after a user clicks the verification link.
- *
- * @param token_hash - The hashed OTP token from the verification email URL
- * @param type - The verification type (must be "email" for email verification)
- * @returns VerifyEmailResult with user and session information
- * @throws {AuthServiceError} If verification fails (expired token, invalid token, or server error)
- */
-export async function verifyEmail(
-  token_hash: string,
-  type: "email"
-): Promise<VerifyEmailResult> {
-  try {
-    log.info({ method: "verifyEmail" }, "Email verification attempt");
-
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash,
-    });
-
-    if (error) {
-      log.error(
-        { method: "verifyEmail", err: error },
-        "Email verification failed"
-      );
-
-      if (isExpiredTokenError(error)) {
-        throw serviceError(
-          "Verification link has expired. Please request a new one.",
-          error
-        );
-      }
-
-      throw serviceError("Invalid verification link", error);
-    }
-
-    if (!data.user || !data.session) {
-      log.error(
-        { method: "verifyEmail" },
-        "No user or session returned from verification"
-      );
-      throw serviceError("Verification failed - no user or session created");
-    }
-
-    log.info(
-      { method: "verifyEmail", userId: data.user.id },
-      "Email verified successfully"
-    );
-
-    return {
-      user: data.user,
-      session: {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      },
-    };
-  } catch (error) {
-    if (error instanceof AuthServiceError) throw error;
-
-    log.error(
-      { method: "verifyEmail", err: error },
-      "Unexpected error during email verification"
-    );
-    throw serviceError(
-      "An unexpected error occurred during email verification",
       error
     );
   }

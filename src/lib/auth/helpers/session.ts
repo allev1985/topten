@@ -1,20 +1,23 @@
 /**
- * Session validation utilities for myfaves
- * Provides consistent session validation and expiry checks
+ * Session validation utilities
  *
- * Works on both client and server contexts
+ * Lightweight helpers for working with BetterAuth session data.
+ * These are pure functions with no side effects — safe to call from
+ * any server context.
  */
 
-import type { Session } from "@supabase/supabase-js";
 import type { SessionInfo } from "@/types/auth";
 import { config } from "@/lib/config/client";
 
+export interface BetterAuthSession {
+  user: { id: string; email: string; name: string };
+  session: { expiresAt: Date | string };
+}
+
 /**
- * Extract session information for API response
- * @param session - Supabase session object or null
- * @returns SessionInfo with validation status and details
+ * Extract session info from a BetterAuth session object.
  */
-export function getSessionInfo(session: Session | null): SessionInfo {
+export function getSessionInfo(session: BetterAuthSession | null): SessionInfo {
   if (!session) {
     return {
       isValid: false,
@@ -24,64 +27,26 @@ export function getSessionInfo(session: Session | null): SessionInfo {
     };
   }
 
-  const expiresAt = session.expires_at
-    ? new Date(session.expires_at * 1000)
-    : null;
+  const expiresAt =
+    session.session.expiresAt instanceof Date
+      ? session.session.expiresAt
+      : new Date(session.session.expiresAt);
 
   return {
     isValid: true,
-    user: session.user
-      ? { id: session.user.id, email: session.user.email }
-      : null,
+    user: { id: session.user.id, email: session.user.email },
     expiresAt,
-    isExpiringSoon: isSessionExpiringSoon(session),
+    isExpiringSoon: isSessionExpiringSoon(expiresAt),
   };
 }
 
 /**
- * Check if session is expired
- * @param session - Supabase session object or null
- * @returns true if session is null or expired
- */
-export function isSessionExpired(session: Session | null): boolean {
-  if (!session?.expires_at) {
-    return true;
-  }
-
-  const expiresAtMs = session.expires_at * 1000;
-  return Date.now() >= expiresAtMs;
-}
-
-/**
- * Get time remaining until session expires (milliseconds)
- * @param session - Supabase session object or null
- * @returns milliseconds until expiration, 0 if expired or null
- */
-export function getSessionTimeRemaining(session: Session | null): number {
-  if (!session?.expires_at) {
-    return 0;
-  }
-
-  const expiresAtMs = session.expires_at * 1000;
-  const remaining = expiresAtMs - Date.now();
-
-  return Math.max(0, remaining);
-}
-
-/**
- * Check if session is expiring within threshold
- * @param session - Supabase session object or null
- * @param thresholdMs - Threshold in milliseconds (default: 5 minutes)
- * @returns true if session expires within threshold
+ * Check if the session expires within the configured threshold.
  */
 export function isSessionExpiringSoon(
-  session: Session | null,
+  expiresAt: Date,
   thresholdMs: number = config.auth.sessionExpiryThresholdMs
 ): boolean {
-  if (!session?.expires_at) {
-    return false;
-  }
-
-  const remaining = getSessionTimeRemaining(session);
+  const remaining = expiresAt.getTime() - Date.now();
   return remaining > 0 && remaining <= thresholdMs;
 }

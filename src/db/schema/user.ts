@@ -1,46 +1,43 @@
 import {
   pgTable,
-  uuid,
-  varchar,
   text,
+  varchar,
+  boolean,
   timestamp,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { authUsers } from "./authUser";
 
 /**
- * Application profile table — extends auth.users (Supabase Auth).
+ * Application user table — managed by BetterAuth.
  *
- * id is a foreign key to auth.users.id, not self-generated. The record is
- * created after the Supabase Auth user is created (e.g. on first sign-in or
- * email verification) and is RESTRICT on delete — hard deletes of auth users
- * are blocked at the DB level; deletion is via soft delete (deleted_at) only.
+ * Core identity fields (id, name, email, emailVerified, image, createdAt,
+ * updatedAt) are owned by BetterAuth. App-specific fields (vanitySlug, bio,
+ * deletedAt) are added as additionalFields in the BetterAuth config.
  *
- * Auth-owned fields (email, password, email_confirmed_at, last_sign_in_at)
- * live in auth.users and are accessed via JOIN using the authUsers reference.
- * See: src/db/schema/authUser.ts
+ * vanitySlug is auto-generated from the user's display name during signup via
+ * BetterAuth's databaseHooks.user.create.before callback.
  */
 export const users = pgTable(
   "users",
   {
-    id: uuid("id")
-      .primaryKey()
-      .references(() => authUsers.id, { onDelete: "restrict" }),
+    // BetterAuth-owned fields
+    id: text("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    bio: text("bio"),
-    avatarUrl: varchar("avatar_url", { length: 2048 }),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    image: varchar("image", { length: 2048 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+
+    // App-specific fields
     vanitySlug: varchar("vanity_slug", { length: 50 }).notNull().unique(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    bio: text("bio"),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     uniqueIndex("users_vanity_slug_idx").on(table.vanitySlug),
     index("users_deleted_at_idx").on(table.deletedAt),
+    uniqueIndex("users_email_idx").on(table.email),
   ]
 );

@@ -1,11 +1,5 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import type {
-  AuthUser,
-  AuthSession,
-  AuthError,
-  AuthState,
-  AuthResult,
-} from "@/types/auth";
+import type { AuthUser, AuthError, AuthState, AuthResult } from "@/types/auth";
 
 describe("Auth Types", () => {
   describe("AuthError interface", () => {
@@ -18,65 +12,44 @@ describe("Auth Types", () => {
       expect(error.code).toBe("invalid_credentials");
       expect(error.message).toBe("Invalid email or password");
     });
-
-    it("should allow optional status property", () => {
-      const errorWithStatus: AuthError = {
-        code: "session_expired",
-        message: "Your session has expired",
-        status: 401,
-      };
-
-      expect(errorWithStatus.status).toBe(401);
-    });
-
-    it("should work without status property", () => {
-      const errorWithoutStatus: AuthError = {
-        code: "token_refresh_failed",
-        message: "Failed to refresh access token",
-      };
-
-      expect(errorWithoutStatus.status).toBeUndefined();
-    });
   });
 
   describe("AuthState discriminated union", () => {
-    it("should allow authenticated state with user and session", () => {
-      const mockUser = { id: "123", email: "test@example.com" } as AuthUser;
-      const mockSession = { access_token: "token" } as AuthSession;
+    it("should allow authenticated state with user", () => {
+      const mockUser: AuthUser = {
+        id: "123",
+        email: "test@example.com",
+        name: "Test User",
+        emailVerified: true,
+      };
 
       const authState: AuthState = {
         status: "authenticated",
         user: mockUser,
-        session: mockSession,
       };
 
       expect(authState.status).toBe("authenticated");
       expect(authState.user).toBe(mockUser);
-      expect(authState.session).toBe(mockSession);
     });
 
-    it("should allow unauthenticated state with null user and session", () => {
+    it("should allow unauthenticated state with null user", () => {
       const authState: AuthState = {
         status: "unauthenticated",
         user: null,
-        session: null,
       };
 
       expect(authState.status).toBe("unauthenticated");
       expect(authState.user).toBeNull();
-      expect(authState.session).toBeNull();
     });
 
-    it("should allow loading state with null user and session", () => {
+    it("should allow loading state with null user", () => {
       const authState: AuthState = {
         status: "loading",
         user: null,
-        session: null,
       };
 
       expect(authState.status).toBe("loading");
       expect(authState.user).toBeNull();
-      expect(authState.session).toBeNull();
     });
   });
 
@@ -107,40 +80,12 @@ describe("Auth Types", () => {
         expect(failureResult.error.code).toBe("invalid_credentials");
       }
     });
-
-    it("should work with different data types", () => {
-      const stringResult: AuthResult<string> = {
-        success: true,
-        data: "success",
-      };
-
-      const numberResult: AuthResult<number> = {
-        success: true,
-        data: 42,
-      };
-
-      const objectResult: AuthResult<{ id: string; name: string }> = {
-        success: true,
-        data: { id: "1", name: "Test" },
-      };
-
-      expect(stringResult.data).toBe("success");
-      expect(numberResult.data).toBe(42);
-      expect(objectResult.data).toEqual({ id: "1", name: "Test" });
-    });
   });
 
   describe("Type exports", () => {
-    it("should export AuthUser type (re-exported from supabase)", () => {
-      // This test verifies the type is accessible
+    it("should export AuthUser type", () => {
       const user = {} as AuthUser;
       expectTypeOf(user).toMatchTypeOf<AuthUser>();
-    });
-
-    it("should export AuthSession type (re-exported from supabase)", () => {
-      // This test verifies the type is accessible
-      const session = {} as AuthSession;
-      expectTypeOf(session).toMatchTypeOf<AuthSession>();
     });
 
     it("should export AuthError interface", () => {
@@ -149,7 +94,7 @@ describe("Auth Types", () => {
     });
 
     it("should export AuthState type", () => {
-      const state: AuthState = { status: "loading", user: null, session: null };
+      const state: AuthState = { status: "loading", user: null };
       expectTypeOf(state).toMatchTypeOf<AuthState>();
     });
 

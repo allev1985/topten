@@ -1,183 +1,195 @@
-# myfaves (TopTen)
+# myfaves
 
-A platform that empowers individuals to curate and share personalized collections of their favorite places. Each list is organized around a specific category—such as coffee shops, hiking trails, or restaurants—allowing users to build focused, meaningful lists that reflect their preferences and local expertise.
+A platform for curating and sharing personalized collections of favourite places. Each list is focused around a category — coffee shops, hiking trails, restaurants — letting users build meaningful, shareable local expertise.
 
 ## Quick Start
 
+### Prerequisites
+
+| Requirement | Minimum version | Check                |
+|-------------|-----------------|----------------------|
+| Node.js     | 20.x            | `node --version`     |
+| pnpm        | 8.x             | `pnpm --version`     |
+| Docker      | 24.x            | `docker --version`   |
+
+### 1. Install dependencies
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd topten
-
-# Install dependencies
 pnpm install
-
-# Copy environment file and configure
-cp .env.example .env.local
-
-# Start local Supabase (requires Docker)
-pnpm supabase:start
-
-# Run database migrations and seed data
-pnpm db:push
-pnpm db:seed
-
-# Start the development server
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### 2. Configure environment
 
-## Prerequisites
+```bash
+cp .env.example .env.local
+```
 
-| Requirement | Minimum Version | Check Command      |
-| ----------- | --------------- | ------------------ |
-| Node.js     | 20.0.0          | `node --version`   |
-| pnpm        | 8.0.0           | `pnpm --version`   |
-| Docker      | 24.0.0          | `docker --version` |
-| Git         | 2.40.0          | `git --version`    |
+Edit `.env.local` and fill in:
 
-## Documentation
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `AUTH_SECRET` | Yes | `openssl rand -base64 32` |
+| `NEXT_PUBLIC_APP_URL` | Yes | `http://localhost:3000` for local dev |
+| `DATABASE_URL` | Yes | Default: `postgresql://postgres:postgres@localhost:5432/topten` |
+| `GOOGLE_PLACES_API_KEY` | Yes | Server-side only — no `NEXT_PUBLIC_` prefix |
+| `SMTP_*` | No | Defaults point to local Mailhog (started with Docker) |
 
-- **[Quickstart Guide](docs/QUICKSTART.md)** - Detailed setup instructions
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Architecture Decisions](docs/decisions/high-level.md)** - Technology choices and rationale
+### 3. Start the database and mail server
 
-## Available Commands
+```bash
+pnpm dev:start        # starts Postgres (5432) + Mailhog SMTP (1025)
+```
+
+Check containers are running:
+
+```bash
+pnpm dev:status
+```
+
+### 4. Initialise the database
+
+```bash
+pnpm db:migrate       # creates tables from src/db/migrations/0000_init.sql
+pnpm db:seed          # optional: seed with sample data
+```
+
+### 5. Start the app
+
+```bash
+pnpm dev              # http://localhost:3000
+```
+
+To inspect emails sent during signup / password reset:
+
+```bash
+pnpm dev:email        # opens Mailhog UI at http://localhost:8025
+```
+
+---
+
+## Stopping the environment
+
+```bash
+pnpm dev:stop         # stops Postgres + Mailhog containers
+```
+
+---
+
+## Commands
 
 ### Development
 
-| Command      | Description                          |
-| ------------ | ------------------------------------ |
-| `pnpm dev`   | Start development server (port 3000) |
-| `pnpm build` | Build production bundle              |
-| `pnpm start` | Start production server              |
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server (port 3000) |
+| `pnpm build` | Production build |
+| `pnpm typecheck` | TypeScript type checking |
+
+### Infrastructure (Docker)
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev:start` | Start Postgres + Mailhog |
+| `pnpm dev:stop` | Stop containers |
+| `pnpm dev:status` | Show running containers |
+| `pnpm dev:email` | Open Mailhog UI (http://localhost:8025) |
 
 ### Database
 
-| Command               | Description                            |
-| --------------------- | -------------------------------------- |
-| `pnpm supabase:start` | Start local Supabase services          |
-| `pnpm supabase:stop`  | Stop local Supabase services           |
-| `pnpm db:push`        | Push schema changes to database        |
-| `pnpm db:seed`        | Seed database with initial data        |
-| `pnpm db:studio`      | Open Drizzle Studio (database browser) |
+| Command | Description |
+|---------|-------------|
+| `pnpm db:migrate` | Run migrations against `DATABASE_URL` |
+| `pnpm db:generate` | Generate a new migration from schema changes |
+| `pnpm db:seed` | Seed initial data |
+| `pnpm db:studio` | Open Drizzle Studio (database browser) |
 
-### Code Quality
+### Code quality
 
-| Command             | Description                      |
-| ------------------- | -------------------------------- |
-| `pnpm lint`         | Run ESLint                       |
-| `pnpm lint:fix`     | Run ESLint with auto-fix         |
-| `pnpm format`       | Format code with Prettier        |
-| `pnpm format:check` | Check formatting without changes |
-| `pnpm typecheck`    | Run TypeScript type checking     |
+| Command | Description |
+|---------|-------------|
+| `pnpm lint` | ESLint |
+| `pnpm lint:fix` | ESLint with auto-fix |
+| `pnpm format` | Prettier write |
+| `pnpm format:check` | Prettier check |
 
 ### Testing
 
-| Command              | Description                       |
-| -------------------- | --------------------------------- |
-| `pnpm test`          | Run unit tests (Vitest)           |
-| `pnpm test:watch`    | Run tests in watch mode           |
-| `pnpm test:coverage` | Run tests with coverage report    |
-| `pnpm test:e2e`      | Run end-to-end tests (Playwright) |
+| Command | Description |
+|---------|-------------|
+| `pnpm test` | All Vitest tests (unit + component + integration) |
+| `pnpm test:watch` | Watch mode |
+| `pnpm test:coverage` | Coverage report |
+| `pnpm test:e2e` | Playwright E2E tests |
+| `pnpm test:e2e:ui` | Playwright interactive UI |
 
-### Observability (local)
+### Observability (optional local stack)
 
-| Command                    | Description                                    |
-| -------------------------- | ---------------------------------------------- |
-| `pnpm observability:start` | Start local Grafana stack (requires Docker)    |
-| `pnpm observability:stop`  | Stop the observability stack                   |
-| `pnpm observability:status`| Show running container status                  |
+| Command | Description |
+|---------|-------------|
+| `pnpm observability:start` | Start Grafana + Tempo + Prometheus + Loki + OTel Collector |
+| `pnpm observability:stop` | Stop the stack |
+| `pnpm observability:status` | Show running containers |
 
-Open [http://localhost:3001](http://localhost:3001) for the Grafana dashboard after starting the stack.
+Grafana runs at http://localhost:3001. Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in `.env.local` to connect the app.
 
-The stack includes:
-
-| Service         | Port | Purpose                                      |
-| --------------- | ---- | -------------------------------------------- |
-| Grafana         | 3001 | Dashboards — traces, metrics, logs           |
-| OTel Collector  | 4318 | OTLP HTTP receiver (app → collector)         |
-| Prometheus      | 9090 | Metrics storage                              |
-| Grafana Tempo   | 3200 | Distributed trace storage                   |
-| Grafana Loki    | 3100 | Log aggregation                              |
-
-The Next.js app exports telemetry via `instrumentation.ts` using the [OpenTelemetry SDK](https://opentelemetry.io/docs/languages/js/). Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in `.env.local` to connect.
-
-**Log levels** are controlled by `LOG_LEVEL` in `.env.local` (`trace` | `debug` | `info` | `warn` | `error` | `fatal`). Defaults to `debug` in development and `info` in production.
-
-Logs are written as newline-delimited JSON. For human-readable output during development:
+For human-readable logs during development:
 
 ```bash
 pnpm dev 2>&1 | pnpm pino-pretty
 ```
 
-## Technology Stack
+---
 
-| Layer          | Technology                                          |
-| -------------- | --------------------------------------------------- |
-| Framework      | Next.js (App Router)                                |
-| Database       | Supabase (Postgres)                                 |
-| ORM            | Drizzle                                             |
-| Auth           | Supabase Auth                                       |
-| Styling        | Tailwind CSS + shadcn/ui                            |
-| Places API     | Google Places API                                   |
-| Logging        | Pino (structured JSON)                              |
-| Telemetry      | OpenTelemetry SDK (traces + metrics)                |
-| Observability  | Grafana + Tempo + Prometheus + Loki (local Docker)  |
-| Testing        | Vitest + React Testing Library + Playwright         |
-| Linting        | ESLint + Prettier                                   |
-| Local Dev      | Node.js + pnpm + Supabase CLI + Docker              |
+## Technology stack
 
-## Authentication Architecture
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js (App Router) |
+| Database | PostgreSQL (Docker) |
+| ORM | Drizzle |
+| Auth | BetterAuth (MIT) |
+| Styling | Tailwind CSS + shadcn/ui |
+| Places API | Google Places API (server-side only) |
+| Logging | Pino (structured JSON) |
+| Telemetry | OpenTelemetry SDK |
+| Observability | Grafana + Tempo + Prometheus + Loki |
+| Testing | Vitest + React Testing Library + Playwright |
 
-This application uses **Supabase Auth** with a service-based architecture:
-
-- **Auth Service** (`src/lib/auth/service.ts`) - Centralized auth logic
-- **Server Actions** (`src/actions/auth-actions.ts`) - Call service directly (no HTTP overhead)
-- **Middleware** (`src/middleware.ts`) - Protects routes, manages sessions
-
-See [Authentication Documentation](docs/decisions/authentication.md) for details.
-
-## Project Structure
+## Project structure
 
 ```
 topten/
 ├── src/
-│   ├── app/                 # Next.js App Router pages & API routes
-│   │   └── api/             # API route handlers
-│   ├── components/          # React components
-│   │   ├── ui/              # shadcn/ui components
-│   │   ├── auth/            # Auth-related components
-│   │   ├── lists/           # List-related components
-│   │   └── shared/          # Shared/common components
-│   ├── db/                  # Database layer
-│   │   ├── schema/          # Drizzle schema definitions
-│   │   └── seed/            # Seed data scripts
-│   ├── hooks/               # Custom React hooks
-│   ├── lib/                 # Shared utilities
-│   │   ├── auth/            # Auth helpers and middleware
-│   │   ├── config/          # Route configuration
-│   │   ├── supabase/        # Supabase client utilities
-│   │   └── utils/           # General utilities
-│   ├── schemas/             # Zod validation schemas
-│   └── types/               # TypeScript types
-├── observability/           # Local observability stack config
-│   ├── grafana/             # Grafana provisioning (datasources + dashboards)
-│   ├── otel-collector/      # OpenTelemetry Collector routing config
-│   ├── prometheus/          # Prometheus scrape config
-│   ├── tempo/               # Grafana Tempo config
-│   └── loki/                # Grafana Loki config
-├── supabase/
-│   └── migrations/          # Database migrations
+│   ├── app/              # Next.js App Router pages + /api/auth catch-all
+│   ├── actions/          # Server actions (auth-actions.ts etc.)
+│   ├── components/       # React components
+│   │   └── ui/           # shadcn/ui — do not edit directly
+│   ├── db/
+│   │   ├── schema/       # Drizzle table definitions
+│   │   ├── migrations/   # SQL migrations (0000_init.sql)
+│   │   └── seed/         # Seed scripts
+│   ├── lib/
+│   │   ├── auth/         # BetterAuth config + service + helpers
+│   │   ├── config/       # Env validation + app constants
+│   │   └── services/     # Logging, email, Google Places
+│   ├── schemas/          # Zod validation schemas
+│   └── types/            # Shared TypeScript types
+├── observability/        # Local Grafana stack config
 ├── tests/
-│   ├── unit/                # Vitest unit tests
-│   ├── integration/         # Integration tests
-│   ├── component/           # React Testing Library tests
-│   └── e2e/                 # Playwright E2E tests
-└── docs/                    # Documentation
+│   ├── unit/
+│   ├── component/
+│   ├── integration/
+│   └── e2e/
+└── docs/
+    └── decisions/        # Architecture Decision Records
 ```
+
+## Authentication
+
+Auth uses **BetterAuth** with a service-based architecture — server actions call `src/lib/auth/service.ts` directly, with no HTTP round-trip. Route protection is handled by `src/proxy.ts` (Next.js middleware) via session-cookie presence, with full DB-backed verification in server actions and pages.
+
+See [docs/decisions/authentication.md](docs/decisions/authentication.md) for details.
 
 ## License
 
-This project is proprietary. See [LICENSE](LICENSE) for details.
+Proprietary. See [LICENSE](LICENSE).

@@ -10,25 +10,19 @@ import "server-only";
 import { z } from "zod";
 import { config as clientConfig } from "./client";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
-
-// ---------------------------------------------------------------------------
-// Env schema
-// ---------------------------------------------------------------------------
 
 const logLevelDefault =
   process.env.NODE_ENV === "production" ? "info" : "debug";
 
 const envSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.string().trim().min(1),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().trim().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1),
+  AUTH_SECRET: z.string().trim().min(1),
+  NEXT_PUBLIC_APP_URL: z.string().trim().min(1),
   DATABASE_URL: z.string().trim().min(1),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
+  SMTP_HOST: z.string().default("localhost"),
+  SMTP_PORT: z.coerce.number().default(1025),
+  SMTP_FROM: z.string().default("noreply@myfaves.local"),
   LOG_LEVEL: z.preprocess(
     (value) => {
       if (typeof value !== "string") return value;
@@ -56,22 +50,20 @@ if (!parsed.success) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Config object
-// ---------------------------------------------------------------------------
-
 export const config = {
   ...clientConfig,
-  supabase: {
-    url: parsed.data.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    serviceRoleKey: parsed.data.SUPABASE_SERVICE_ROLE_KEY,
-  },
+  authSecret: parsed.data.AUTH_SECRET,
+  appUrl: parsed.data.NEXT_PUBLIC_APP_URL,
   db: {
     url: parsed.data.DATABASE_URL,
   },
   googlePlaces: {
     apiKey: parsed.data.GOOGLE_PLACES_API_KEY ?? "",
+  },
+  smtp: {
+    host: parsed.data.SMTP_HOST,
+    port: parsed.data.SMTP_PORT,
+    from: parsed.data.SMTP_FROM,
   },
   log: {
     level: parsed.data.LOG_LEVEL as LogLevel,
@@ -82,14 +74,9 @@ export const config = {
   },
 } as const;
 
-// ---------------------------------------------------------------------------
-// Utilities that depend on runtime context (not pure config values)
-// ---------------------------------------------------------------------------
-
 /**
  * Resolve the application base URL.
- * Prefers the request origin (from headers) over the static env var.
  */
 export function getAppUrl(requestOrigin?: string | null): string {
-  return requestOrigin ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+  return requestOrigin ?? config.appUrl;
 }

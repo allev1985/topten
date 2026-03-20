@@ -1,8 +1,8 @@
 import {
   pgTable,
   uuid,
-  varchar,
   text,
+  varchar,
   boolean,
   timestamp,
   index,
@@ -14,7 +14,7 @@ export const lists = pgTable(
   "lists",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => users.id),
     title: varchar("title", { length: 255 }).notNull(),

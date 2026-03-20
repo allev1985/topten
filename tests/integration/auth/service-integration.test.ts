@@ -1,315 +1,215 @@
 /**
  * Integration tests for Auth Service
  *
- * Tests complete authentication workflows with realistic Supabase mocks
- * to validate end-to-end auth flows.
+ * Tests complete authentication workflows using BetterAuth mocks to validate
+ * end-to-end auth flows across multiple operations.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   signup,
   login,
   logout,
   resetPassword,
   updatePassword,
+  changePassword,
   getSession,
-  refreshSession,
-  verifyEmail,
 } from "@/lib/auth/service";
-import * as supabaseServer from "@/lib/supabase/server";
-import * as sessionHelpers from "@/lib/auth/helpers/session";
+import { AuthServiceError } from "@/lib/auth/service/errors";
+import { TEST_CREDENTIALS, TEST_TOKENS } from "../../fixtures/auth";
 import {
   createMockUser,
-  createMockSession,
-  TEST_CREDENTIALS,
-  TEST_TOKENS,
-} from "../../utils/auth";
+  createMockBetterAuthSession,
+} from "../../utils/auth/mocks";
 
-// Mock dependencies
-vi.mock("@/lib/supabase/server");
-vi.mock("@/lib/utils/formatting/email", () => ({
-  maskEmail: (email: string) => email.replace(/@.+$/, "@***"),
+// Mock next/headers
+vi.mock("next/headers", () => ({
+  headers: vi.fn().mockResolvedValue(new Headers()),
 }));
-vi.mock("@/lib/auth/helpers/session");
+
+// Mock the auth instance — use vi.hoisted so the object is available when the factory runs
+const mockAuthApi = vi.hoisted(() => ({
+  signUpEmail: vi.fn(),
+  signInEmail: vi.fn(),
+  signOut: vi.fn(),
+  getSession: vi.fn(),
+  requestPasswordReset: vi.fn(),
+  resetPassword: vi.fn(),
+  changePassword: vi.fn(),
+}));
+
+vi.mock("@/lib/auth/auth", () => ({
+  auth: { api: mockAuthApi },
+}));
+
+vi.mock("@/lib/utils/formatting/email", () => ({
+  maskEmail: (email: string) => email,
+}));
+
+vi.mock("@/lib/services/logging", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
 
 describe("Auth Service Integration Tests", () => {
-  let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
-
-  function createMockSupabaseClient() {
-    return {
-      auth: {
-        signUp: vi.fn(),
-        signInWithPassword: vi.fn(),
-        signOut: vi.fn(),
-        getUser: vi.fn(),
-        getSession: vi.fn(),
-        resetPasswordForEmail: vi.fn(),
-        updateUser: vi.fn(),
-        verifyOtp: vi.fn(),
-        refreshSession: vi.fn(),
-      },
-    };
-  }
+  const testUser = createMockUser();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase = createMockSupabaseClient();
-    vi.mocked(supabaseServer.createClient).mockResolvedValue(
-      mockSupabase as unknown as Awaited<
-        ReturnType<typeof supabaseServer.createClient>
-      >
-    );
   });
 
-  describe("Workflow 1: Complete Signup Flow", () => {
-    it("should complete signup → email verification → login workflow", async () => {
-      const testUser = createMockUser();
-      const testSession = createMockSession();
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-      // Step 1: Signup
-      mockSupabase.auth.signUp.mockResolvedValue({
-        data: { user: testUser, session: null },
-        error: null,
+  describe("Workflow 1: Signup → Login", () => {
+    it("completes signup then login after email verification", async () => {
+      // Step 1: Signup — email not yet verified
+      mockAuthApi.signUpEmail.mockResolvedValue({
+        user: { ...testUser, emailVerified: false },
       });
 
       const signupResult = await signup(
         TEST_CREDENTIALS.email,
-        TEST_CREDENTIALS.password
+        TEST_CREDENTIALS.password,
+        "Test User"
       );
 
       expect(signupResult.requiresEmailConfirmation).toBe(true);
-      expect(signupResult.user).toEqual(testUser);
-      expect(signupResult.session).toBeNull();
+      expect(signupResult.user?.id).toBe(testUser.id);
 
-      // Step 2: Verify email
-      mockSupabase.auth.verifyOtp.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
-
-      const verifyResult = await verifyEmail(
-        TEST_TOKENS.validTokenHash,
-        "email"
-      );
-
-      expect(verifyResult.user).toEqual(testUser);
-      expect(verifyResult.session).toBeDefined();
-
-      // Step 3: Login
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
+      // Step 2: Login after email is verified externally
+      mockAuthApi.signInEmail.mockResolvedValue({ user: testUser });
 
       const loginResult = await login(
         TEST_CREDENTIALS.email,
         TEST_CREDENTIALS.password
       );
 
-      expect(loginResult.user).toEqual(testUser);
-      expect(loginResult.session).toBeDefined();
+      expect(loginResult.user.id).toBe(testUser.id);
+      expect(loginResult.user.email).toBe(TEST_CREDENTIALS.email);
     });
   });
 
   describe("Workflow 2: Password Reset Flow", () => {
-    it("should complete password reset request → update → login workflow", async () => {
-      const testUser = createMockUser();
-      const testSession = createMockSession();
-
+    it("completes request → token update → login with new password", async () => {
       // Step 1: Request password reset
-      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
-        error: null,
-      });
+      mockAuthApi.requestPasswordReset.mockResolvedValue(undefined);
 
       const resetResult = await resetPassword(TEST_CREDENTIALS.email);
 
       expect(resetResult.success).toBe(true);
 
-      // Step 2: Update password with OTP token
-      mockSupabase.auth.verifyOtp.mockResolvedValue({
-        data: { user: testUser },
-        error: null,
-      });
+      // Step 2: Update password with reset token
+      mockAuthApi.resetPassword.mockResolvedValue(undefined);
 
-      mockSupabase.auth.updateUser.mockResolvedValue({
-        data: { user: testUser },
-        error: null,
-      });
-
-      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
-
-      const updateResult = await updatePassword("NewPassword123!", {
-        token_hash: TEST_TOKENS.validTokenHash,
-        type: "recovery",
-      });
+      const updateResult = await updatePassword(
+        "NewPassword123!",
+        TEST_TOKENS.validTokenHash
+      );
 
       expect(updateResult.success).toBe(true);
 
       // Step 3: Login with new password
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
+      mockAuthApi.signInEmail.mockResolvedValue({ user: testUser });
 
       const loginResult = await login(
         TEST_CREDENTIALS.email,
         "NewPassword123!"
       );
 
-      expect(loginResult.user).toEqual(testUser);
-      expect(loginResult.session).toBeDefined();
+      expect(loginResult.user.id).toBe(testUser.id);
     });
   });
 
   describe("Workflow 3: Session Lifecycle", () => {
-    it("should handle login → get session → refresh session → logout workflow", async () => {
-      const testUser = createMockUser();
-      const testSession = createMockSession();
+    it("handles login → get session → logout → verify session gone", async () => {
+      const mockSession = createMockBetterAuthSession();
 
       // Step 1: Login
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
+      mockAuthApi.signInEmail.mockResolvedValue({ user: testUser });
 
       const loginResult = await login(
         TEST_CREDENTIALS.email,
         TEST_CREDENTIALS.password
       );
 
-      expect(loginResult.user).toEqual(testUser);
+      expect(loginResult.user.id).toBe(testUser.id);
 
       // Step 2: Get session
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: testSession },
-        error: null,
-      });
-
-      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
-        isValid: true,
-        user: testUser,
-        expiresAt: new Date(testSession.expires_at! * 1000),
-        isExpiringSoon: false,
-      });
+      mockAuthApi.getSession.mockResolvedValue(mockSession);
 
       const sessionResult = await getSession();
 
       expect(sessionResult.authenticated).toBe(true);
-      expect(sessionResult.user).toEqual(testUser);
+      expect(sessionResult.user?.id).toBe(testUser.id);
 
-      // Step 3: Refresh session
-      const refreshedSession = createMockSession(7200); // 2 hours
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: refreshedSession },
-        error: null,
-      });
-
-      const refreshResult = await refreshSession();
-
-      expect(refreshResult.session.access_token).toBe(
-        refreshedSession.access_token
-      );
-
-      // Step 4: Logout
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: testUser },
-        error: null,
-      });
-
-      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+      // Step 3: Logout
+      mockAuthApi.getSession.mockResolvedValue(mockSession);
+      mockAuthApi.signOut.mockResolvedValue(undefined);
 
       const logoutResult = await logout();
 
       expect(logoutResult.success).toBe(true);
 
-      // Step 5: Verify session is gone
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
+      // Step 4: Session is gone after logout
+      mockAuthApi.getSession.mockResolvedValue(null);
 
-      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
-        isValid: false,
-        user: null,
-        expiresAt: null,
-        isExpiringSoon: false,
-      });
+      const finalSession = await getSession();
 
-      const finalSessionResult = await getSession();
-
-      expect(finalSessionResult.authenticated).toBe(false);
+      expect(finalSession.authenticated).toBe(false);
+      expect(finalSession.user).toBeNull();
     });
   });
 
   describe("Workflow 4: Password Change Flow", () => {
-    it("should handle login → change password → logout → login with new password", async () => {
-      const testUser = createMockUser();
-      const testSession = createMockSession();
+    it("handles change password then login with new password", async () => {
+      // Step 1: Change password
+      mockAuthApi.changePassword.mockResolvedValue(undefined);
 
-      // Step 1: Login
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
+      const changeResult = await changePassword(
+        TEST_CREDENTIALS.password,
+        "NewPassword456!"
+      );
 
-      await login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.password);
+      expect(changeResult.success).toBe(true);
 
-      // Step 2: Change password (session-based)
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: testUser },
-        error: null,
-      });
+      // Step 2: Login with new password
+      mockAuthApi.signInEmail.mockResolvedValue({ user: testUser });
 
-      mockSupabase.auth.updateUser.mockResolvedValue({
-        data: { user: testUser },
-        error: null,
-      });
-
-      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
-
-      const updateResult = await updatePassword("NewPassword456!");
-
-      expect(updateResult.success).toBe(true);
-
-      // Step 3: Login with new password
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: testSession },
-        error: null,
-      });
-
-      const newLoginResult = await login(
+      const loginResult = await login(
         TEST_CREDENTIALS.email,
         "NewPassword456!"
       );
 
-      expect(newLoginResult.user).toEqual(testUser);
-      expect(newLoginResult.session).toBeDefined();
+      expect(loginResult.user.id).toBe(testUser.id);
     });
   });
 
-  describe("State Transitions and Validation", () => {
-    it("should maintain consistent user state across operations", async () => {
+  describe("State Transitions", () => {
+    it("maintains consistent user ID across signup, login, and session", async () => {
       const consistentUserId = "consistent-user-id";
-      const testUser = createMockUser({ id: consistentUserId });
+      const specificUser = createMockUser({ id: consistentUserId });
 
       // Signup
-      mockSupabase.auth.signUp.mockResolvedValue({
-        data: { user: testUser, session: null },
-        error: null,
+      mockAuthApi.signUpEmail.mockResolvedValue({
+        user: { ...specificUser, emailVerified: false },
       });
 
       const signupResult = await signup(
         TEST_CREDENTIALS.email,
-        TEST_CREDENTIALS.password
+        TEST_CREDENTIALS.password,
+        "Test User"
       );
 
       expect(signupResult.user?.id).toBe(consistentUserId);
 
       // Login
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: testUser, session: createMockSession() },
-        error: null,
-      });
+      mockAuthApi.signInEmail.mockResolvedValue({ user: specificUser });
 
       const loginResult = await login(
         TEST_CREDENTIALS.email,
@@ -319,56 +219,41 @@ describe("Auth Service Integration Tests", () => {
       expect(loginResult.user.id).toBe(consistentUserId);
 
       // Get session
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: createMockSession() },
-        error: null,
-      });
-
-      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
-        isValid: true,
-        user: testUser,
-        expiresAt: new Date(),
-        isExpiringSoon: false,
-      });
+      mockAuthApi.getSession.mockResolvedValue(
+        createMockBetterAuthSession({ userId: consistentUserId })
+      );
 
       const sessionResult = await getSession();
 
       expect(sessionResult.user?.id).toBe(consistentUserId);
     });
 
-    it("should handle session expiry and refresh correctly", async () => {
-      const testSession = createMockSession(3600);
+    it("always returns success for reset password (enumeration protection)", async () => {
+      // Success case — email exists
+      mockAuthApi.requestPasswordReset.mockResolvedValue(undefined);
 
-      // Get session
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: testSession },
-        error: null,
-      });
+      const successResult = await resetPassword("exists@example.com");
 
-      vi.mocked(sessionHelpers.getSessionInfo).mockReturnValue({
-        isValid: true,
-        user: createMockUser(),
-        expiresAt: new Date(testSession.expires_at! * 1000),
-        isExpiringSoon: false,
-      });
+      expect(successResult.success).toBe(true);
 
-      const sessionResult = await getSession();
-
-      expect(sessionResult.authenticated).toBe(true);
-
-      // Refresh session
-      const refreshedSession = createMockSession(7200);
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: refreshedSession },
-        error: null,
-      });
-
-      const refreshResult = await refreshSession();
-
-      expect(refreshResult.session.expiresAt).toBeDefined();
-      expect(refreshResult.session.access_token).toBe(
-        refreshedSession.access_token
+      // Failure case — email doesn't exist; service still returns success
+      mockAuthApi.requestPasswordReset.mockRejectedValue(
+        new Error("User not found")
       );
+
+      const failResult = await resetPassword("nonexistent@example.com");
+
+      expect(failResult.success).toBe(true);
+    });
+
+    it("propagates AuthServiceError for invalid credentials on login", async () => {
+      mockAuthApi.signInEmail.mockRejectedValue(
+        new Error("Invalid email or password")
+      );
+
+      await expect(
+        login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.weakPassword)
+      ).rejects.toThrow(AuthServiceError);
     });
   });
 });

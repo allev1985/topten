@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772496000000,
-      "tag": "0000_initial_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1741046400000,
-      "tag": "0001_add_place_indexes",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1741132800000,
-      "tag": "0002_add_user_id_to_places",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1741219200000,
-      "tag": "0003_add_place_google_fields",
+      "when": 1742428800000,
+      "tag": "0000_init",
       "breakpoints": true
     }
   ]

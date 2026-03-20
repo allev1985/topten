@@ -29,10 +29,11 @@ pnpm db:migrate   # Run migrations
 pnpm db:seed      # Seed initial data
 pnpm db:studio    # Drizzle Studio GUI
 
-# Local Supabase (requires Docker)
-pnpm supabase:start
-pnpm supabase:stop
-pnpm supabase:status
+# Local dev infrastructure — Postgres + Mailhog (requires Docker)
+pnpm dev:start    # Start postgres (port 5432) and Mailhog SMTP (port 1025)
+pnpm dev:stop     # Stop containers
+pnpm dev:status   # Check running containers
+pnpm dev:email    # Open Mailhog UI at http://localhost:8025
 
 # Local observability stack — Grafana at http://localhost:3001 (requires Docker)
 pnpm observability:start   # Start Grafana, Tempo, Prometheus, Loki, OTel Collector
@@ -142,10 +143,12 @@ log.error({ method: "doThing", err }, "Thing failed");
 ## Environment variables
 
 ```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-DATABASE_URL
+AUTH_SECRET                    # generate: openssl rand -base64 32
+NEXT_PUBLIC_APP_URL            # e.g. http://localhost:3000
+DATABASE_URL                   # e.g. postgresql://postgres:postgres@localhost:5432/topten
+SMTP_HOST                      # default: localhost
+SMTP_PORT                      # default: 1025 (Mailhog)
+SMTP_FROM                      # default: noreply@myfaves.local
 GOOGLE_PLACES_API_KEY          # server-side only
 LOG_LEVEL                      # trace|debug|info|warn|error|fatal (optional)
 OTEL_SERVICE_NAME              # defaults to "topten" (optional)

@@ -1,61 +1,37 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { NextRequest, NextResponse } from "next/server";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
-// Mock environment variables
-const mockEnv = {
-  NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
-};
-
-// Store original process.env
-const originalEnv = { ...process.env };
-
-// Mock Supabase SSR
-const mockGetUser = vi.fn();
-const mockCreateServerClient = vi.fn();
-
-vi.mock("@supabase/ssr", () => ({
-  createServerClient: (...args: unknown[]) => mockCreateServerClient(...args),
-}));
-
-// Mock updateSession
-const mockUpdateSession = vi.fn();
-vi.mock("@/lib/supabase/middleware", () => ({
-  updateSession: (...args: unknown[]) => mockUpdateSession(...args),
+// Mock logging to avoid env var validation
+vi.mock("@/lib/services/logging", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
 }));
 
 describe("Auth Middleware Integration", () => {
+  const SESSION_COOKIE = "better-auth.session_token";
+
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Set up environment variables
-    process.env = { ...originalEnv, ...mockEnv };
-
-    // Default mock implementations
-    mockCreateServerClient.mockReturnValue({
-      auth: {
-        getUser: mockGetUser,
-      },
-    });
-
-    mockUpdateSession.mockImplementation((request: NextRequest) => {
-      return NextResponse.next({ request });
-    });
+    vi.resetModules();
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
-  });
+  function makeRequest(path: string, withSessionCookie = false): NextRequest {
+    const request = new NextRequest(`http://localhost${path}`);
+    if (withSessionCookie) {
+      request.cookies.set(SESSION_COOKIE, "mock-session-token");
+    }
+    return request;
+  }
 
   describe("Protected Route Access Control (US1)", () => {
     it("redirects unauthenticated users from protected routes to login", async () => {
-      // Setup: No authenticated user
-      mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard/my-lists", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard/my-lists");
-
-      const response = await middleware(request);
+      const response = await proxy(request);
 
       expect(response.status).toBe(307);
       const location = response.headers.get("Location");
@@ -63,13 +39,10 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("preserves redirectTo parameter when redirecting to login", async () => {
-      // Setup: No authenticated user
-      mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard/my-lists", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard/my-lists");
-
-      const response = await middleware(request);
+      const response = await proxy(request);
 
       const location = response.headers.get("Location");
       expect(location).toContain("redirectTo");
@@ -77,235 +50,153 @@ describe("Auth Middleware Integration", () => {
     });
 
     it("allows authenticated users to access protected routes", async () => {
-      // Setup: Authenticated user
-      mockGetUser.mockResolvedValue({
-        data: {
-          user: {
-            id: "user-123",
-            email: "test@example.com",
-          },
-        },
-        error: null,
-      });
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard", true);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard");
+      const response = await proxy(request);
 
-      const response = await middleware(request);
-
-      // Should not be a redirect
       expect(response.headers.get("Location")).toBeNull();
     });
   });
 
   describe("Public Route Accessibility (US2)", () => {
     it("allows unauthenticated users to access public routes", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/login");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/login", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      // Should call updateSession for session refresh
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
-      // Should not redirect
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows access to homepage without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows access to signup page without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/signup");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/signup", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows access to verify-email page without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/verify-email");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/verify-email", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows access to forgot-password page without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/forgot-password");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/forgot-password", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows access to reset-password page without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/reset-password");
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/reset-password", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
-    it("allows access to auth callback routes without authentication", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/auth/callback");
+    it("allows access to BetterAuth API routes without authentication", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/api/auth/sign-in/email", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
 
     it("allows authenticated users to access public routes", async () => {
-      mockUpdateSession.mockImplementation((request: NextRequest) => {
-        // Simulate authenticated session in response
-        return NextResponse.next({ request });
-      });
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/login", true);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/login");
+      const response = await proxy(request);
 
-      const response = await middleware(request);
-
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
       expect(response.headers.get("Location")).toBeNull();
     });
   });
 
   describe("Redirect URL Validation (US3)", () => {
-    it("rejects malicious redirectTo URLs (protocol-relative)", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    it("redirect URL does not contain external domains", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      // Even if someone tries to manipulate the redirect, our createLoginRedirect
-      // uses getValidatedRedirect which sanitizes the URL
-      const request = new NextRequest("http://localhost/dashboard");
-
-      const response = await middleware(request);
+      const response = await proxy(request);
 
       const location = response.headers.get("Location");
-      // The redirect URL should be validated and safe
       expect(location).not.toContain("//evil.com");
       expect(location).toContain("/login");
     });
 
-    it("preserves valid redirectTo URLs", async () => {
-      mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    it("preserves valid redirectTo URLs in the redirect", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard/settings/profile", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest(
-        "http://localhost/dashboard/settings/profile"
-      );
-
-      const response = await middleware(request);
+      const response = await proxy(request);
 
       const location = response.headers.get("Location");
       expect(location).toContain("redirectTo");
-      // URL should contain the original valid path (URL-encoded)
       expect(location).toContain("settings");
       expect(location).toContain("profile");
     });
   });
 
-  describe("Session Refresh (US4)", () => {
-    it("calls updateSession for public routes to allow session refresh", async () => {
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/login");
+  describe("Cookie-based Session Check (US4)", () => {
+    it("allows request through when session cookie is present on protected route", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard", true);
 
-      await middleware(request);
+      const response = await proxy(request);
 
-      expect(mockUpdateSession).toHaveBeenCalledWith(request);
+      expect(response.status).not.toBe(307);
+      expect(response.headers.get("Location")).toBeNull();
     });
 
-    it("validates session on protected routes", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "user-123" } },
-        error: null,
-      });
+    it("redirects when session cookie is absent on protected route", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/dashboard", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard");
+      const response = await proxy(request);
 
-      await middleware(request);
-
-      // Should call getUser to validate session
-      expect(mockGetUser).toHaveBeenCalled();
+      expect(response.status).toBe(307);
+      expect(response.headers.get("Location")).toContain("/login");
     });
 
-    it("refreshes session cookies for authenticated requests", async () => {
-      // The cookie refresh is handled by the Supabase client's setAll callback
-      // which is called when cookies need to be updated
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "user-123" } },
-        error: null,
-      });
+    it("does not require session cookie for public routes", async () => {
+      const { proxy } = await import("@/proxy");
+      const request = makeRequest("/signup", false);
 
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard");
+      const response = await proxy(request);
 
-      const response = await middleware(request);
-
-      // Response should exist and not be a redirect
-      expect(response).toBeDefined();
       expect(response.headers.get("Location")).toBeNull();
     });
   });
 
   describe("Error Handling (Fail-Closed)", () => {
-    it("redirects to login when auth service throws error", async () => {
-      // Setup: Auth service error
-      mockGetUser.mockRejectedValue(new Error("Network error"));
-
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard");
-
-      const response = await middleware(request);
-
-      // Should redirect to login (fail-closed)
-      expect(response.status).toBe(307);
-      expect(response.headers.get("Location")).toContain("/login");
-    });
-
-    it("redirects to login when getUser returns error", async () => {
-      // Setup: Auth error in response
-      mockGetUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Session expired" },
-      });
-
-      const { proxy: middleware } = await import("@/proxy");
-      const request = new NextRequest("http://localhost/dashboard");
-
-      const response = await middleware(request);
-
-      // Should redirect to login
-      expect(response.status).toBe(307);
-      expect(response.headers.get("Location")).toContain("/login");
-    });
-
     it("allows through routes not explicitly protected or public", async () => {
-      const { proxy: middleware } = await import("@/proxy");
+      const { proxy } = await import("@/proxy");
       // A route that's neither in PROTECTED_ROUTES nor PUBLIC_ROUTES
-      const request = new NextRequest("http://localhost/some-other-page");
+      const request = makeRequest("/some-other-page", false);
 
-      const response = await middleware(request);
+      const response = await proxy(request);
 
-      // Should pass through
       expect(response.headers.get("Location")).toBeNull();
     });
   });
@@ -322,7 +213,6 @@ describe("Auth Middleware Integration", () => {
     it("matcher should exclude static files", async () => {
       const { config } = await import("@/proxy");
 
-      // The matcher pattern should exclude _next/static, _next/image, etc.
       const matcherPattern = config.matcher[0];
       expect(matcherPattern).toContain("_next/static");
       expect(matcherPattern).toContain("_next/image");
