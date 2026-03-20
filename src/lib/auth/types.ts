@@ -42,8 +42,16 @@ export interface SignupResult {
   user: AuthUser | null;
 }
 
-/** Result of a successful login operation */
+/** Result of a login attempt */
 export interface LoginResult {
+  /** Populated when login completes without MFA */
+  user: AuthUser | null;
+  /** True when the login succeeded but MFA verification is still required */
+  requiresMFA: boolean;
+}
+
+/** Result of a successful MFA code verification */
+export interface VerifyMFAResult {
   user: AuthUser;
 }
 

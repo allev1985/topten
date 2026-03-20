@@ -1,12 +1,5 @@
 import type { JSX } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import Link from "next/link";
 import { PasswordResetForm } from "./password-reset-form";
 
 interface ResetPasswordPageProps {
@@ -25,36 +18,49 @@ export default async function ResetPasswordPage({
   const params = await searchParams;
   const { token } = params;
 
-  // If no token, show error state
-  if (!token) {
-    return (
-      <main>
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Invalid Reset Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>
-              The password reset link you followed appears to be invalid or has
-              expired. Please request a new one.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <p>
-              <a href="/forgot-password">Request a new reset link</a>
-            </p>
-          </CardFooter>
-        </Card>
-      </main>
-    );
-  }
-
   return (
-    <main>
-      <PasswordResetForm token={token} />
-    </main>
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-8">
+        {/* Logo */}
+        <div className="text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center transition-opacity hover:opacity-80"
+            aria-label="myfaves home"
+          >
+            <span
+              className="font-serif text-4xl leading-none tracking-tight select-none"
+              aria-label="myfaves"
+            >
+              <span className="text-foreground">my</span>
+              <span className="text-violet-700">faves</span>
+            </span>
+          </Link>
+          <p className="text-muted-foreground mt-3 text-sm">
+            {token ? "Set a new password" : "Invalid reset link"}
+          </p>
+        </div>
+
+        {/* Content */}
+        {token ? (
+          <PasswordResetForm token={token} />
+        ) : (
+          <div className="space-y-6 text-center">
+            <div className="space-y-2">
+              <p className="text-muted-foreground">
+                This password reset link is invalid or has expired. Please
+                request a new one.
+              </p>
+            </div>
+            <Link
+              href="/forgot-password"
+              className="text-muted-foreground text-sm"
+            >
+              Request a new reset link
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

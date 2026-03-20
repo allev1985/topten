@@ -18,8 +18,11 @@ import {
   resetPassword,
   updatePassword,
   changePassword,
+  sendMFACode,
+  verifyMFACode,
   AuthServiceError,
 } from "@/lib/auth";
+import { isSlugAvailable, updateSlug } from "@/lib/profile";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import { createServiceLogger } from "@/lib/services/logging";
@@ -44,6 +47,10 @@ export interface PasswordUpdateSuccessData {
   redirectTo?: string;
 }
 
+export interface VerifyMFASuccessData {
+  redirectTo: string;
+}
+
 /**
  * Signup server action
  */
@@ -53,9 +60,24 @@ export async function signupAction(
 ): Promise<ActionState<SignupSuccessData>> {
   const email = formData.get("email");
   const password = formData.get("password");
-  const name = formData.get("name") ?? email; // fall back to email if no name field
+  const confirmPassword = formData.get("confirmPassword");
+  const name = formData.get("name");
+  const vanitySlug = formData.get("vanitySlug");
 
-  const result = signupSchema.safeParse({ email, password });
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
+    return {
+      data: null,
+      error: null,
+      fieldErrors: { confirmPassword: ["Passwords do not match"] },
+      isSuccess: false,
+    };
+  }
+
+  const result = signupSchema.safeParse({ email, password, name, vanitySlug });
 
   if (!result.success) {
     return {
@@ -66,18 +88,51 @@ export async function signupAction(
     };
   }
 
+  // Pre-check slug before creating the user — safe to surface this error
+  // (does not reveal whether the email already exists)
   try {
-    await signup(
+    const slugFree = await isSlugAvailable(result.data.vanitySlug);
+    if (!slugFree) {
+      return {
+        data: null,
+        error: null,
+        fieldErrors: { vanitySlug: ["This profile URL is already taken"] },
+        isSuccess: false,
+      };
+    }
+  } catch (err) {
+    log.warn(
+      { method: "signupAction", err },
+      "Slug availability check failed — proceeding with signup"
+    );
+  }
+
+  let userId: string | undefined;
+  try {
+    const signupResult = await signup(
       result.data.email,
       result.data.password,
-      typeof name === "string" ? name : result.data.email
+      result.data.name
     );
+    userId = signupResult.user?.id ?? undefined;
   } catch (err) {
     // Log internally but still redirect — enumeration protection
     log.error(
       { method: "signupAction", err },
       "Signup error (redirecting for enumeration protection)"
     );
+  }
+
+  // Best-effort: override the auto-generated slug with the user's chosen one
+  if (userId) {
+    try {
+      await updateSlug(userId, result.data.vanitySlug);
+    } catch (err) {
+      log.warn(
+        { method: "signupAction", userId, err },
+        "Post-signup slug update failed — auto-generated slug retained"
+      );
+    }
   }
 
   // Always redirect to verify-email page (user enumeration protection)
@@ -116,7 +171,16 @@ export async function loginAction(
       "Login attempt"
     );
 
-    await login(result.data.email, result.data.password);
+    const loginResult = await login(result.data.email, result.data.password);
+
+    if (loginResult.requiresMFA) {
+      // two-factor cookie is now set — redirect to MFA verification
+      const target =
+        result.data.redirectTo && isValidRedirect(result.data.redirectTo)
+          ? result.data.redirectTo
+          : config.auth.redirectRoutes.default;
+      redirect(`/verify-mfa?redirectTo=${encodeURIComponent(target)}`);
+    }
 
     log.info(
       { method: "loginAction", email: maskEmail(result.data.email) },
@@ -208,7 +272,11 @@ export async function passwordUpdateAction(
   const confirmPassword = formData.get("confirmPassword");
   const token = formData.get("token");
 
-  if (password !== confirmPassword) {
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
     return {
       data: null,
       error: null,
@@ -291,7 +359,11 @@ export async function passwordChangeAction(
     };
   }
 
-  if (password !== confirmPassword) {
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
     return {
       data: null,
       error: null,
@@ -342,6 +414,77 @@ export async function passwordChangeAction(
       isSuccess: false,
     };
   }
+}
+
+/**
+ * Send MFA code server action
+ * Triggers BetterAuth to generate and email a one-time code to the user.
+ * Requires the two-factor cookie set during the password-login step.
+ */
+export async function sendMFACodeAction(): Promise<{ error?: string }> {
+  try {
+    await sendMFACode();
+    return {};
+  } catch (err) {
+    log.error({ method: "sendMFACodeAction", err }, "Failed to send MFA code");
+    return { error: "Failed to send verification code. Please try again." };
+  }
+}
+
+/**
+ * Verify MFA code server action
+ * Validates the submitted code and, on success, creates a full session.
+ */
+export async function verifyMFAAction(
+  _prevState: ActionState<VerifyMFASuccessData>,
+  formData: FormData
+): Promise<ActionState<VerifyMFASuccessData>> {
+  const code = formData.get("code");
+  const redirectTo = formData.get("redirectTo");
+
+  if (!code || typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
+    return {
+      data: null,
+      error: null,
+      fieldErrors: { code: ["Enter the 6-digit code from your email"] },
+      isSuccess: false,
+    };
+  }
+
+  try {
+    await verifyMFACode(code.trim());
+  } catch (err) {
+    if (err instanceof AuthServiceError) {
+      const sessionExpired =
+        err.code === "INVALID_MFA_SESSION" ||
+        err.code === "MFA_CODE_EXPIRED" ||
+        err.code === "TOO_MANY_MFA_ATTEMPTS";
+
+      return {
+        data: null,
+        error: sessionExpired
+          ? `${err.message} Please log in again.`
+          : err.message,
+        fieldErrors: {},
+        isSuccess: false,
+      };
+    }
+
+    log.error({ method: "verifyMFAAction", err }, "Unexpected error");
+    return {
+      data: null,
+      error: "Something went wrong. Please try again.",
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
+  const targetUrl =
+    typeof redirectTo === "string" && isValidRedirect(redirectTo)
+      ? redirectTo
+      : config.auth.redirectRoutes.default;
+
+  redirect(targetUrl);
 }
 
 /**

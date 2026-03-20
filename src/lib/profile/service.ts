@@ -24,6 +24,26 @@ import type {
 const log = createServiceLogger("profile-service");
 
 /**
+ * Check whether a vanity slug is available (not taken by any active user).
+ * Used during signup before a user record exists.
+ *
+ * @param vanitySlug - The slug to check (already format-validated by caller)
+ * @returns true if the slug is free to claim
+ * @throws {ProfileServiceError} code SERVICE_ERROR on DB failure
+ */
+export async function isSlugAvailable(vanitySlug: string): Promise<boolean> {
+  log.debug({ method: "isSlugAvailable" }, "Checking slug availability");
+
+  try {
+    const taken = await profileRepository.checkSlugTaken(vanitySlug);
+    return !taken;
+  } catch (err) {
+    log.error({ method: "isSlugAvailable", err }, "DB error");
+    throw profileServiceError("Failed to check URL availability.", err);
+  }
+}
+
+/**
  * Retrieve the profile data required for the settings page.
  *
  * @param userId - The authenticated user's id (FK to auth.users)

@@ -51,7 +51,7 @@ describe("route-config", () => {
     it("is a tuple type (const assertion)", () => {
       // The `as const` assertion creates a readonly tuple type
       // We verify it has the expected number of public routes
-      expect(config.auth.publicRoutes.length).toBe(7);
+      expect(config.auth.publicRoutes.length).toBe(8);
     });
   });
 

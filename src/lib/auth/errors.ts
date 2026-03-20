@@ -11,7 +11,11 @@ export type AuthServiceErrorCode =
   | "EMAIL_NOT_CONFIRMED"
   | "USER_EXISTS"
   | "WEAK_PASSWORD"
-  | "SERVICE_ERROR";
+  | "SERVICE_ERROR"
+  | "INVALID_MFA_CODE"
+  | "MFA_CODE_EXPIRED"
+  | "TOO_MANY_MFA_ATTEMPTS"
+  | "INVALID_MFA_SESSION";
 
 /**
  * Authentication service error class
@@ -96,6 +100,59 @@ export function isEmailNotVerifiedError(err: unknown): boolean {
 export function isExpiredTokenError(err: unknown): boolean {
   if (err instanceof Error) {
     return err.message.toLowerCase().includes("expired");
+  }
+  return false;
+}
+
+/**
+ * Detect invalid MFA code errors from BetterAuth twoFactor plugin.
+ */
+export function isInvalidMFACodeError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toUpperCase();
+    return msg.includes("INVALID_CODE");
+  }
+  return false;
+}
+
+/**
+ * Detect expired MFA code errors from BetterAuth twoFactor plugin.
+ */
+export function isMFACodeExpiredError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toUpperCase();
+    return msg.includes("OTP_HAS_EXPIRED");
+  }
+  return false;
+}
+
+/**
+ * Detect too-many-attempts errors from BetterAuth twoFactor plugin.
+ */
+export function isTooManyMFAAttemptsError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toUpperCase();
+    return msg.includes("TOO_MANY_ATTEMPTS");
+  }
+  return false;
+}
+
+/**
+ * Detect invalid/missing two-factor session cookie errors.
+ * BetterAuth uses "INVALID_TWO_FACTOR_COOKIE" as the machine code but
+ * "Invalid two factor cookie" as the human-readable message — check both.
+ */
+export function isInvalidMFASessionError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toUpperCase();
+    const bodyCode = (err as unknown as Record<string, unknown>)?.body as
+      | Record<string, unknown>
+      | undefined;
+    return (
+      msg.includes("INVALID_TWO_FACTOR_COOKIE") ||
+      msg.includes("INVALID TWO FACTOR COOKIE") ||
+      bodyCode?.code === "INVALID_TWO_FACTOR_COOKIE"
+    );
   }
   return false;
 }

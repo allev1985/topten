@@ -30,6 +30,9 @@ export const users = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 
+    // BetterAuth twoFactor plugin field
+    twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+
     // App-specific fields
     vanitySlug: varchar("vanity_slug", { length: 50 }).notNull().unique(),
     bio: text("bio"),

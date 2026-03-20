@@ -8,10 +8,17 @@ import {
 } from "@/schemas/auth";
 import { config } from "@/lib/config";
 
+// Base valid fields beyond email/password added when signupSchema was extended
+const validSignupBase = {
+  name: "Test User",
+  vanitySlug: "test-user",
+};
+
 describe("signupSchema", () => {
   describe("email validation", () => {
     it("accepts valid email", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "test@example.com",
         password: "SecurePass123!",
       });
@@ -20,6 +27,7 @@ describe("signupSchema", () => {
 
     it("rejects missing email", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         password: "SecurePass123!",
       });
       expect(result.success).toBe(false);
@@ -32,6 +40,7 @@ describe("signupSchema", () => {
 
     it("rejects invalid email format", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "invalid-email",
         password: "SecurePass123!",
       });
@@ -43,6 +52,7 @@ describe("signupSchema", () => {
 
     it("rejects email without domain", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "test@",
         password: "SecurePass123!",
       });
@@ -51,6 +61,7 @@ describe("signupSchema", () => {
 
     it("rejects email with invalid characters", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "test user@example.com",
         password: "SecurePass123!",
       });
@@ -59,6 +70,7 @@ describe("signupSchema", () => {
 
     it("trims whitespace from email", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "  test@example.com  ",
         password: "SecurePass123!",
       });
@@ -70,6 +82,7 @@ describe("signupSchema", () => {
 
     it("lowercases email", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "TEST@Example.COM",
         password: "SecurePass123!",
       });
@@ -81,6 +94,7 @@ describe("signupSchema", () => {
 
     it("trims and lowercases email together", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "  TEST@Example.COM  ",
         password: "SecurePass123!",
       });
@@ -96,6 +110,7 @@ describe("signupSchema", () => {
 
     it("accepts valid password with all requirements", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "SecurePass123!",
       });
@@ -104,6 +119,7 @@ describe("signupSchema", () => {
 
     it("accepts password with exactly 12 characters", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "Abcdefgh12!@",
       });
@@ -112,6 +128,7 @@ describe("signupSchema", () => {
 
     it("rejects missing password", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
       });
       expect(result.success).toBe(false);
@@ -124,6 +141,7 @@ describe("signupSchema", () => {
 
     it("rejects password shorter than 12 characters", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "Short1!",
       });
@@ -137,6 +155,7 @@ describe("signupSchema", () => {
 
     it("rejects password with 11 characters (boundary)", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "Abcdefgh1!@",
       });
@@ -145,6 +164,7 @@ describe("signupSchema", () => {
 
     it("rejects password without uppercase letter", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "securepass123!",
       });
@@ -160,6 +180,7 @@ describe("signupSchema", () => {
 
     it("rejects password without lowercase letter", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "SECUREPASS123!",
       });
@@ -175,6 +196,7 @@ describe("signupSchema", () => {
 
     it("rejects password without number", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "SecurePassword!",
       });
@@ -188,6 +210,7 @@ describe("signupSchema", () => {
 
     it("rejects password without special character", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "SecurePass1234",
       });
@@ -237,6 +260,7 @@ describe("signupSchema", () => {
 
       for (const char of specialChars) {
         const result = signupSchema.safeParse({
+          ...validSignupBase,
           email: validEmail,
           password: `SecurePass12${char}`,
         });
@@ -246,6 +270,7 @@ describe("signupSchema", () => {
 
     it("reports all validation errors at once", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: validEmail,
         password: "short",
       });
@@ -280,6 +305,7 @@ describe("signupSchema", () => {
 
     it("strips extra fields", () => {
       const result = signupSchema.safeParse({
+        ...validSignupBase,
         email: "test@example.com",
         password: "SecurePass123!",
         extraField: "should be ignored",

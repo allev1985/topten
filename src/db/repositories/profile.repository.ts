@@ -40,6 +40,23 @@ export async function getSettingsProfile(
 }
 
 /**
+ * Check whether a vanity slug is already claimed by any active user.
+ * Used during signup when no userId exists yet.
+ *
+ * @param vanitySlug - Slug to check
+ * @returns true if the slug is taken
+ */
+export async function checkSlugTaken(vanitySlug: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.vanitySlug, vanitySlug), isNull(users.deletedAt)))
+    .limit(1);
+
+  return rows.length > 0;
+}
+
+/**
  * Check whether a vanity slug is already claimed by another active user.
  *
  * @param vanitySlug - Slug to check

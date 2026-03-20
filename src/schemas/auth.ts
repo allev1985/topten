@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { config } from "@/lib/config/client";
+import { vanitySlugField } from "@/schemas/profile";
 
 const { minLength, specialCharRegex } = config.auth.password;
 const { verificationTypeEmail } = config.auth;
@@ -40,6 +41,12 @@ export const signupSchema = z.object({
       .email("Invalid email format")
   ),
   password: passwordField,
+  name: z
+    .string({ message: "Name is required" })
+    .min(1, "Name is required")
+    .max(255, "Name is too long")
+    .trim(),
+  vanitySlug: vanitySlugField,
 });
 
 /**
