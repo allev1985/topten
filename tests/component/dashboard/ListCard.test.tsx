@@ -2,23 +2,26 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ListCard } from "@/components/dashboard/ListCard";
-import type { List } from "@/types/list";
+import type { ListSummary } from "@/lib/list/types";
 
-const mockPublishedList: List = {
+const mockPublishedList: ListSummary = {
   id: "test-id-1",
   title: "Test Published List",
   slug: "a1b2",
   description: "The best coffee spots in the city.",
   isPublished: true,
   placeCount: 5,
+  createdAt: new Date("2024-01-01"),
 };
 
-const mockDraftList: List = {
+const mockDraftList: ListSummary = {
   id: "test-id-2",
   title: "Test Draft List",
   slug: "c3d4",
+  description: null,
   isPublished: false,
   placeCount: 3,
+  createdAt: new Date("2024-01-01"),
 };
 
 describe("ListCard", () => {

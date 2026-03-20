@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth/service";
+import { getSession } from "@/lib/auth";
 
 /**
  * Shared auth guard for Server Actions.

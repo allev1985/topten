@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { PublicPlaceEntry } from "@/lib/public/service/types";
+import type { PublicPlaceEntry } from "@/lib/public/types";
 import { PublicPlaceAccordionItem } from "./PublicPlaceAccordionItem";
 
 interface PublicPlaceListProps {

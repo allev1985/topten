@@ -18,8 +18,8 @@ import {
   resetPassword,
   updatePassword,
   changePassword,
-} from "@/lib/auth/service";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+  AuthServiceError,
+} from "@/lib/auth";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import { createServiceLogger } from "@/lib/services/logging";

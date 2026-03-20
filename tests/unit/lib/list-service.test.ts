@@ -7,7 +7,7 @@ import {
   publishList,
   unpublishList,
   ListServiceError,
-} from "@/lib/list/service";
+} from "@/lib/list";
 
 // ─── Repository mock setup ────────────────────────────────────────────────────
 

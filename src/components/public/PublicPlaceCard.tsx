@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { JSX } from "react";
-import type { PublicPlaceEntry } from "@/lib/public/service/types";
+import type { PublicPlaceEntry } from "@/lib/public/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 

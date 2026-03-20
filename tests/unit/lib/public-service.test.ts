@@ -4,7 +4,7 @@ import {
   getPublicListsForProfile,
   getPublicListDetail,
   PublicServiceError,
-} from "@/lib/public/service";
+} from "@/lib/public";
 
 // ─── Repository mock setup ────────────────────────────────────────────────────
 

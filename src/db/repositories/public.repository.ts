@@ -18,7 +18,7 @@ import type {
   PublicListSummary,
   PublicListDetail,
   PublicPlaceEntry,
-} from "@/lib/public/service/types";
+} from "@/lib/public/types";
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 

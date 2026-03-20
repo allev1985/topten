@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPublicProfile } from "@/lib/public/service";
+import { getPublicProfile } from "@/lib/public";
 import type { JSX } from "react";
 
 interface ProfileLayoutProps {

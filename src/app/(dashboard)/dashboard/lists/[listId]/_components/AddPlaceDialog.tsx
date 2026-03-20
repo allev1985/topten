@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { addExistingPlaceToListAction } from "@/actions/place-actions";
 import type { AddExistingPlaceSuccessData } from "@/actions/place-actions";
 import type { ActionState } from "@/types/forms";
-import type { PlaceSummary } from "@/types/place";
+import type { PlaceSummary } from "@/lib/place/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

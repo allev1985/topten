@@ -1,6 +1,6 @@
 /**
  * Type definitions for the List Service
- * @module list/service/types
+ * @module lib/list/types
  */
 
 /**

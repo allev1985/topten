@@ -14,8 +14,8 @@ import {
   updatePassword,
   changePassword,
   getSession,
-} from "@/lib/auth/service";
-import { AuthServiceError } from "@/lib/auth/service/errors";
+} from "@/lib/auth";
+import { AuthServiceError } from "@/lib/auth/errors";
 import { TEST_CREDENTIALS, TEST_TOKENS } from "../../fixtures/auth";
 import {
   createMockUser,

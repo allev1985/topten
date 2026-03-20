@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DeletePlaceDialog } from "@/app/(dashboard)/dashboard/places/_components/DeletePlaceDialog";
-import type { PlaceWithListCount } from "@/lib/place/service";
+import type { PlaceWithListCount } from "@/lib/place";
 
 // ─── Mock server action ───────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PublicPlaceCard } from "@/components/public/PublicPlaceCard";
-import type { PublicPlaceEntry } from "@/lib/public/service/types";
+import type { PublicPlaceEntry } from "@/lib/public/types";
 
 // Mock next/image to avoid Next.js Image optimisation in jsdom
 vi.mock("next/image", () => ({

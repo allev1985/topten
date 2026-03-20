@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { JSX } from "react";
-import type { PublicListSummary } from "@/lib/public/service/types";
+import type { PublicListSummary } from "@/lib/public/types";
 import {
   Card,
   CardHeader,

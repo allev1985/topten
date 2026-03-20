@@ -1,7 +1,11 @@
 /**
  * Error handling for the List Service
- * @module list/service/errors
+ * @module lib/list/errors
  */
+
+import { isUniqueViolation } from "@/lib/utils/db";
+
+export { isUniqueViolation };
 
 /**
  * Known error codes for the List Service
@@ -67,18 +71,5 @@ export function listServiceError(
     "SERVICE_ERROR",
     message ?? "An unexpected error occurred",
     originalError
-  );
-}
-
-/**
- * Returns true when the postgres.js driver error represents a unique-constraint
- * violation (code 23505). Used to detect race-condition slug conflicts.
- */
-export function isUniqueViolation(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code: string }).code === "23505"
   );
 }

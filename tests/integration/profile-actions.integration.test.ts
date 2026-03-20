@@ -59,7 +59,7 @@ vi.mock("@/db", () => {
   };
 });
 
-import { getSession } from "@/lib/auth/service";
+import { getSession } from "@/lib/auth";
 
 const mockGetSession = vi.mocked(getSession);
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PublicListCard } from "@/components/public/PublicListCard";
-import type { PublicListSummary } from "@/lib/public/service/types";
+import type { PublicListSummary } from "@/lib/public/types";
 
 // Mock next/link to render a plain anchor for testing
 vi.mock("next/link", () => ({

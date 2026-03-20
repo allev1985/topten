@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getPublicProfile, getPublicListDetail } from "@/lib/public/service";
+import { getPublicProfile, getPublicListDetail } from "@/lib/public";
 import { PublicPlaceList } from "@/components/public/PublicPlaceList";
 
 interface ListPageProps {

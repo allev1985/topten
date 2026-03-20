@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState, useTransition } from "react";
-import type { PlaceSummary } from "@/types/place";
+import type { PlaceSummary } from "@/lib/place/types";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,

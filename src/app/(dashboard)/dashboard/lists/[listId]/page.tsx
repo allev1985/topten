@@ -1,12 +1,12 @@
 import type { JSX } from "react";
 import { redirect, notFound } from "next/navigation";
-import { getSession } from "@/lib/auth/service";
+import { getSession } from "@/lib/auth";
 import {
   getPlacesByList,
   getAvailablePlacesForList,
-} from "@/lib/place/service";
-import { PlaceServiceError } from "@/lib/place/service/errors";
-import { getListsByUser } from "@/lib/list/service";
+  PlaceServiceError,
+} from "@/lib/place";
+import { getListsByUser } from "@/lib/list";
 import { PlaceList } from "./_components/PlaceList";
 
 interface ListDetailPageProps {

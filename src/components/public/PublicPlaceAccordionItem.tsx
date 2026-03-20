@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ImageIcon, ChevronDown } from "lucide-react";
 import type { JSX } from "react";
-import type { PublicPlaceEntry } from "@/lib/public/service/types";
+import type { PublicPlaceEntry } from "@/lib/public/types";
 import {
   Collapsible,
   CollapsibleTrigger,

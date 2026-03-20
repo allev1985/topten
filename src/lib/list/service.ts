@@ -27,7 +27,7 @@ import {
   slugCollisionError,
   listServiceError,
   isUniqueViolation,
-} from "./service/errors";
+} from "./errors";
 import { createServiceLogger } from "@/lib/services/logging";
 import type {
   ListSummary,
@@ -36,18 +36,7 @@ import type {
   DeleteListResult,
   PublishListResult,
   UnpublishListResult,
-} from "./service/types";
-
-export { ListServiceError };
-
-export type {
-  ListSummary,
-  CreateListResult,
-  UpdateListResult,
-  DeleteListResult,
-  PublishListResult,
-  UnpublishListResult,
-};
+} from "./types";
 
 const log = createServiceLogger("list-service");
 

@@ -1,8 +1,7 @@
 import type { JSX } from "react";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/service";
-import { getAllPlacesByUser } from "@/lib/place/service";
-import { PlaceServiceError } from "@/lib/place/service/errors";
+import { getSession } from "@/lib/auth";
+import { getAllPlacesByUser, PlaceServiceError } from "@/lib/place";
 import { PlacesClient } from "./_components/PlacesClient";
 
 /**

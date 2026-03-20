@@ -1,11 +1,16 @@
 /**
  * Type definitions for the Place Service
- * @module place/service/types
+ * @module lib/place/types
  */
 
-import type { PlaceSummary } from "@/types/place";
-
-export type { PlaceSummary };
+/** Minimal place data sufficient to render a place card. */
+export interface PlaceSummary {
+  id: string;
+  name: string;
+  address: string;
+  description: string | null;
+  heroImageUrl: string | null;
+}
 
 /**
  * Full place record returned after a mutation.

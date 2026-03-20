@@ -10,20 +10,16 @@
 
 import * as profileRepository from "@/db/repositories/profile.repository";
 import {
-  ProfileServiceError,
   slugTakenError,
   profileServiceError,
   isUniqueViolation,
-} from "./service/errors";
+} from "./errors";
 import { createServiceLogger } from "@/lib/services/logging";
 import type {
   UpdateNameResult,
   UpdateSlugResult,
   SettingsProfile,
-} from "./service/types";
-
-export { ProfileServiceError };
-export type { UpdateNameResult, UpdateSlugResult, SettingsProfile };
+} from "./types";
 
 const log = createServiceLogger("profile-service");
 

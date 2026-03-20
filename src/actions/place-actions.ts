@@ -11,8 +11,8 @@ import {
   updatePlace,
   deletePlaceFromList,
   deletePlace,
-} from "@/lib/place/service";
-import { PlaceServiceError } from "@/lib/place/service/errors";
+  PlaceServiceError,
+} from "@/lib/place";
 import { config } from "@/lib/config";
 import {
   searchPlaces,
