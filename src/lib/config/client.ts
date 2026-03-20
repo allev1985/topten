@@ -1,10 +1,10 @@
 /**
  * Client-safe configuration constants.
  *
- * No environment variables, no server secrets — safe to import from
- * Client Components. The server config (`@/lib/config`) re-exports these
- * as part of the same `config` object, so server code never needs to
- * import from here directly.
+ * May read NEXT_PUBLIC_* environment variables — no server secrets.
+ * Safe to import from Client Components. The server config (`@/lib/config`)
+ * re-exports these as part of the same `config` object, so server code never
+ * needs to import from here directly.
  */
 
 export const config = {
