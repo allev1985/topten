@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import type { JSX } from "react";
 import { getSession } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 import { getProfileForSettings } from "@/lib/profile";
 import { SlugSettingsForm } from "./_components/SlugSettingsForm";
 import { NameSettingsForm } from "./_components/NameSettingsForm";
