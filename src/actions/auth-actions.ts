@@ -64,7 +64,11 @@ export async function signupAction(
   const name = formData.get("name");
   const vanitySlug = formData.get("vanitySlug");
 
-  if (typeof password === "string" && typeof confirmPassword === "string" && password !== confirmPassword) {
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
     return {
       data: null,
       error: null,
@@ -268,7 +272,11 @@ export async function passwordUpdateAction(
   const confirmPassword = formData.get("confirmPassword");
   const token = formData.get("token");
 
-  if (typeof password === "string" && typeof confirmPassword === "string" && password !== confirmPassword) {
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
     return {
       data: null,
       error: null,
@@ -351,7 +359,11 @@ export async function passwordChangeAction(
     };
   }
 
-  if (typeof password === "string" && typeof confirmPassword === "string" && password !== confirmPassword) {
+  if (
+    typeof password === "string" &&
+    typeof confirmPassword === "string" &&
+    password !== confirmPassword
+  ) {
     return {
       data: null,
       error: null,

@@ -47,6 +47,7 @@ export function SignupForm() {
   const [hasPasswordInput, setHasPasswordInput] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
   const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentSlugRef = useRef<string>("");
 
   const passwordMismatch =
     confirmPassword.length > 0 && password !== confirmPassword;
@@ -76,6 +77,7 @@ export function SignupForm() {
 
   const handleSlugChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    currentSlugRef.current = value;
 
     if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
 
@@ -89,6 +91,7 @@ export function SignupForm() {
     slugTimerRef.current = setTimeout(async () => {
       try {
         const result = await checkSlugAvailabilityAction(value);
+        if (value !== currentSlugRef.current) return;
         if (result.available) {
           setSlugStatus("available");
         } else {
@@ -97,6 +100,7 @@ export function SignupForm() {
           );
         }
       } catch {
+        if (value !== currentSlugRef.current) return;
         setSlugStatus("idle");
       }
     }, 500);
