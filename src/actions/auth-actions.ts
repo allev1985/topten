@@ -390,12 +390,10 @@ export async function passwordChangeAction(
 
   try {
     await changePassword(currentPassword, result.data.password);
-    return {
-      data: { message: "Password updated successfully" },
-      error: null,
-      fieldErrors: {},
-      isSuccess: true,
-    };
+    // Session has been revoked by the service — redirect to login so the user
+    // re-authenticates with the new password. The notice param surfaces a
+    // confirmation message on the login page.
+    redirect("/login?notice=password_changed");
   } catch (err) {
     if (err instanceof AuthServiceError) {
       return {

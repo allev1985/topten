@@ -24,6 +24,8 @@ export interface LoginFormProps {
   defaultEmail?: string;
   /** Callback invoked on successful authentication (before redirect) */
   onSuccess?: (data: { redirectTo: string }) => void;
+  /** Informational message displayed above the form (e.g. after password change) */
+  notice?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export function LoginForm({
   redirectTo,
   defaultEmail,
   onSuccess,
+  notice,
 }: LoginFormProps) {
   const router = useRouter();
   const { state, formAction } = useFormState(loginAction);
@@ -53,6 +56,11 @@ export function LoginForm({
 
   const formContent = (
     <form action={formAction} className="space-y-4">
+      {notice && (
+        <Alert>
+          <AlertDescription>{notice}</AlertDescription>
+        </Alert>
+      )}
       {state.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>

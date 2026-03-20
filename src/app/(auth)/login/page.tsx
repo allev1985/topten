@@ -6,6 +6,7 @@ interface LoginPageProps {
   searchParams: Promise<{
     redirectTo?: string;
     email?: string;
+    notice?: string;
   }>;
 }
 
@@ -17,7 +18,12 @@ export default async function LoginPage({
   searchParams,
 }: LoginPageProps): Promise<JSX.Element> {
   const params = await searchParams;
-  const { redirectTo, email } = params;
+  const { redirectTo, email, notice } = params;
+
+  const noticeMessage =
+    notice === "password_changed"
+      ? "Your password has been changed. Please sign in again."
+      : undefined;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
@@ -43,7 +49,11 @@ export default async function LoginPage({
         </div>
 
         {/* Form */}
-        <LoginForm redirectTo={redirectTo} defaultEmail={email} />
+        <LoginForm
+          redirectTo={redirectTo}
+          defaultEmail={email}
+          notice={noticeMessage}
+        />
       </div>
     </div>
   );
