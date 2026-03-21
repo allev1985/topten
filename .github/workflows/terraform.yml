@@ -1,0 +1,64 @@
+name: Terraform
+
+on:
+  push:
+    paths:
+      - 'infrastructure/**'
+  pull_request:
+    paths:
+      - 'infrastructure/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate & Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Validate modules
+        run: |
+          for dir in modules/*/; do
+            echo "Validating $dir..."
+            cd "$dir"
+            terraform init -backend=false
+            terraform validate
+            cd ../..
+          done
+
+      - name: Run Terraform tests
+        run: |
+          cd tests
+          terraform init -backend=false
+          terraform test
+
+      - name: Install tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+      - name: Run tfsec
+        run: tfsec . --config-file .tfsec/config.yml --minimum-severity HIGH
+
+      - name: Install checkov
+        run: pip install checkov
+
+      - name: Run checkov
+        run: |
+          checkov -d modules/ \
+            --external-checks-dir policies/checkov \
+            --framework terraform \
+            --compact \
+            --quiet
