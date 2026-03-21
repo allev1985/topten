@@ -19,7 +19,6 @@ export { CacheServiceError } from "./errors";
 export type { CacheStore, CacheServiceErrorCode } from "./types";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __cacheStore: CacheStore | undefined;
 }
 
