@@ -31,7 +31,7 @@ export class RedisStore implements CacheStore {
     });
 
     this.client.on("connect", () => {
-      log.info({ method: "RedisStore" }, "Connected to Redis");
+      log.debug({ method: "RedisStore" }, "Connected to Redis");
     });
 
     // Connect eagerly but don't block construction
