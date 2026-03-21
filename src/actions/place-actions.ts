@@ -452,12 +452,14 @@ export async function deletePlaceAction(
     await deletePlaceFromList({ placeId, listId, userId: auth.userId });
 
     revalidatePath(config.routes.dashboard.listDetail(listId));
-    invalidatePublicListCaches(auth.userId).catch((err) =>
+    try {
+      await invalidatePublicListCaches(auth.userId);
+    } catch (err) {
       log.warn(
         { method: "deletePlaceAction", err },
         "Cache invalidation failed"
-      )
-    );
+      );
+    }
 
     return {
       data: { success: true },
