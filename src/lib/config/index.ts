@@ -36,6 +36,8 @@ const envSchema = z.object({
   ),
   OTEL_SERVICE_NAME: z.string().default("topten"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
+  SESSION_CACHE_TTL_SECONDS: z.coerce.number().default(60),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -71,6 +73,10 @@ export const config = {
   otel: {
     serviceName: parsed.data.OTEL_SERVICE_NAME,
     endpoint: parsed.data.OTEL_EXPORTER_OTLP_ENDPOINT,
+  },
+  cache: {
+    redisUrl: parsed.data.REDIS_URL,
+    sessionTtlSeconds: parsed.data.SESSION_CACHE_TTL_SECONDS,
   },
 } as const;
 
