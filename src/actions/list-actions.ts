@@ -198,9 +198,9 @@ export async function deleteListAction(
   }
 
   try {
-    await deleteList({ listId, userId: auth.userId });
+    const { slug } = await deleteList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
-    invalidatePublicListCaches(auth.userId).catch((err) =>
+    invalidatePublicListCaches(auth.userId, slug).catch((err) =>
       log.warn({ method: "deleteListAction", err }, "Cache invalidation failed")
     );
     return {

@@ -46,6 +46,7 @@ export interface UpdateListResult {
 /** Result of a successful deleteList operation */
 export interface DeleteListResult {
   success: true;
+  slug: string;
 }
 
 /** Result of a successful publishList operation */
