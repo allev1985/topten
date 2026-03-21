@@ -65,6 +65,29 @@ vi.mock("@/lib/services/logging", () => ({
   }),
 }));
 
+// Mock getClientIP and rate limiters — default to allow-all
+vi.mock("@/lib/utils/request", () => ({
+  getClientIP: vi.fn().mockResolvedValue("127.0.0.1"),
+}));
+
+const rl = vi.hoisted(() => ({
+  allowed: true,
+  current: 1,
+  limit: 10,
+  retryAfterSeconds: 0,
+}));
+
+vi.mock("@/lib/services/rate-limit", () => ({
+  loginIPLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  loginEmailLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  signupLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  resetPasswordIPLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  resetPasswordEmailLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  mfaSendLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  mfaVerifyLimiter: { check: vi.fn().mockResolvedValue(rl) },
+  passwordChangeLimiter: { check: vi.fn().mockResolvedValue(rl) },
+}));
+
 // Import after mocking
 import {
   signup,
