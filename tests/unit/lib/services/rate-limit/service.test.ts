@@ -9,6 +9,7 @@ vi.mock("@/lib/services/logging", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   }),
+  obfuscate: vi.fn((v: string) => v.slice(0, 8)),
 }));
 
 function createMockStore(): CacheStore {
