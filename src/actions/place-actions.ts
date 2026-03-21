@@ -548,13 +548,7 @@ export async function deletePlaceGlobalAction(
     revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
     try {
-      await Promise.all(
-        listSlugs.length > 0
-          ? listSlugs.map((slug) =>
-              invalidatePublicListCaches(auth.userId, slug)
-            )
-          : [invalidatePublicListCaches(auth.userId)]
-      );
+      await invalidatePublicListCaches(auth.userId, ...listSlugs);
     } catch (err) {
       log.warn(
         { method: "deletePlaceGlobalAction", err },

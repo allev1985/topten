@@ -303,7 +303,7 @@ describe("Public Service", () => {
       expect(mockInvalidateCache).toHaveBeenCalledWith(`pub:lists:${USER_ID}`);
     });
 
-    it("invalidates both summaries and detail cache when listSlug provided", async () => {
+    it("invalidates both summaries and detail cache when list slug provided", async () => {
       mockInvalidateCache.mockResolvedValue(undefined);
 
       await invalidatePublicListCaches(USER_ID, LIST_SLUG);

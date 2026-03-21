@@ -190,18 +190,18 @@ export const getPublicListDetail = cache(
 
 /**
  * Invalidate public list caches for a user.
- * Always invalidates the list summaries cache. If listSlug is provided,
- * also invalidates the specific list detail cache.
+ * Always invalidates the list summaries cache. Any provided slugs also
+ * invalidate their corresponding list detail caches in the same call.
  * @param userId - The user's UUID
- * @param listSlug - Optional list slug to also invalidate the detail cache
+ * @param listSlugs - Zero or more list slugs whose detail caches should also be invalidated
  */
 export async function invalidatePublicListCaches(
   userId: string,
-  listSlug?: string
+  ...listSlugs: string[]
 ): Promise<void> {
-  const keys = [publicListsCacheKey(userId)];
-  if (listSlug) {
-    keys.push(publicListDetailCacheKey(userId, listSlug));
-  }
+  const keys = [
+    publicListsCacheKey(userId),
+    ...listSlugs.map((slug) => publicListDetailCacheKey(userId, slug)),
+  ];
   await invalidateCache(...keys);
 }

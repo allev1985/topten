@@ -91,13 +91,13 @@ describe("RedisStore", () => {
       );
     });
 
-    it("connect handler logs info", () => {
+    it("connect handler logs debug", () => {
       const connectHandler = eventHandlers.get("connect");
       expect(connectHandler).toBeDefined();
 
       connectHandler!();
 
-      expect(mockLog.info).toHaveBeenCalledWith(
+      expect(mockLog.debug).toHaveBeenCalledWith(
         expect.objectContaining({ method: "RedisStore" }),
         "Connected to Redis"
       );
