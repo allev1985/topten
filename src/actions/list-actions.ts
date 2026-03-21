@@ -13,6 +13,10 @@ import {
   unpublishList,
   ListServiceError,
 } from "@/lib/list";
+import { invalidatePublicListCaches } from "@/lib/public";
+import { createServiceLogger } from "@/lib/services/logging";
+
+const log = createServiceLogger("list-actions");
 
 // ─── Success data types ───────────────────────────────────────────────────────
 
@@ -151,6 +155,9 @@ export async function updateListAction(
       description: result.data.description,
     });
     revalidatePath("/dashboard");
+    invalidatePublicListCaches(auth.userId).catch((err) =>
+      log.warn({ method: "updateListAction", err }, "Cache invalidation failed")
+    );
     return { data: { listId }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     const message =
@@ -193,6 +200,9 @@ export async function deleteListAction(
   try {
     await deleteList({ listId, userId: auth.userId });
     revalidatePath("/dashboard");
+    invalidatePublicListCaches(auth.userId).catch((err) =>
+      log.warn({ method: "deleteListAction", err }, "Cache invalidation failed")
+    );
     return {
       data: { success: true },
       error: null,
@@ -244,6 +254,12 @@ export async function publishListAction(
       revalidatePath(`/profiles/${list.vanitySlug}`);
       revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
     }
+    invalidatePublicListCaches(auth.userId, list.slug).catch((err) =>
+      log.warn(
+        { method: "publishListAction", err },
+        "Cache invalidation failed"
+      )
+    );
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,
@@ -295,6 +311,12 @@ export async function unpublishListAction(
       revalidatePath(`/profiles/${list.vanitySlug}`);
       revalidatePath(`/profiles/${list.vanitySlug}/lists/${list.slug}`);
     }
+    invalidatePublicListCaches(auth.userId, list.slug).catch((err) =>
+      log.warn(
+        { method: "unpublishListAction", err },
+        "Cache invalidation failed"
+      )
+    );
     return {
       data: { listId: list.id, isPublished: list.isPublished },
       error: null,

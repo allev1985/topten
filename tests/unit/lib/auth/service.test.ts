@@ -21,6 +21,9 @@ import type {
 // Mock next/headers
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
+  cookies: vi.fn().mockResolvedValue({
+    get: vi.fn().mockReturnValue(undefined),
+  }),
 }));
 
 // Mock the auth instance — use vi.hoisted so the object is available when the factory runs
@@ -41,6 +44,15 @@ vi.mock("@/lib/auth/auth", () => ({
 // Mock email masking
 vi.mock("@/lib/utils/formatting/email", () => ({
   maskEmail: (email: string) => email,
+}));
+
+// Mock cache store (used by session-cache)
+vi.mock("@/lib/services/cache", () => ({
+  cacheStore: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    del: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 // Mock logging

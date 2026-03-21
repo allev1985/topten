@@ -21,6 +21,7 @@ import {
 } from "@/lib/services/google-places";
 import { createServiceLogger } from "@/lib/services/logging";
 import type { GooglePlaceResult } from "@/lib/services/google-places";
+import { invalidatePublicListCaches } from "@/lib/public";
 
 const log = createServiceLogger("place-actions");
 
@@ -451,6 +452,13 @@ export async function deletePlaceAction(
     await deletePlaceFromList({ placeId, listId, userId: auth.userId });
 
     revalidatePath(config.routes.dashboard.listDetail(listId));
+    invalidatePublicListCaches(auth.userId).catch((err) =>
+      log.warn(
+        { method: "deletePlaceAction", err },
+        "Cache invalidation failed"
+      )
+    );
+
     return {
       data: { success: true },
       error: null,
@@ -505,6 +513,12 @@ export async function deletePlaceGlobalAction(
 
     revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
+    invalidatePublicListCaches(auth.userId).catch((err) =>
+      log.warn(
+        { method: "deletePlaceGlobalAction", err },
+        "Cache invalidation failed"
+      )
+    );
     return {
       data: { deletedListPlaceCount },
       error: null,

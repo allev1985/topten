@@ -3,6 +3,9 @@ import {
   getPublicProfile,
   getPublicListsForProfile,
   getPublicListDetail,
+  invalidatePublicListCaches,
+  publicListsCacheKey,
+  publicListDetailCacheKey,
   PublicServiceError,
 } from "@/lib/public";
 
@@ -12,16 +15,34 @@ const {
   mockGetPublicProfileBySlug,
   mockGetPublicListsForProfile,
   mockGetPublicListDetail,
+  mockCachedQuery,
+  mockInvalidateCache,
 } = vi.hoisted(() => ({
   mockGetPublicProfileBySlug: vi.fn(),
   mockGetPublicListsForProfile: vi.fn(),
   mockGetPublicListDetail: vi.fn(),
+  mockCachedQuery: vi.fn(),
+  mockInvalidateCache: vi.fn(),
 }));
 
 vi.mock("@/db/repositories/public.repository", () => ({
   getPublicProfileBySlug: mockGetPublicProfileBySlug,
   getPublicListsForProfile: mockGetPublicListsForProfile,
   getPublicListDetail: mockGetPublicListDetail,
+}));
+
+vi.mock("@/lib/services/cache/helpers", () => ({
+  cachedQuery: (...args: unknown[]) => mockCachedQuery(...args),
+  invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),
+}));
+
+vi.mock("@/lib/services/logging", () => ({
+  createServiceLogger: () => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
 }));
 
 // Keep React.cache as a pass-through so the service functions are directly awaitable
@@ -128,6 +149,14 @@ describe("Public Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPublicListsForProfile", () => {
+    beforeEach(() => {
+      // cachedQuery calls the fetcher, so we simulate that
+      mockCachedQuery.mockImplementation(
+        async (_key: string, _ttl: number, fetcher: () => Promise<unknown>) =>
+          fetcher()
+      );
+    });
+
     it("returns published list summaries for a user", async () => {
       mockGetPublicListsForProfile.mockResolvedValue([listSummaryRow]);
 
@@ -139,16 +168,19 @@ describe("Public Service", () => {
       expect(result[0]?.updatedAt).toEqual(NOW);
     });
 
-    it("returns empty array when user has no published lists", async () => {
+    it("passes correct cache key and TTL to cachedQuery", async () => {
       mockGetPublicListsForProfile.mockResolvedValue([]);
 
-      const result = await getPublicListsForProfile(USER_ID);
+      await getPublicListsForProfile(USER_ID);
 
-      expect(result).toEqual([]);
+      expect(mockCachedQuery).toHaveBeenCalledWith(
+        `pub:lists:${USER_ID}`,
+        86_400,
+        expect.any(Function)
+      );
     });
 
-    it("returns empty array when user has no published lists (DB filters is_published = true)", async () => {
-      // Unpublished lists are excluded by the is_published = true filter at DB level.
+    it("returns empty array when user has no published lists", async () => {
       mockGetPublicListsForProfile.mockResolvedValue([]);
 
       const result = await getPublicListsForProfile(USER_ID);
@@ -158,7 +190,7 @@ describe("Public Service", () => {
 
     it("wraps DB errors in PublicServiceError", async () => {
       const cause = new Error("query timeout");
-      mockGetPublicListsForProfile.mockRejectedValue(cause);
+      mockCachedQuery.mockRejectedValue(cause);
 
       const err = await getPublicListsForProfile(USER_ID).catch((e) => e);
 
@@ -170,6 +202,13 @@ describe("Public Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("getPublicListDetail", () => {
+    beforeEach(() => {
+      mockCachedQuery.mockImplementation(
+        async (_key: string, _ttl: number, fetcher: () => Promise<unknown>) =>
+          fetcher()
+      );
+    });
+
     it("returns list detail with places when found", async () => {
       mockGetPublicListDetail.mockResolvedValue(listDetailRow);
 
@@ -183,6 +222,21 @@ describe("Public Service", () => {
       expect(result?.title).toBe("Top 10 Coffee");
       expect(result?.places).toHaveLength(1);
       expect(result?.places[0]?.name).toBe("The Coffee House");
+    });
+
+    it("passes correct cache key and TTL to cachedQuery", async () => {
+      mockGetPublicListDetail.mockResolvedValue(listDetailRow);
+
+      await getPublicListDetail({
+        userId: USER_ID,
+        listSlug: LIST_SLUG,
+      });
+
+      expect(mockCachedQuery).toHaveBeenCalledWith(
+        `pub:list:${USER_ID}:${LIST_SLUG}`,
+        86_400,
+        expect.any(Function)
+      );
     });
 
     it("returns list detail with empty places array when list has no places", async () => {
@@ -211,31 +265,9 @@ describe("Public Service", () => {
       expect(result).toBeNull();
     });
 
-    it("returns null when list exists but is not published (DB returns null — filtered by query)", async () => {
-      mockGetPublicListDetail.mockResolvedValue(null);
-
-      const result = await getPublicListDetail({
-        userId: USER_ID,
-        listSlug: LIST_SLUG,
-      });
-
-      expect(result).toBeNull();
-    });
-
-    it("returns null when list is soft-deleted (DB returns null — filtered by query)", async () => {
-      mockGetPublicListDetail.mockResolvedValue(null);
-
-      const result = await getPublicListDetail({
-        userId: USER_ID,
-        listSlug: LIST_SLUG,
-      });
-
-      expect(result).toBeNull();
-    });
-
     it("wraps DB errors in PublicServiceError", async () => {
       const cause = new Error("DB connection lost");
-      mockGetPublicListDetail.mockRejectedValue(cause);
+      mockCachedQuery.mockRejectedValue(cause);
 
       const err = await getPublicListDetail({
         userId: USER_ID,
@@ -245,6 +277,41 @@ describe("Public Service", () => {
       expect(err).toBeInstanceOf(PublicServiceError);
       expect(err.code).toBe("SERVICE_ERROR");
       expect(err.originalError).toBe(cause);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("cache key builders", () => {
+    it("publicListsCacheKey builds correct key", () => {
+      expect(publicListsCacheKey(USER_ID)).toBe(`pub:lists:${USER_ID}`);
+    });
+
+    it("publicListDetailCacheKey builds correct key", () => {
+      expect(publicListDetailCacheKey(USER_ID, LIST_SLUG)).toBe(
+        `pub:list:${USER_ID}:${LIST_SLUG}`
+      );
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("invalidatePublicListCaches", () => {
+    it("invalidates summaries cache", async () => {
+      mockInvalidateCache.mockResolvedValue(undefined);
+
+      await invalidatePublicListCaches(USER_ID);
+
+      expect(mockInvalidateCache).toHaveBeenCalledWith(`pub:lists:${USER_ID}`);
+    });
+
+    it("invalidates both summaries and detail cache when listSlug provided", async () => {
+      mockInvalidateCache.mockResolvedValue(undefined);
+
+      await invalidatePublicListCaches(USER_ID, LIST_SLUG);
+
+      expect(mockInvalidateCache).toHaveBeenCalledWith(
+        `pub:lists:${USER_ID}`,
+        `pub:list:${USER_ID}:${LIST_SLUG}`
+      );
     });
   });
 });

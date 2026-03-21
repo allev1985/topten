@@ -11,9 +11,12 @@ export {
   updatePassword,
   changePassword,
   getSession,
+  getSessionDirect,
   sendMFACode,
   verifyMFACode,
 } from "./service";
+
+export { invalidateSessionCache } from "./session-cache";
 
 export { AuthServiceError } from "./errors";
 

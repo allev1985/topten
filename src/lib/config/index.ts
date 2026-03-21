@@ -77,6 +77,17 @@ export const config = {
   cache: {
     redisUrl: parsed.data.REDIS_URL,
     sessionTtlSeconds: parsed.data.SESSION_CACHE_TTL_SECONDS,
+    publicListTtlSeconds: 86_400, // 24 hours
+  },
+  rateLimit: {
+    login: { maxRequests: 10, windowSeconds: 15 * 60 },
+    loginEmail: { maxRequests: 5, windowSeconds: 15 * 60 },
+    signup: { maxRequests: 5, windowSeconds: 60 * 60 },
+    resetPasswordIP: { maxRequests: 3, windowSeconds: 60 * 60 },
+    resetPasswordEmail: { maxRequests: 3, windowSeconds: 60 * 60 },
+    mfaSend: { maxRequests: 5, windowSeconds: 15 * 60 },
+    mfaVerify: { maxRequests: 5, windowSeconds: 15 * 60 },
+    passwordChange: { maxRequests: 5, windowSeconds: 60 * 60 },
   },
 } as const;
 

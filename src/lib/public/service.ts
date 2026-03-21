@@ -5,15 +5,21 @@
  * All functions are wrapped in React.cache so repeated calls within
  * the same request (e.g. layout + page) are deduplicated.
  *
+ * Published list queries are additionally cached in Redis (24h TTL,
+ * keyed by userId) and invalidated on mutations.
+ *
  * Delegates all DB access to the public repository.
  * Used by Server Components only — never called from client code.
  *
+ * @see docs/decisions/caching-and-rate-limiting.md
  * @module public/service
  */
 
 import { cache } from "react";
 import * as publicRepository from "@/db/repositories/public.repository";
 import { createServiceLogger } from "@/lib/services/logging";
+import { cachedQuery, invalidateCache } from "@/lib/services/cache/helpers";
+import { config } from "@/lib/config";
 import type {
   PublicProfile,
   PublicListSummary,
@@ -22,6 +28,30 @@ import type {
 import { publicServiceError } from "./errors";
 
 const log = createServiceLogger("public-service");
+
+// ─── Cache key builders ───────────────────────────────────────────────────────
+
+/**
+ * Build the cache key for a user's published list summaries.
+ * @param userId - The user's UUID
+ * @returns The cache key
+ */
+export function publicListsCacheKey(userId: string): string {
+  return `pub:lists:${userId}`;
+}
+
+/**
+ * Build the cache key for a single published list's detail (with places).
+ * @param userId - The user's UUID
+ * @param listSlug - The list slug
+ * @returns The cache key
+ */
+export function publicListDetailCacheKey(
+  userId: string,
+  listSlug: string
+): string {
+  return `pub:list:${userId}:${listSlug}`;
+}
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -67,6 +97,7 @@ export const getPublicProfile = cache(
 
 /**
  * Fetch all published lists for a user, newest first.
+ * Results are cached in Redis for 24h, keyed by userId.
  *
  * @param userId - The user's UUID
  * @returns Array of PublicListSummary ordered by publishedAt DESC
@@ -79,7 +110,11 @@ export const getPublicListsForProfile = cache(
     );
 
     try {
-      const rows = await publicRepository.getPublicListsForProfile(userId);
+      const rows = await cachedQuery(
+        publicListsCacheKey(userId),
+        config.cache.publicListTtlSeconds,
+        () => publicRepository.getPublicListsForProfile(userId)
+      );
 
       log.info(
         { method: "getPublicListsForProfile", userId, count: rows.length },
@@ -99,8 +134,9 @@ export const getPublicListsForProfile = cache(
 
 /**
  * Fetch the full detail of a single published list, including ordered places.
+ * Results are cached in Redis for 24h, keyed by userId and listSlug.
  *
- * @param userId   - The list owner's UUID (ownership scoping)
+ * @param userId - The list owner's UUID (ownership scoping)
  * @param listSlug - The list slug
  * @returns PublicListDetail if found and published, null otherwise
  */
@@ -119,10 +155,11 @@ export const getPublicListDetail = cache(
     );
 
     try {
-      const result = await publicRepository.getPublicListDetail({
-        userId,
-        listSlug,
-      });
+      const result = await cachedQuery(
+        publicListDetailCacheKey(userId, listSlug),
+        config.cache.publicListTtlSeconds,
+        () => publicRepository.getPublicListDetail({ userId, listSlug })
+      );
 
       if (result) {
         log.info(
@@ -148,3 +185,23 @@ export const getPublicListDetail = cache(
     }
   }
 );
+
+// ─── Cache invalidation ──────────────────────────────────────────────────────
+
+/**
+ * Invalidate public list caches for a user.
+ * Always invalidates the list summaries cache. If listSlug is provided,
+ * also invalidates the specific list detail cache.
+ * @param userId - The user's UUID
+ * @param listSlug - Optional list slug to also invalidate the detail cache
+ */
+export async function invalidatePublicListCaches(
+  userId: string,
+  listSlug?: string
+): Promise<void> {
+  const keys = [publicListsCacheKey(userId)];
+  if (listSlug) {
+    keys.push(publicListDetailCacheKey(userId, listSlug));
+  }
+  await invalidateCache(...keys);
+}

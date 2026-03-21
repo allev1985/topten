@@ -240,9 +240,7 @@ describe("Auth actions — rate limiting", () => {
 
       await loginAction(initialState, fd);
 
-      expect(mockLoginEmailCheck).toHaveBeenCalledWith(
-        "test@example.com"
-      );
+      expect(mockLoginEmailCheck).toHaveBeenCalledWith("test@example.com");
     });
 
     it("proceeds when both IP and email are within limits", async () => {

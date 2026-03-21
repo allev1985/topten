@@ -3,7 +3,7 @@ import { RedisStore } from "@/lib/services/cache/redis-store";
 
 // Capture constructor args and event handlers
 let capturedOptions: Record<string, unknown> = {};
-const eventHandlers = new Map<string, Function>();
+const eventHandlers = new Map<string, (...args: unknown[]) => void>();
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();
@@ -12,7 +12,7 @@ const mockDel = vi.fn();
 const mockExpire = vi.fn();
 const mockTtl = vi.fn();
 const mockConnect = vi.fn().mockResolvedValue(undefined);
-const mockOn = vi.fn((event: string, handler: Function) => {
+const mockOn = vi.fn((event: string, handler: (...args: unknown[]) => void) => {
   eventHandlers.set(event, handler);
 });
 

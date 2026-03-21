@@ -25,7 +25,7 @@ Introduce a Redis-backed caching layer that provides:
 
 1. **Rate limiting** — Sliding window counter algorithm on all auth endpoints
 2. **Session caching** — Cache `getSession()` results with short TTL (~60s)
-3. **DB query caching** — Cache public profiles, published lists, and place data
+3. **Public list caching** — Cache published list summaries and list detail (with places)
 
 ### Architecture
 
@@ -35,27 +35,22 @@ graph TD
         SA["Server Actions"]
         AS["Auth Service"]
         PS["Public Service"]
-        LS["List / Place Service"]
         RL["Rate Limiter"]
         SessC["Session Cache"]
-        QC["Query Cache"]
+        LC["List Cache"]
         CS["CacheStore Interface"]
     end
 
     SA --> RL
     SA --> AS
-    SA --> PS
-    SA --> LS
+    PS --> LC
     RL --> CS
     AS --> SessC
     SessC --> CS
-    PS --> QC
-    LS --> QC
-    QC --> CS
+    LC --> CS
     CS --> Redis[(Redis)]
     AS -->|"miss"| DB[(PostgreSQL)]
     PS -->|"miss"| DB
-    LS -->|"miss"| DB
 ```
 
 ### Infrastructure Topology
@@ -179,36 +174,35 @@ sequenceDiagram
     end
 ```
 
-## DB Query Cache Flow
+## Public List Cache Flow
 
-Caching lives in the **repository layer** — repositories are the single point of DB access, so wrapping queries there means every consumer (service, action, component) benefits transparently. Services remain unaware of whether data came from cache or DB. Repository mutation methods handle cache invalidation for the keys they own.
+Caching is applied in the **public service layer** alongside the existing `React.cache()` request dedup. A `cachedQuery()` helper wraps repository calls with Redis, keyed by `userId` so cache keys can be invalidated from server actions without extra DB lookups. Only published list summaries and list detail (with places) are cached.
 
 ```mermaid
 sequenceDiagram
     participant P as Page Component
     participant S as PublicService
-    participant Repo as Repository
     participant CH as cachedQuery()
     participant R as Redis
+    participant Repo as Repository
     participant DB as PostgreSQL
 
-    P->>S: getPublicProfile(slug)
-    S->>Repo: getPublicProfileBySlug(slug)
-    Repo->>CH: cachedQuery("profile:{slug}", 300, fetcher)
-    CH->>R: GET profile:{slug}
+    P->>S: getPublicListsForProfile(userId)
+    S->>CH: cachedQuery("pub:lists:{userId}", 86400, fetcher)
+    CH->>R: GET pub:lists:{userId}
     alt Cache hit
         R-->>CH: JSON string
-        CH-->>Repo: parsed result
-        Repo-->>S: PublicProfile
-        S-->>P: PublicProfile
+        CH-->>S: PublicListSummary[]
+        S-->>P: PublicListSummary[]
     else Cache miss
         R-->>CH: null
-        CH->>DB: SELECT from users
-        DB-->>CH: row
-        CH->>R: SET profile:{slug} (TTL 300s)
-        CH-->>Repo: PublicProfile
-        Repo-->>S: PublicProfile
-        S-->>P: PublicProfile
+        CH->>Repo: getPublicListsForProfile(userId)
+        Repo->>DB: SELECT from lists
+        DB-->>Repo: rows
+        Repo-->>CH: PublicListSummary[]
+        CH->>R: SET pub:lists:{userId} (TTL 24h)
+        CH-->>S: PublicListSummary[]
+        S-->>P: PublicListSummary[]
     end
 ```
 
@@ -276,11 +270,10 @@ Cache keys use the pattern `rl:{action}:{identifier}:{windowStart}` with TTL = `
 | Data Type | Key Pattern | TTL | Rationale |
 |-----------|-------------|-----|-----------|
 | Session | `session:{hash}` | 60s | Short TTL — security-sensitive, must reflect revocation quickly |
-| Public profile | `profile:{vanitySlug}` | 5 min | Profiles change infrequently |
-| Published list | `list:{userId}:{listSlug}` | 5 min | Lists change infrequently when published |
-| Place | `place:{googlePlaceId}` | 30 min | Google Places data is essentially static |
+| Published lists | `pub:lists:{userId}` | 24 hr | List summaries for a profile page; invalidated on any list/place mutation |
+| List detail + places | `pub:list:{userId}:{listSlug}` | 24 hr | Full list with places; invalidated on publish/unpublish (slug available from result) |
 
-Invalidation: Repository mutation methods (publish, unpublish, update, soft-delete) explicitly delete the matching cache key as part of the write operation. This keeps cache ownership co-located with data ownership in the repository layer.
+Invalidation: Server actions that mutate list data explicitly delete the matching cache keys using the authenticated `userId` (always available, no DB lookup needed). Publish/unpublish actions also invalidate the specific list detail cache since `listSlug` is in the service result. Other mutations (update, delete, place changes) invalidate the summaries cache only; detail caches expire via TTL.
 
 ---
 
@@ -312,12 +305,13 @@ Invalidation: Repository mutation methods (publish, unpublish, update, soft-dele
 
 ### Positive
 - Brute-force protection on all auth endpoints
-- Reduced DB load from session verification and public page queries
+- Reduced DB load from session verification and public list pages
 - Clear cache abstraction enables future backend changes (e.g., switching to Upstash)
+- Narrow caching scope (public lists only) keeps invalidation simple
 
 ### Negative
 - New infrastructure dependency (Redis) — must be running for optimal performance
-- Additional complexity in repository layer (cache hit/miss/invalidation logic)
+- Additional complexity in public service layer (cache hit/miss/invalidation logic)
 - Fail-open means rate limiting is bypassed when Redis is down
 
 ### Risks

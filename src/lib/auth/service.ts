@@ -25,6 +25,7 @@ import {
   isTooManyMFAAttemptsError,
   isInvalidMFASessionError,
 } from "./errors";
+import { getCachedSession, invalidateSessionCache } from "./session-cache";
 import type {
   SignupResult,
   LoginResult,
@@ -272,6 +273,8 @@ export async function verifyMFACode(code: string): Promise<VerifyMFAResult> {
  */
 export async function logout(): Promise<LogoutResult> {
   try {
+    await invalidateSessionCache();
+
     const h = await getHeaders();
     const session = await auth.api.getSession({ headers: h });
 
@@ -397,6 +400,8 @@ export async function changePassword(
   try {
     log.info({ method: "changePassword" }, "Password change requested");
 
+    await invalidateSessionCache();
+
     const h = await getHeaders();
     await auth.api.changePassword({
       body: { currentPassword, newPassword, revokeOtherSessions: true },
@@ -430,11 +435,12 @@ export async function changePassword(
 }
 
 /**
- * Get current session information.
+ * Get current session information (bypasses cache, hits BetterAuth/DB directly).
  *
  * Returns authenticated=false (not an error) when no session exists.
+ * Prefer `getSession()` which adds a short-lived cache layer.
  */
-export async function getSession(): Promise<SessionResult> {
+export async function getSessionDirect(): Promise<SessionResult> {
   try {
     const h = await getHeaders();
     const session = await auth.api.getSession({ headers: h });
@@ -468,4 +474,14 @@ export async function getSession(): Promise<SessionResult> {
       error
     );
   }
+}
+
+/**
+ * Get current session information (with short-lived Redis cache).
+ *
+ * On cache miss the result is fetched from BetterAuth/DB and cached for
+ * `SESSION_CACHE_TTL_SECONDS` (default 60s). Cache errors are fail-open.
+ */
+export async function getSession(): Promise<SessionResult> {
+  return getCachedSession(getSessionDirect);
 }
