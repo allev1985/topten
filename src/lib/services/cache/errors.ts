@@ -24,7 +24,11 @@ export class CacheServiceError extends Error {
   }
 }
 
-/** Factory: Redis connection failed. */
+/**
+ * Create a CONNECTION_ERROR for Redis connection failures.
+ * @param originalError - The underlying error that caused the connection failure
+ * @returns A CacheServiceError with code CONNECTION_ERROR
+ */
 export function connectionError(originalError?: unknown): CacheServiceError {
   return new CacheServiceError(
     "CONNECTION_ERROR",
@@ -33,7 +37,11 @@ export function connectionError(originalError?: unknown): CacheServiceError {
   );
 }
 
-/** Factory: Operation timed out. */
+/**
+ * Create a TIMEOUT error for cache operations that exceeded their deadline.
+ * @param originalError - The underlying error that caused the timeout
+ * @returns A CacheServiceError with code TIMEOUT
+ */
 export function timeoutError(originalError?: unknown): CacheServiceError {
   return new CacheServiceError(
     "TIMEOUT",
@@ -42,7 +50,12 @@ export function timeoutError(originalError?: unknown): CacheServiceError {
   );
 }
 
-/** Factory: Missing or invalid configuration. */
+/**
+ * Create a CONFIGURATION_ERROR for missing or invalid cache config.
+ * @param message - Optional custom message (defaults to generic config message)
+ * @param originalError - The underlying error, if any
+ * @returns A CacheServiceError with code CONFIGURATION_ERROR
+ */
 export function configurationError(
   message?: string,
   originalError?: unknown

@@ -15,7 +15,8 @@ export { CacheServiceError } from "./errors";
 export type { CacheStore, CacheServiceErrorCode } from "./types";
 
 /**
- * Create a CacheStore from config.
+ * Create a CacheStore backed by Redis, using `REDIS_URL` from config.
+ * @returns A new RedisStore instance
  */
 export function createCacheStore(): CacheStore {
   return new RedisStore(config.cache.redisUrl);

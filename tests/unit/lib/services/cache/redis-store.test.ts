@@ -1,15 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RedisStore } from "@/lib/services/cache/redis-store";
 
-// Mock ioredis with a class implementation
+// Capture constructor args and event handlers
+let capturedOptions: Record<string, unknown> = {};
+const eventHandlers = new Map<string, Function>();
+
 const mockGet = vi.fn();
 const mockSet = vi.fn();
 const mockIncr = vi.fn();
 const mockDel = vi.fn();
 const mockExpire = vi.fn();
 const mockTtl = vi.fn();
-const mockOn = vi.fn();
 const mockConnect = vi.fn().mockResolvedValue(undefined);
+const mockOn = vi.fn((event: string, handler: Function) => {
+  eventHandlers.set(event, handler);
+});
 
 vi.mock("ioredis", () => ({
   default: class MockRedis {
@@ -21,17 +26,22 @@ vi.mock("ioredis", () => ({
     ttl = mockTtl;
     on = mockOn;
     connect = mockConnect;
+
+    constructor(_url: string, options: Record<string, unknown>) {
+      capturedOptions = options;
+    }
   },
 }));
 
-// Mock logging
+const mockLog = vi.hoisted(() => ({
+  info: vi.fn(),
+  debug: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}));
+
 vi.mock("@/lib/services/logging", () => ({
-  createServiceLogger: () => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
+  createServiceLogger: () => mockLog,
 }));
 
 describe("RedisStore", () => {
@@ -39,6 +49,8 @@ describe("RedisStore", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    eventHandlers.clear();
+    capturedOptions = {};
     mockConnect.mockResolvedValue(undefined);
     store = new RedisStore("redis://localhost:6379");
   });
@@ -51,6 +63,56 @@ describe("RedisStore", () => {
 
     it("calls connect eagerly", () => {
       expect(mockConnect).toHaveBeenCalledOnce();
+    });
+
+    it("logs a warning when initial connect fails", async () => {
+      mockConnect.mockRejectedValue(new Error("ECONNREFUSED"));
+
+      new RedisStore("redis://localhost:6379");
+
+      // Let the rejected promise settle
+      await vi.waitFor(() => {
+        expect(mockLog.warn).toHaveBeenCalledWith(
+          expect.objectContaining({ method: "RedisStore" }),
+          "Initial Redis connection failed"
+        );
+      });
+    });
+
+    it("error handler logs a warning", () => {
+      const errorHandler = eventHandlers.get("error");
+      expect(errorHandler).toBeDefined();
+
+      errorHandler!(new Error("connection reset"));
+
+      expect(mockLog.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ method: "RedisStore" }),
+        "Redis connection error"
+      );
+    });
+
+    it("connect handler logs info", () => {
+      const connectHandler = eventHandlers.get("connect");
+      expect(connectHandler).toBeDefined();
+
+      connectHandler!();
+
+      expect(mockLog.info).toHaveBeenCalledWith(
+        expect.objectContaining({ method: "RedisStore" }),
+        "Connected to Redis"
+      );
+    });
+
+    it("retryStrategy stops after 3 attempts", () => {
+      const retryStrategy = capturedOptions.retryStrategy as (
+        times: number
+      ) => number | null;
+      expect(retryStrategy).toBeDefined();
+
+      expect(retryStrategy(1)).toBe(200);
+      expect(retryStrategy(2)).toBe(400);
+      expect(retryStrategy(3)).toBe(600);
+      expect(retryStrategy(4)).toBeNull();
     });
   });
 
