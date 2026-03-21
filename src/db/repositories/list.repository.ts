@@ -41,7 +41,7 @@ export type PublishRow = {
   slug: string;
 };
 
-export type DeletedListRow = { id: string };
+export type DeletedListRow = { id: string; slug: string };
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ export async function softDeleteList({
         isNull(lists.deletedAt)
       )
     )
-    .returning({ id: lists.id });
+    .returning({ id: lists.id, slug: lists.slug });
 
   return rows[0] ?? null;
 }

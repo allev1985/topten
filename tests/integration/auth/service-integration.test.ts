@@ -25,6 +25,9 @@ import {
 // Mock next/headers
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
+  cookies: vi.fn().mockResolvedValue({
+    get: vi.fn().mockReturnValue(undefined),
+  }),
 }));
 
 // Mock the auth instance — use vi.hoisted so the object is available when the factory runs
@@ -53,6 +56,15 @@ vi.mock("@/lib/services/logging", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   }),
+}));
+
+// Mock cache store (used by session-cache)
+vi.mock("@/lib/services/cache", () => ({
+  cacheStore: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    del: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 describe("Auth Service Integration Tests", () => {

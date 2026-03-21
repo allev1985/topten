@@ -12,6 +12,7 @@ export type AuthServiceErrorCode =
   | "USER_EXISTS"
   | "WEAK_PASSWORD"
   | "SERVICE_ERROR"
+  | "RATE_LIMITED"
   | "INVALID_MFA_CODE"
   | "MFA_CODE_EXPIRED"
   | "TOO_MANY_MFA_ATTEMPTS"
@@ -64,6 +65,18 @@ export function authServiceError(
     "SERVICE_ERROR",
     message || "An unexpected error occurred",
     originalError
+  );
+}
+
+/**
+ * Create a RATE_LIMITED error when the user has exceeded the rate limit.
+ * @param retryAfterSeconds - Seconds until the user can retry
+ * @returns An AuthServiceError with code RATE_LIMITED
+ */
+export function rateLimitedError(retryAfterSeconds: number): AuthServiceError {
+  return new AuthServiceError(
+    "RATE_LIMITED",
+    `Too many attempts. Please try again in ${retryAfterSeconds} seconds.`
   );
 }
 

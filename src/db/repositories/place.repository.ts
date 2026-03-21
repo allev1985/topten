@@ -169,7 +169,7 @@ export async function getPlaceByGoogleId({
 /**
  * Check whether a list is owned by (and not deleted for) the given user.
  *
- * @returns true if list is accessible by userId
+ * @returns { slug: string } if list is accessible by userId, or null otherwise
  */
 export async function getListOwnership({
   listId,
@@ -177,9 +177,9 @@ export async function getListOwnership({
 }: {
   listId: string;
   userId: string;
-}): Promise<boolean> {
+}): Promise<{ slug: string } | null> {
   const rows = await db
-    .select({ id: lists.id })
+    .select({ id: lists.id, slug: lists.slug })
     .from(lists)
     .where(
       and(
@@ -189,7 +189,7 @@ export async function getListOwnership({
       )
     );
 
-  return rows.length > 0;
+  return rows[0] ? { slug: rows[0].slug } : null;
 }
 
 /**
@@ -227,7 +227,7 @@ export async function getMaxPosition(listId: string): Promise<number> {
  * Check whether a place is accessible by a user via a specific list
  * (for updatePlace / deletePlaceFromList with a list context).
  *
- * @returns true if the place has an active attachment to an active list owned by userId
+ * @returns { slug: string } if the place has an active attachment to an active list owned by userId, or null otherwise
  */
 export async function getPlaceInListByOwner({
   placeId,
@@ -237,9 +237,9 @@ export async function getPlaceInListByOwner({
   placeId: string;
   listId: string;
   userId: string;
-}): Promise<boolean> {
+}): Promise<{ slug: string } | null> {
   const rows = await db
-    .select({ placeId: listPlaces.placeId })
+    .select({ placeId: listPlaces.placeId, slug: lists.slug })
     .from(listPlaces)
     .innerJoin(lists, eq(listPlaces.listId, lists.id))
     .innerJoin(places, eq(listPlaces.placeId, places.id))
@@ -254,7 +254,7 @@ export async function getPlaceInListByOwner({
       )
     );
 
-  return rows.length > 0;
+  return rows[0] ? { slug: rows[0].slug } : null;
 }
 
 /**
@@ -513,7 +513,7 @@ export async function deletePlaceWithCascade({
 }: {
   placeId: string;
   userId: string;
-}): Promise<{ deletedListPlaceCount: number } | null> {
+}): Promise<{ deletedListPlaceCount: number; listSlugs: string[] } | null> {
   return db.transaction(async (tx) => {
     // Verify ownership inside the transaction
     const ownerRows = await tx
@@ -536,6 +536,16 @@ export async function deletePlaceWithCascade({
       .set({ deletedAt: now, updatedAt: now })
       .where(eq(places.id, placeId));
 
+    // Collect slugs of affected lists before cascading
+    const affectedLists = await tx
+      .select({ slug: lists.slug })
+      .from(listPlaces)
+      .innerJoin(lists, eq(listPlaces.listId, lists.id))
+      .where(
+        and(eq(listPlaces.placeId, placeId), isNull(listPlaces.deletedAt))
+      );
+    const listSlugs = affectedLists.map((r) => r.slug);
+
     // Cascade soft-delete to all active ListPlace rows
     const cascadedRows = await tx
       .update(listPlaces)
@@ -543,6 +553,6 @@ export async function deletePlaceWithCascade({
       .where(and(eq(listPlaces.placeId, placeId), isNull(listPlaces.deletedAt)))
       .returning({ id: listPlaces.id });
 
-    return { deletedListPlaceCount: cascadedRows.length };
+    return { deletedListPlaceCount: cascadedRows.length, listSlugs };
   });
 }

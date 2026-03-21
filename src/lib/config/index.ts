@@ -36,6 +36,8 @@ const envSchema = z.object({
   ),
   OTEL_SERVICE_NAME: z.string().default("topten"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
+  SESSION_CACHE_TTL_SECONDS: z.coerce.number().default(60),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -71,6 +73,21 @@ export const config = {
   otel: {
     serviceName: parsed.data.OTEL_SERVICE_NAME,
     endpoint: parsed.data.OTEL_EXPORTER_OTLP_ENDPOINT,
+  },
+  cache: {
+    redisUrl: parsed.data.REDIS_URL,
+    sessionTtlSeconds: parsed.data.SESSION_CACHE_TTL_SECONDS,
+    publicListTtlSeconds: 86_400, // 24 hours
+  },
+  rateLimit: {
+    login: { maxRequests: 10, windowSeconds: 15 * 60 },
+    loginEmail: { maxRequests: 5, windowSeconds: 15 * 60 },
+    signup: { maxRequests: 5, windowSeconds: 60 * 60 },
+    resetPasswordIP: { maxRequests: 3, windowSeconds: 60 * 60 },
+    resetPasswordEmail: { maxRequests: 3, windowSeconds: 60 * 60 },
+    mfaSend: { maxRequests: 5, windowSeconds: 15 * 60 },
+    mfaVerify: { maxRequests: 5, windowSeconds: 15 * 60 },
+    passwordChange: { maxRequests: 5, windowSeconds: 60 * 60 },
   },
 } as const;
 

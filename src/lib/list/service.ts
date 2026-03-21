@@ -211,7 +211,7 @@ export async function updateList({
  *
  * @param listId - The list's UUID
  * @param userId - The authenticated user's id (ownership check)
- * @returns DeleteListResult { success: true }
+ * @returns DeleteListResult { success: true, slug }
  * @throws {ListServiceError} code NOT_FOUND if list missing, deleted, or wrong owner
  * @throws {ListServiceError} code SERVICE_ERROR on unexpected DB failure
  */
@@ -233,7 +233,7 @@ export async function deleteList({
 
     log.info({ method: "deleteList", userId, listId }, "List soft-deleted");
 
-    return { success: true };
+    return { success: true, slug: row.slug };
   } catch (err) {
     if (err instanceof ListServiceError) throw err;
     log.error({ method: "deleteList", userId, listId, err }, "DB error");

@@ -81,6 +81,7 @@ vi.mock("@/db/repositories/place.repository", () => ({
 
 const USER_ID = "user-abc-123";
 const LIST_ID = "list-xyz-456";
+const LIST_SLUG = "ab12";
 const PLACE_ID = "place-def-789";
 const LIST_PLACE_ID = "lp-ghi-000";
 const NOW = new Date("2024-06-01T00:00:00Z");
@@ -115,10 +116,10 @@ beforeEach(() => {
   mockGetAvailablePlacesForList.mockResolvedValue([]);
   mockGetAllPlacesByUser.mockResolvedValue([]);
   mockGetPlaceByGoogleId.mockResolvedValue(null);
-  mockGetListOwnership.mockResolvedValue(false);
+  mockGetListOwnership.mockResolvedValue(null);
   mockGetListPlaceRow.mockResolvedValue(null);
   mockGetMaxPosition.mockResolvedValue(0);
-  mockGetPlaceInListByOwner.mockResolvedValue(false);
+  mockGetPlaceInListByOwner.mockResolvedValue(null);
   mockGetPlaceByOwner.mockResolvedValue(false);
   mockDeletePlaceWithCascade.mockResolvedValue(null);
 });
@@ -212,7 +213,7 @@ describe("Place Service", () => {
 
     it("creates a place and list_place row atomically, returns both ids", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(null);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockCreatePlaceWithListAttachment.mockResolvedValue({
         place: { ...fullPlaceRow, id: PLACE_ID },
         listPlaceId: LIST_PLACE_ID,
@@ -222,11 +223,12 @@ describe("Place Service", () => {
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(result.listSlug).toBe(LIST_SLUG);
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(null);
-      mockGetListOwnership.mockResolvedValue(false);
+      mockGetListOwnership.mockResolvedValue(null);
 
       await expect(createPlace(newPlaceParams)).rejects.toMatchObject({
         code: "NOT_FOUND",
@@ -235,7 +237,7 @@ describe("Place Service", () => {
 
     it("throws SERVICE_ERROR when transaction insert fails", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(null);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockCreatePlaceWithListAttachment.mockRejectedValue(
         new Error("constraint violation")
       );
@@ -248,7 +250,7 @@ describe("Place Service", () => {
     it("passes the provided googlePlaceId to the insert", async () => {
       let capturedGooglePlaceId: string | undefined;
       mockGetPlaceByGoogleId.mockResolvedValue(null);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockCreatePlaceWithListAttachment.mockImplementation(
         (params: { googlePlaceId: string }) => {
           capturedGooglePlaceId = params.googlePlaceId;
@@ -287,7 +289,7 @@ describe("Place Service", () => {
 
     it("reuses an active place and attaches it to a list", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue(null);
       mockGetMaxPosition.mockResolvedValue(0);
       mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
@@ -296,11 +298,12 @@ describe("Place Service", () => {
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(result.listSlug).toBe(LIST_SLUG);
     });
 
     it("propagates ALREADY_IN_LIST when reusing a place already attached to the list", async () => {
       mockGetPlaceByGoogleId.mockResolvedValue(fullPlaceRow);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue({
         id: LIST_PLACE_ID,
         deletedAt: null,
@@ -344,7 +347,7 @@ describe("Place Service", () => {
       const restoredPlace = { ...fullPlaceRow, deletedAt: null };
       mockGetPlaceByGoogleId.mockResolvedValue(deletedPlace);
       mockRestorePlace.mockResolvedValue(restoredPlace);
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue(null);
       mockGetMaxPosition.mockResolvedValue(2);
       mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
@@ -353,6 +356,7 @@ describe("Place Service", () => {
 
       expect(result.place.id).toBe(PLACE_ID);
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(result.listSlug).toBe(LIST_SLUG);
       expect(mockInsertPlace).not.toHaveBeenCalled();
     });
   });
@@ -360,7 +364,7 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("addExistingPlaceToList", () => {
     it("attaches an existing place and returns the new listPlaceId", async () => {
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue(null);
       mockGetMaxPosition.mockResolvedValue(3);
       mockInsertListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
@@ -372,10 +376,11 @@ describe("Place Service", () => {
       });
 
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(result.listSlug).toBe(LIST_SLUG);
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockGetListOwnership.mockResolvedValue(false);
+      mockGetListOwnership.mockResolvedValue(null);
 
       await expect(
         addExistingPlaceToList({
@@ -387,7 +392,7 @@ describe("Place Service", () => {
     });
 
     it("throws ALREADY_IN_LIST when place is already attached", async () => {
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue({
         id: LIST_PLACE_ID,
         deletedAt: null,
@@ -403,7 +408,7 @@ describe("Place Service", () => {
     });
 
     it("restores a previously removed place instead of inserting a duplicate", async () => {
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue({
         id: LIST_PLACE_ID,
         deletedAt: new Date("2024-01-01"),
@@ -418,10 +423,11 @@ describe("Place Service", () => {
       });
 
       expect(result.listPlaceId).toBe(LIST_PLACE_ID);
+      expect(result.listSlug).toBe(LIST_SLUG);
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockGetListOwnership.mockResolvedValue(true);
+      mockGetListOwnership.mockResolvedValue({ slug: LIST_SLUG });
       mockGetListPlaceRow.mockResolvedValue(null);
       mockGetMaxPosition.mockResolvedValue(0);
       mockInsertListPlace.mockRejectedValue(new Error("db error"));
@@ -439,7 +445,7 @@ describe("Place Service", () => {
   // ───────────────────────────────────────────────────────────────────────────
   describe("updatePlace", () => {
     it("updates a place's description and returns the updated record", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockUpdatePlaceDescription.mockResolvedValue({
         id: PLACE_ID,
         description: "Great coffee shop",
@@ -457,7 +463,7 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when ownership check fails", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(false);
+      mockGetPlaceInListByOwner.mockResolvedValue(null);
 
       await expect(
         updatePlace({
@@ -470,7 +476,7 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when DB update returns no rows", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockUpdatePlaceDescription.mockResolvedValue(null);
 
       await expect(
@@ -493,7 +499,7 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockUpdatePlaceDescription.mockRejectedValue(new Error("db down"));
 
       await expect(
@@ -509,8 +515,8 @@ describe("Place Service", () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe("deletePlaceFromList", () => {
-    it("soft-deletes a place and returns success: true", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+    it("soft-deletes a place and returns success: true with listSlug", async () => {
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockSoftDeleteListPlace.mockResolvedValue({ id: LIST_PLACE_ID });
 
       const result = await deletePlaceFromList({
@@ -520,10 +526,11 @@ describe("Place Service", () => {
       });
 
       expect(result.success).toBe(true);
+      expect(result.listSlug).toBe(LIST_SLUG);
     });
 
     it("throws NOT_FOUND when place is already deleted (idempotency)", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockSoftDeleteListPlace.mockResolvedValue(null);
 
       await expect(
@@ -536,7 +543,7 @@ describe("Place Service", () => {
     });
 
     it("throws NOT_FOUND when list does not belong to user", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(false);
+      mockGetPlaceInListByOwner.mockResolvedValue(null);
 
       await expect(
         deletePlaceFromList({
@@ -548,7 +555,7 @@ describe("Place Service", () => {
     });
 
     it("throws SERVICE_ERROR on DB failure", async () => {
-      mockGetPlaceInListByOwner.mockResolvedValue(true);
+      mockGetPlaceInListByOwner.mockResolvedValue({ slug: LIST_SLUG });
       mockSoftDeleteListPlace.mockRejectedValue(new Error("disk full"));
 
       await expect(
@@ -671,21 +678,25 @@ describe("Place Service", () => {
     it("soft-deletes the place and cascades to list attachments", async () => {
       mockDeletePlaceWithCascade.mockResolvedValue({
         deletedListPlaceCount: 2,
+        listSlugs: [LIST_SLUG],
       });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
 
       expect(result.deletedListPlaceCount).toBe(2);
+      expect(result.listSlugs).toEqual([LIST_SLUG]);
     });
 
     it("returns 0 cascaded rows when place is not attached to any list", async () => {
       mockDeletePlaceWithCascade.mockResolvedValue({
         deletedListPlaceCount: 0,
+        listSlugs: [],
       });
 
       const result = await deletePlace({ placeId: PLACE_ID, userId: USER_ID });
 
       expect(result.deletedListPlaceCount).toBe(0);
+      expect(result.listSlugs).toEqual([]);
     });
 
     it("throws NOT_FOUND when place does not belong to user", async () => {

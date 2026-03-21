@@ -7,6 +7,9 @@ export {
   getPublicProfile,
   getPublicListsForProfile,
   getPublicListDetail,
+  invalidatePublicListCaches,
+  publicListsCacheKey,
+  publicListDetailCacheKey,
 } from "./service";
 
 export { PublicServiceError } from "./errors";

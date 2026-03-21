@@ -26,8 +26,21 @@ import { isSlugAvailable, updateSlug } from "@/lib/profile";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
 import { createServiceLogger } from "@/lib/services/logging";
+import { getClientIP } from "@/lib/utils/request";
+import {
+  loginIPLimiter,
+  loginEmailLimiter,
+  signupLimiter,
+  resetPasswordIPLimiter,
+  resetPasswordEmailLimiter,
+  mfaSendLimiter,
+  mfaVerifyLimiter,
+  passwordChangeLimiter,
+} from "@/lib/services/rate-limit";
 
 const log = createServiceLogger("auth-actions");
+
+const RATE_LIMIT_MESSAGE = "Too many attempts. Please try again later.";
 
 export interface SignupSuccessData {
   message: string;
@@ -58,6 +71,17 @@ export async function signupAction(
   _prevState: ActionState<SignupSuccessData>,
   formData: FormData
 ): Promise<ActionState<SignupSuccessData>> {
+  const ip = await getClientIP();
+  const ipCheck = await signupLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
   const email = formData.get("email");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
@@ -146,6 +170,17 @@ export async function loginAction(
   _prevState: ActionState<LoginSuccessData>,
   formData: FormData
 ): Promise<ActionState<LoginSuccessData>> {
+  const ip = await getClientIP();
+  const ipCheck = await loginIPLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
   const email = formData.get("email");
   const password = formData.get("password");
   const redirectToValue = formData.get("redirectTo");
@@ -161,6 +196,18 @@ export async function loginAction(
       data: null,
       error: null,
       fieldErrors: mapZodErrors(result.error.issues),
+      isSuccess: false,
+    };
+  }
+
+  const emailCheck = await loginEmailLimiter.check(
+    result.data.email.toLowerCase()
+  );
+  if (!emailCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
       isSuccess: false,
     };
   }
@@ -233,6 +280,17 @@ export async function passwordResetRequestAction(
   _prevState: ActionState<PasswordResetRequestSuccessData>,
   formData: FormData
 ): Promise<ActionState<PasswordResetRequestSuccessData>> {
+  const ip = await getClientIP();
+  const ipCheck = await resetPasswordIPLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
   const email = formData.get("email");
 
   const result = passwordResetSchema.safeParse({ email });
@@ -242,6 +300,18 @@ export async function passwordResetRequestAction(
       data: null,
       error: null,
       fieldErrors: mapZodErrors(result.error.issues),
+      isSuccess: false,
+    };
+  }
+
+  const emailCheck = await resetPasswordEmailLimiter.check(
+    result.data.email.toLowerCase()
+  );
+  if (!emailCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
       isSuccess: false,
     };
   }
@@ -388,6 +458,16 @@ export async function passwordChangeAction(
     return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
   }
 
+  const rateLimitCheck = await passwordChangeLimiter.check(auth.userId);
+  if (!rateLimitCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
   try {
     await changePassword(currentPassword, result.data.password);
   } catch (err) {
@@ -421,6 +501,12 @@ export async function passwordChangeAction(
  * Requires the two-factor cookie set during the password-login step.
  */
 export async function sendMFACodeAction(): Promise<{ error?: string }> {
+  const ip = await getClientIP();
+  const ipCheck = await mfaSendLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return { error: RATE_LIMIT_MESSAGE };
+  }
+
   try {
     await sendMFACode();
     return {};
@@ -438,6 +524,17 @@ export async function verifyMFAAction(
   _prevState: ActionState<VerifyMFASuccessData>,
   formData: FormData
 ): Promise<ActionState<VerifyMFASuccessData>> {
+  const ip = await getClientIP();
+  const ipCheck = await mfaVerifyLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return {
+      data: null,
+      error: RATE_LIMIT_MESSAGE,
+      fieldErrors: {},
+      isSuccess: false,
+    };
+  }
+
   const code = formData.get("code");
   const redirectTo = formData.get("redirectTo");
 

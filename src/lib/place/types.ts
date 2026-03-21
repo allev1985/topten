@@ -35,21 +35,27 @@ export interface CreatePlaceResult {
   place: PlaceRecord;
   /** Present when the place was attached to a list at creation time */
   listPlaceId?: string;
+  /** Slug of the list the place was attached to (present when listPlaceId is present) */
+  listSlug?: string;
 }
 
 /** Result of a successful addExistingPlaceToList operation */
 export interface AddExistingPlaceResult {
   listPlaceId: string;
+  listSlug: string;
 }
 
 /** Result of a successful updatePlace operation */
 export interface UpdatePlaceResult {
   place: Pick<PlaceRecord, "id" | "description" | "updatedAt">;
+  /** Slug of the list context used for ownership, if a listId was provided */
+  listSlug?: string;
 }
 
 /** Result of a successful deletePlaceFromList operation */
 export interface RemovePlaceFromListResult {
   success: true;
+  listSlug: string;
 }
 
 /**
@@ -70,4 +76,6 @@ export interface PlaceWithListCount {
 export interface DeletePlaceResult {
   /** Number of ListPlace rows that were cascade-soft-deleted */
   deletedListPlaceCount: number;
+  /** Slugs of the lists that had this place removed */
+  listSlugs: string[];
 }
