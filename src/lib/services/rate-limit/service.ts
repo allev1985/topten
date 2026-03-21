@@ -15,6 +15,7 @@
 import type { CacheStore } from "@/lib/services/cache/types";
 import type { RateLimitConfig, RateLimitResult } from "./types";
 import { createServiceLogger } from "@/lib/services/logging";
+import { hashIdentifier } from "@/lib/utils/formatting/identifier";
 
 const log = createServiceLogger("rate-limiter");
 
@@ -80,7 +81,7 @@ export class RateLimiter {
         {
           method: "check",
           action,
-          identifier,
+          identifierHash: hashIdentifier(identifier),
           estimatedCount: Math.floor(estimatedCount),
           limit: maxRequests,
         },
