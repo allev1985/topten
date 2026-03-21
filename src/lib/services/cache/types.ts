@@ -10,6 +10,7 @@ export interface CacheStore {
   del(key: string): Promise<void>;
   expire(key: string, ttlSeconds: number): Promise<boolean>;
   ttl(key: string): Promise<number>;
+  eval(script: string, keys: string[], args: string[]): Promise<unknown>;
 }
 
 export type CacheServiceErrorCode =

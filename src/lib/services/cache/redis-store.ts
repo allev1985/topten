@@ -92,4 +92,15 @@ export class RedisStore implements CacheStore {
   async ttl(key: string): Promise<number> {
     return this.client.ttl(key);
   }
+
+  /**
+   * Execute a Lua script atomically.
+   * @param script - Lua script source
+   * @param keys - KEYS array passed to the script
+   * @param args - ARGV array passed to the script
+   * @returns The value returned by the Lua script
+   */
+  async eval(script: string, keys: string[], args: string[]): Promise<unknown> {
+    return this.client.eval(script, keys.length, ...keys, ...args);
+  }
 }

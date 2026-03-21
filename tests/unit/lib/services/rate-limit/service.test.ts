@@ -30,6 +30,24 @@ function createMockStore(): CacheStore {
     }),
     expire: vi.fn(async () => true),
     ttl: vi.fn(async () => -2),
+    // Simulate the sliding-window Lua script in JS so unit tests don't need Redis
+    eval: vi.fn(async (_script: string, keys: string[], args: string[]) => {
+      const previousKey = keys[0]!;
+      const currentKey = keys[1]!;
+      const elapsed = parseFloat(args[0]!);
+      const limit = parseFloat(args[1]!);
+      const ttl = parseFloat(args[2]!);
+      const prev = parseFloat(data.get(previousKey) ?? "0");
+      const curr = parseFloat(data.get(currentKey) ?? "0");
+      const estimated = prev * (1 - elapsed) + curr;
+      if (estimated >= limit) {
+        return [0, Math.floor(estimated)];
+      }
+      const next = curr + 1;
+      data.set(currentKey, String(next));
+      void ttl; // TTL tracking not needed in the in-memory mock
+      return [1, Math.floor(estimated) + 1];
+    }),
   };
 }
 
@@ -155,6 +173,7 @@ describe("RateLimiter", () => {
       del: vi.fn().mockRejectedValue(new Error("Redis down")),
       expire: vi.fn().mockRejectedValue(new Error("Redis down")),
       ttl: vi.fn().mockRejectedValue(new Error("Redis down")),
+      eval: vi.fn().mockRejectedValue(new Error("Redis down")),
     };
 
     const limiter = new RateLimiter(
@@ -178,9 +197,11 @@ describe("RateLimiter", () => {
 
     await limiter.check("user-1");
 
-    expect(store.expire).toHaveBeenCalledWith(
-      expect.stringContaining("rl:test:user-1:"),
-      600
+    // TTL is passed as the third ARGV element to the atomic Lua script
+    expect(store.eval).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining([expect.stringContaining("rl:test:user-1:")]),
+      expect.arrayContaining(["600"])
     );
   });
 });

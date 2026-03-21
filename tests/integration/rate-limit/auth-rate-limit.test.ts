@@ -30,6 +30,22 @@ function createInMemoryStore(): CacheStore {
     }),
     expire: vi.fn(async () => true),
     ttl: vi.fn(async () => -2),
+    // Simulate the sliding-window Lua script in JS so integration tests don't need Redis
+    eval: vi.fn(async (_script: string, keys: string[], args: string[]) => {
+      const previousKey = keys[0]!;
+      const currentKey = keys[1]!;
+      const elapsed = parseFloat(args[0]!);
+      const limit = parseFloat(args[1]!);
+      const prev = parseFloat(data.get(previousKey) ?? "0");
+      const curr = parseFloat(data.get(currentKey) ?? "0");
+      const estimated = prev * (1 - elapsed) + curr;
+      if (estimated >= limit) {
+        return [0, Math.floor(estimated)];
+      }
+      const next = curr + 1;
+      data.set(currentKey, String(next));
+      return [1, Math.floor(estimated) + 1];
+    }),
   };
 }
 

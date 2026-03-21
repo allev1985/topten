@@ -18,6 +18,30 @@ import { createServiceLogger } from "@/lib/services/logging";
 
 const log = createServiceLogger("rate-limiter");
 
+/**
+ * Atomically reads both window counters, checks against the limit, and
+ * increments the current window counter if the request is allowed.
+ *
+ * KEYS[1] = previousKey, KEYS[2] = currentKey
+ * ARGV[1] = elapsedRatio, ARGV[2] = maxRequests, ARGV[3] = ttlSeconds
+ *
+ * Returns a two-element array: { allowed (0|1), current count }
+ */
+const SLIDING_WINDOW_SCRIPT = `
+local prev    = tonumber(redis.call('GET', KEYS[1])) or 0
+local curr    = tonumber(redis.call('GET', KEYS[2])) or 0
+local elapsed = tonumber(ARGV[1])
+local limit   = tonumber(ARGV[2])
+local ttl     = tonumber(ARGV[3])
+local estimated = prev * (1 - elapsed) + curr
+if estimated >= limit then
+  return {0, math.floor(estimated)}
+end
+redis.call('INCR', KEYS[2])
+redis.call('EXPIRE', KEYS[2], ttl)
+return {1, math.floor(estimated) + 1}
+`;
+
 export class RateLimiter {
   constructor(
     private readonly config: RateLimitConfig,
@@ -59,21 +83,16 @@ export class RateLimiter {
     const currentKey = `rl:${action}:${identifier}:${currentWindowStart}`;
     const previousKey = `rl:${action}:${identifier}:${previousWindowStart}`;
 
-    const prevCountStr = await this.store.get(previousKey);
-    const parsedPrevCount =
-      prevCountStr != null ? Number.parseInt(prevCountStr, 10) : 0;
-    const prevCount = Number.isFinite(parsedPrevCount) ? parsedPrevCount : 0;
+    const ttl = windowSeconds * 2;
+    const result = (await this.store.eval(
+      SLIDING_WINDOW_SCRIPT,
+      [previousKey, currentKey],
+      [String(elapsedRatio), String(maxRequests), String(ttl)]
+    )) as [number, number];
 
-    const currentCountStr = await this.store.get(currentKey);
-    const parsedCurrentCount =
-      currentCountStr != null ? Number.parseInt(currentCountStr, 10) : 0;
-    const currentCount = Number.isFinite(parsedCurrentCount)
-      ? parsedCurrentCount
-      : 0;
+    const [allowed, current] = result;
 
-    const estimatedCount = prevCount * (1 - elapsedRatio) + currentCount;
-
-    if (estimatedCount >= maxRequests) {
+    if (!allowed) {
       const retryAfterSeconds = Math.ceil(windowSeconds * (1 - elapsedRatio));
 
       log.info(
@@ -81,7 +100,7 @@ export class RateLimiter {
           method: "check",
           action,
           identifier,
-          estimatedCount: Math.floor(estimatedCount),
+          estimatedCount: current,
           limit: maxRequests,
         },
         "Rate limit exceeded"
@@ -89,20 +108,15 @@ export class RateLimiter {
 
       return {
         allowed: false,
-        current: Math.floor(estimatedCount),
+        current,
         limit: maxRequests,
         retryAfterSeconds,
       };
     }
 
-    // Increment and set TTL
-    const ttl = windowSeconds * 2;
-    await this.store.incr(currentKey);
-    await this.store.expire(currentKey, ttl);
-
     return {
       allowed: true,
-      current: Math.floor(estimatedCount) + 1,
+      current,
       limit: maxRequests,
       retryAfterSeconds: 0,
     };
