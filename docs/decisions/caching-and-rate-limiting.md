@@ -243,10 +243,10 @@ Connect to an external Redis instance via `REDIS_URL` environment variable. No D
 | Login (by IP) | IP address | 10 | 15 min | `rl:login-ip:{ip}:{window}` |
 | Login (by email) | email (lowercased) | 5 | 15 min | `rl:login-email:{email}:{window}` |
 | Signup | IP address | 5 | 60 min | `rl:signup:{ip}:{window}` |
-| Password Reset (by IP) | IP address | 3 | 60 min | `rl:reset-ip:{ip}:{window}` |
-| Password Reset (by email) | email | 3 | 60 min | `rl:reset-email:{email}:{window}` |
-| MFA Send Code | session cookie | 5 | 15 min | `rl:mfa-send:{cookie}:{window}` |
-| MFA Verify | session cookie | 5 | 15 min | `rl:mfa-verify:{cookie}:{window}` |
+| Password Reset (by IP) | IP address | 3 | 60 min | `rl:reset-password-ip:{ip}:{window}` |
+| Password Reset (by email) | email | 3 | 60 min | `rl:reset-password-email:{email}:{window}` |
+| MFA Send Code | IP address | 5 | 15 min | `rl:mfa-send:{ip}:{window}` |
+| MFA Verify | IP address | 5 | 15 min | `rl:mfa-verify:{ip}:{window}` |
 | Password Change | user ID | 5 | 60 min | `rl:password-change:{userId}:{window}` |
 
 ### Sliding Window Algorithm
