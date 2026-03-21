@@ -60,10 +60,16 @@ export class RateLimiter {
     const previousKey = `rl:${action}:${identifier}:${previousWindowStart}`;
 
     const prevCountStr = await this.store.get(previousKey);
-    const prevCount = prevCountStr ? parseInt(prevCountStr, 10) : 0;
+    const parsedPrevCount =
+      prevCountStr != null ? Number.parseInt(prevCountStr, 10) : 0;
+    const prevCount = Number.isFinite(parsedPrevCount) ? parsedPrevCount : 0;
 
     const currentCountStr = await this.store.get(currentKey);
-    const currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
+    const parsedCurrentCount =
+      currentCountStr != null ? Number.parseInt(currentCountStr, 10) : 0;
+    const currentCount = Number.isFinite(parsedCurrentCount)
+      ? parsedCurrentCount
+      : 0;
 
     const estimatedCount = prevCount * (1 - elapsedRatio) + currentCount;
 
