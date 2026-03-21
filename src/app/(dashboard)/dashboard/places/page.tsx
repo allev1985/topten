@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-primport { getAllPlacesByUser, PlaceServiceError } from "@/lib/place";
+import { getAllPlacesByUser, PlaceServiceError } from "@/lib/place";
 import { PlacesClient } from "./_components/PlacesClient";
 
 /**
