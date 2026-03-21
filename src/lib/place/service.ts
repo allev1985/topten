@@ -242,12 +242,12 @@ export async function createPlace({
     }
 
     if (listId) {
-      const { listPlaceId } = await addExistingPlaceToList({
+      const { listPlaceId, listSlug } = await addExistingPlaceToList({
         listId,
         placeId: place.id,
         userId,
       });
-      return { place, listPlaceId };
+      return { place, listPlaceId, listSlug };
     }
 
     return { place };
@@ -281,7 +281,7 @@ export async function createPlace({
   }
 
   // New place with list: verify ownership then atomically create + attach
-  let owned: boolean;
+  let owned: { slug: string } | null;
   try {
     owned = await placeRepository.getListOwnership({ listId, userId });
   } catch (err) {
@@ -320,7 +320,7 @@ export async function createPlace({
       "Place created and attached to list"
     );
 
-    return result;
+    return { ...result, listSlug: owned.slug };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     log.error({ method: "createPlace", userId, listId, err }, "DB error");
@@ -392,7 +392,7 @@ export async function addExistingPlaceToList({
         "Place restored to list"
       );
 
-      return { listPlaceId: existingRow.id };
+      return { listPlaceId: existingRow.id, listSlug: owned.slug };
     }
 
     const { id: listPlaceId } = await placeRepository.insertListPlace({
@@ -413,7 +413,7 @@ export async function addExistingPlaceToList({
       "Place attached to list"
     );
 
-    return { listPlaceId };
+    return { listPlaceId, listSlug: owned.slug };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     log.error(
@@ -459,6 +459,7 @@ export async function updatePlace({
   );
 
   try {
+    let listSlug: string | undefined;
     if (listId) {
       const accessible = await placeRepository.getPlaceInListByOwner({
         placeId,
@@ -468,6 +469,7 @@ export async function updatePlace({
       if (!accessible) {
         throw notFoundError();
       }
+      listSlug = accessible.slug;
     } else {
       const accessible = await placeRepository.getPlaceByOwner({
         placeId,
@@ -492,7 +494,7 @@ export async function updatePlace({
       "Place updated"
     );
 
-    return { place: row };
+    return { place: row, listSlug };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     log.error(
@@ -545,7 +547,7 @@ export async function deletePlaceFromList({
       "Place removed from list"
     );
 
-    return { success: true };
+    return { success: true, listSlug: accessible.slug };
   } catch (err) {
     if (err instanceof PlaceServiceError) throw err;
     log.error(

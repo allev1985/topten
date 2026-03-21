@@ -111,6 +111,16 @@ export async function createPlaceAction(
     }
     revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
+    if (created.listSlug) {
+      try {
+        await invalidatePublicListCaches(auth.userId, created.listSlug);
+      } catch (err) {
+        log.warn(
+          { method: "createPlaceAction", err },
+          "Cache invalidation failed"
+        );
+      }
+    }
     return {
       data: { placeId: created.place.id, listPlaceId: created.listPlaceId },
       error: null,
@@ -167,13 +177,21 @@ export async function addExistingPlaceToListAction(
   }
 
   try {
-    const { listPlaceId } = await addExistingPlaceToList({
+    const { listPlaceId, listSlug } = await addExistingPlaceToList({
       listId,
       placeId,
       userId: auth.userId,
     });
 
     revalidatePath(config.routes.dashboard.listDetail(listId));
+    try {
+      await invalidatePublicListCaches(auth.userId, listSlug);
+    } catch (err) {
+      log.warn(
+        { method: "addExistingPlaceToListAction", err },
+        "Cache invalidation failed"
+      );
+    }
     return {
       data: { listPlaceId },
       error: null,
@@ -245,7 +263,7 @@ export async function updatePlaceAction(
   }
 
   try {
-    const { place } = await updatePlace({
+    const { place, listSlug } = await updatePlace({
       placeId,
       listId: resolvedListId,
       userId: auth.userId,
@@ -257,6 +275,16 @@ export async function updatePlaceAction(
     }
     revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
+    if (listSlug) {
+      try {
+        await invalidatePublicListCaches(auth.userId, listSlug);
+      } catch (err) {
+        log.warn(
+          { method: "updatePlaceAction", err },
+          "Cache invalidation failed"
+        );
+      }
+    }
     return {
       data: { placeId: place.id },
       error: null,
@@ -449,11 +477,15 @@ export async function deletePlaceAction(
   }
 
   try {
-    await deletePlaceFromList({ placeId, listId, userId: auth.userId });
+    const { listSlug } = await deletePlaceFromList({
+      placeId,
+      listId,
+      userId: auth.userId,
+    });
 
     revalidatePath(config.routes.dashboard.listDetail(listId));
     try {
-      await invalidatePublicListCaches(auth.userId);
+      await invalidatePublicListCaches(auth.userId, listSlug);
     } catch (err) {
       log.warn(
         { method: "deletePlaceAction", err },
@@ -508,19 +540,27 @@ export async function deletePlaceGlobalAction(
   }
 
   try {
-    const { deletedListPlaceCount } = await deletePlace({
+    const { deletedListPlaceCount, listSlugs } = await deletePlace({
       placeId,
       userId: auth.userId,
     });
 
     revalidatePath(config.routes.dashboard.places, "page");
     revalidatePath("/dashboard/lists", "layout");
-    invalidatePublicListCaches(auth.userId).catch((err) =>
+    try {
+      await Promise.all(
+        listSlugs.length > 0
+          ? listSlugs.map((slug) =>
+              invalidatePublicListCaches(auth.userId, slug)
+            )
+          : [invalidatePublicListCaches(auth.userId)]
+      );
+    } catch (err) {
       log.warn(
         { method: "deletePlaceGlobalAction", err },
         "Cache invalidation failed"
-      )
-    );
+      );
+    }
     return {
       data: { deletedListPlaceCount },
       error: null,
