@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { TagBadgeList } from "@/components/shared/TagBadge";
 
 interface PublicListCardProps {
   list: PublicListSummary;
@@ -45,6 +46,11 @@ export function PublicListCard({
             </CardDescription>
           )}
         </CardHeader>
+        {list.tags && list.tags.length > 0 && (
+          <div className="px-6 pb-1">
+            <TagBadgeList tags={list.tags} maxVisible={4} />
+          </div>
+        )}
         <CardFooter className="text-muted-foreground gap-3 text-xs">
           <span>
             {list.placeCount} {list.placeCount === 1 ? "place" : "places"}

@@ -3,12 +3,14 @@
 import type { JSX, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TagBadgeList } from "@/components/shared/TagBadge";
 
 interface PlaceCardPlace {
   name: string;
   address: string;
   heroImageUrl: string | null;
   activeListCount?: number;
+  tags?: Array<{ name: string; source?: "system" | "custom" }>;
 }
 
 interface PlaceCardProps {
@@ -49,6 +51,11 @@ export function PlaceCard({ place, actions }: PlaceCardProps): JSX.Element {
           <p className="text-muted-foreground mt-0.5 truncate text-sm">
             {place.address}
           </p>
+          {place.tags && place.tags.length > 0 && (
+            <div className="mt-1">
+              <TagBadgeList tags={place.tags} maxVisible={3} />
+            </div>
+          )}
         </div>
         {actions && <div className="flex shrink-0 gap-1">{actions}</div>}
       </CardContent>

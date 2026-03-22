@@ -10,6 +10,7 @@ export interface PlaceSummary {
   address: string;
   description: string | null;
   heroImageUrl: string | null;
+  tags: Array<{ name: string; source: "system" | "custom" }>;
 }
 
 /**

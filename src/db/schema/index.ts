@@ -6,3 +6,6 @@ export * from "./two-factor";
 export * from "./list";
 export * from "./place";
 export * from "./listPlace";
+export * from "./tag";
+export * from "./listTag";
+export * from "./placeTag";

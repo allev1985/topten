@@ -28,6 +28,7 @@ describe("PublicListCard", () => {
     description: "The best coffee in town",
     updatedAt: new Date("2024-06-15T00:00:00Z"),
     placeCount: 7,
+    tags: [],
   };
 
   it("renders the list title", () => {

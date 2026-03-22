@@ -24,6 +24,7 @@ export interface PublicListSummary {
   description: string | null;
   updatedAt: Date;
   placeCount: number;
+  tags: Array<{ name: string; source: "system" | "custom" }>;
 }
 
 /**
@@ -36,6 +37,7 @@ export interface PublicPlaceEntry {
   description: string | null;
   heroImageUrl: string | null;
   position: number;
+  tags: Array<{ name: string; source: "system" | "custom" }>;
 }
 
 /**

@@ -77,6 +77,11 @@ vi.mock("@/db/repositories/place.repository", () => ({
   deletePlaceWithCascade: mockDeletePlaceWithCascade,
 }));
 
+vi.mock("@/db/repositories/tag.repository", () => ({
+  getTagsByList: vi.fn().mockResolvedValue([]),
+  getTagsByPlace: vi.fn().mockResolvedValue([]),
+}));
+
 // ─── Test data ────────────────────────────────────────────────────────────────
 
 const USER_ID = "user-abc-123";
@@ -135,7 +140,7 @@ describe("Place Service", () => {
       const result = await getPlacesByList(LIST_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(placeSummaryRow);
+      expect(result[0]).toMatchObject(placeSummaryRow);
     });
 
     it("returns empty array when list has no places", async () => {
@@ -174,7 +179,7 @@ describe("Place Service", () => {
       });
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(placeSummaryRow);
+      expect(result[0]).toMatchObject(placeSummaryRow);
     });
 
     it("returns empty array when all user places are already in target list", async () => {

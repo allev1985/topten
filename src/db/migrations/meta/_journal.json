@@ -15,6 +15,13 @@
       "when": 1773964800000,
       "tag": "0001_add_mfa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774178320943,
+      "tag": "0002_dark_warlock",
+      "breakpoints": true
     }
   ]
 }

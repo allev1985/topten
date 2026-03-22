@@ -12,6 +12,7 @@ const mockPublishedList: ListSummary = {
   isPublished: true,
   placeCount: 5,
   createdAt: new Date("2024-01-01"),
+  tags: [],
 };
 
 const mockDraftList: ListSummary = {
@@ -22,6 +23,7 @@ const mockDraftList: ListSummary = {
   isPublished: false,
   placeCount: 3,
   createdAt: new Date("2024-01-01"),
+  tags: [],
 };
 
 describe("ListCard", () => {

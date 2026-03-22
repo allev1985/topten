@@ -42,6 +42,11 @@ vi.mock("@/db/repositories/user.repository", () => ({
   getVanitySlugByUserId: mockGetVanitySlugByUserId,
 }));
 
+vi.mock("@/db/repositories/tag.repository", () => ({
+  getTagsByList: vi.fn().mockResolvedValue([]),
+  getTagsByPlace: vi.fn().mockResolvedValue([]),
+}));
+
 // ─── Test data ────────────────────────────────────────────────────────────────
 
 const USER_ID = "user-abc-123";
@@ -91,7 +96,10 @@ describe("List Service", () => {
       const result = await getListsByUser(USER_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(listSummaryRow);
+      expect(result[0]).toMatchObject({
+        ...listSummaryRow,
+        tags: [],
+      });
     });
 
     it("returns empty array when user has no lists", async () => {

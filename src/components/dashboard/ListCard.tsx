@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { ListCardProps } from "@/types/list";
+import { TagBadgeList } from "@/components/shared/TagBadge";
 
 export function ListCard({
   list,
@@ -158,6 +159,13 @@ export function ListCard({
               <p className="text-muted-foreground mt-1 mb-3 line-clamp-2 text-sm">
                 {list.description}
               </p>
+            )}
+
+            {/* Tags */}
+            {list.tags && list.tags.length > 0 && (
+              <div className="mt-2 mb-2">
+                <TagBadgeList tags={list.tags} maxVisible={3} />
+              </div>
             )}
 
             {/* Footer: place count + status badge */}

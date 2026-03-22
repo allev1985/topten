@@ -15,6 +15,7 @@ export interface ListSummary {
   isPublished: boolean;
   createdAt: Date;
   placeCount: number;
+  tags: Array<{ name: string; source: "system" | "custom" }>;
 }
 
 /**

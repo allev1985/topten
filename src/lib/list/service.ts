@@ -21,6 +21,7 @@
 
 import * as listRepository from "@/db/repositories/list.repository";
 import * as userRepository from "@/db/repositories/user.repository";
+import * as tagRepository from "@/db/repositories/tag.repository";
 import {
   ListServiceError,
   notFoundError,
@@ -65,12 +66,20 @@ export async function getListsByUser(userId: string): Promise<ListSummary[]> {
   try {
     const rows = await listRepository.getListsByUser(userId);
 
+    // Enrich each list with its tags
+    const enriched: ListSummary[] = await Promise.all(
+      rows.map(async (row) => {
+        const tags = await tagRepository.getTagsByList(row.id);
+        return { ...row, tags };
+      })
+    );
+
     log.info(
-      { method: "getListsByUser", userId, count: rows.length },
+      { method: "getListsByUser", userId, count: enriched.length },
       "Lists fetched"
     );
 
-    return rows;
+    return enriched;
   } catch (err) {
     log.error({ method: "getListsByUser", userId, err }, "DB error");
     throw listServiceError("Failed to load lists. Please try again.", err);

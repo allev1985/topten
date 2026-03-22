@@ -31,6 +31,11 @@ vi.mock("@/db/repositories/public.repository", () => ({
   getPublicListDetail: mockGetPublicListDetail,
 }));
 
+vi.mock("@/db/repositories/tag.repository", () => ({
+  getTagsByList: vi.fn().mockResolvedValue([]),
+  getTagsByPlace: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("@/lib/services/cache/helpers", () => ({
   cachedQuery: (...args: unknown[]) => mockCachedQuery(...args),
   invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),

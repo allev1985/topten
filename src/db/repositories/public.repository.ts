@@ -13,12 +13,39 @@ import { users } from "@/db/schema/user";
 import { lists } from "@/db/schema/list";
 import { listPlaces } from "@/db/schema/listPlace";
 import { places } from "@/db/schema/place";
-import type {
-  PublicProfile,
-  PublicListSummary,
-  PublicListDetail,
-  PublicPlaceEntry,
-} from "@/lib/public/types";
+import type { PublicProfile } from "@/lib/public/types";
+
+// ─── Raw row types (without enriched fields like tags) ───────────────────────
+
+/** Raw list summary row as returned by the DB query (no tags). */
+export type RawPublicListSummaryRow = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  updatedAt: Date;
+  placeCount: number;
+};
+
+/** Raw place entry row as returned by the DB query (no tags). */
+export type RawPublicPlaceEntryRow = {
+  id: string;
+  name: string;
+  address: string;
+  description: string | null;
+  heroImageUrl: string | null;
+  position: number;
+};
+
+/** Raw list detail as returned by the DB query (no tags on places). */
+export type RawPublicListDetailRow = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  updatedAt: Date;
+  places: RawPublicPlaceEntryRow[];
+};
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -54,7 +81,7 @@ export async function getPublicProfileBySlug(
  */
 export async function getPublicListsForProfile(
   userId: string
-): Promise<PublicListSummary[]> {
+): Promise<RawPublicListSummaryRow[]> {
   return db
     .select({
       id: lists.id,
@@ -97,7 +124,7 @@ export async function getPublicListDetail({
 }: {
   userId: string;
   listSlug: string;
-}): Promise<PublicListDetail | null> {
+}): Promise<RawPublicListDetailRow | null> {
   // Step 1: Fetch the list header
   const listRows = await db
     .select({
@@ -144,7 +171,7 @@ export async function getPublicListDetail({
     )
     .orderBy(asc(listPlaces.position));
 
-  const placeEntries: PublicPlaceEntry[] = placeRows.map((row) => ({
+  const placeEntries: RawPublicPlaceEntryRow[] = placeRows.map((row) => ({
     id: row.id,
     name: row.name,
     address: row.address,

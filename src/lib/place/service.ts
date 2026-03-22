@@ -22,6 +22,7 @@
  */
 
 import * as placeRepository from "@/db/repositories/place.repository";
+import * as tagRepository from "@/db/repositories/tag.repository";
 import {
   PlaceServiceError,
   notFoundError,
@@ -58,12 +59,19 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
   try {
     const rows = await placeRepository.getPlacesByList(listId);
 
+    const enriched: PlaceSummary[] = await Promise.all(
+      rows.map(async (row) => {
+        const tags = await tagRepository.getTagsByPlace(row.id);
+        return { ...row, tags };
+      })
+    );
+
     log.info(
-      { method: "getPlacesByList", listId, count: rows.length },
+      { method: "getPlacesByList", listId, count: enriched.length },
       "Places fetched"
     );
 
-    return rows;
+    return enriched;
   } catch (err) {
     log.error({ method: "getPlacesByList", listId, err }, "DB error");
     throw placeServiceError("Failed to load places. Please try again.", err);
@@ -97,17 +105,24 @@ export async function getAvailablePlacesForList({
       userId,
     });
 
+    const enriched: PlaceSummary[] = await Promise.all(
+      rows.map(async (row) => {
+        const tags = await tagRepository.getTagsByPlace(row.id);
+        return { ...row, tags };
+      })
+    );
+
     log.info(
       {
         method: "getAvailablePlacesForList",
         listId,
         userId,
-        count: rows.length,
+        count: enriched.length,
       },
       "Available places fetched"
     );
 
-    return rows;
+    return enriched;
   } catch (err) {
     log.error(
       { method: "getAvailablePlacesForList", listId, userId, err },

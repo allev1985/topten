@@ -17,6 +17,7 @@
 
 import { cache } from "react";
 import * as publicRepository from "@/db/repositories/public.repository";
+import * as tagRepository from "@/db/repositories/tag.repository";
 import { createServiceLogger } from "@/lib/services/logging";
 import { cachedQuery, invalidateCache } from "@/lib/services/cache/helpers";
 import { config } from "@/lib/config";
@@ -113,7 +114,16 @@ export const getPublicListsForProfile = cache(
       const rows = await cachedQuery(
         publicListsCacheKey(userId),
         config.cache.publicListTtlSeconds,
-        () => publicRepository.getPublicListsForProfile(userId)
+        async () => {
+          const rawRows =
+            await publicRepository.getPublicListsForProfile(userId);
+          return Promise.all(
+            rawRows.map(async (row) => ({
+              ...row,
+              tags: await tagRepository.getTagsByList(row.id),
+            }))
+          );
+        }
       );
 
       log.info(
@@ -158,7 +168,20 @@ export const getPublicListDetail = cache(
       const result = await cachedQuery(
         publicListDetailCacheKey(userId, listSlug),
         config.cache.publicListTtlSeconds,
-        () => publicRepository.getPublicListDetail({ userId, listSlug })
+        async () => {
+          const raw = await publicRepository.getPublicListDetail({
+            userId,
+            listSlug,
+          });
+          if (!raw) return null;
+          const enrichedPlaces = await Promise.all(
+            raw.places.map(async (p) => ({
+              ...p,
+              tags: await tagRepository.getTagsByPlace(p.id),
+            }))
+          );
+          return { ...raw, places: enrichedPlaces };
+        }
       );
 
       if (result) {
