@@ -8,6 +8,7 @@ import type { ActionState } from "@/types/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput } from "@/components/shared/TagInput";
 
 interface CreateListFormProps {
   /** Called when the list is successfully created */
@@ -79,6 +80,12 @@ export function CreateListForm({
           </p>
         )}
       </div>
+
+      <TagInput
+        name="tags"
+        disabled={isPending}
+        error={state.fieldErrors.tags?.[0]}
+      />
 
       <Button
         type="submit"

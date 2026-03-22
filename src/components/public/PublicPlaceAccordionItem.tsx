@@ -9,6 +9,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import { TagBadgeList } from "@/components/shared/TagBadgeList";
 
 interface PublicPlaceAccordionItemProps {
   place: PublicPlaceEntry;
@@ -25,7 +26,7 @@ interface PublicPlaceAccordionItemProps {
 export function PublicPlaceAccordionItem({
   place,
 }: PublicPlaceAccordionItemProps): JSX.Element {
-  const hasContent = Boolean(place.description);
+  const hasContent = Boolean(place.description) || place.tags.length > 0;
 
   const heroImage = (
     <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-white">
@@ -78,9 +79,12 @@ export function PublicPlaceAccordionItem({
       </CollapsibleTrigger>
 
       <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
-        <p className="text-muted-foreground px-3 py-3 text-sm">
-          {place.description}
-        </p>
+        <div className="space-y-2 px-3 py-3">
+          {place.description && (
+            <p className="text-muted-foreground text-sm">{place.description}</p>
+          )}
+          <TagBadgeList tags={place.tags} size="sm" />
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );

@@ -3,6 +3,7 @@ import type { JSX } from "react";
 import type { PublicPlaceEntry } from "@/lib/public/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TagBadgeList } from "@/components/shared/TagBadgeList";
 
 interface PublicPlaceCardProps {
   place: PublicPlaceEntry;
@@ -34,6 +35,7 @@ export function PublicPlaceCard({
           {place.description && (
             <p className="text-foreground mt-2 text-sm">{place.description}</p>
           )}
+          <TagBadgeList tags={place.tags} size="sm" className="mt-2" />
         </div>
 
         {place.heroImageUrl && (

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { tagsFieldSchema } from "./tag";
 
 /**
  * Schema for creating a new place via Google Places selection.
@@ -31,6 +32,7 @@ export const createPlaceSchema = z.object({
     .max(2048, "URL must be 2048 characters or fewer")
     .nullable()
     .optional(),
+  tags: tagsFieldSchema.optional().default([]),
 });
 
 /**

@@ -24,6 +24,7 @@ describe("PublicPlaceCard", () => {
     description: null,
     heroImageUrl: null,
     position: 1,
+    tags: [],
   };
 
   it("renders the place name", () => {

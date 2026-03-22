@@ -3,6 +3,8 @@
  * @module lib/public/types
  */
 
+import type { TagSummary } from "@/lib/tag/types";
+
 /**
  * Public-facing user profile data.
  */
@@ -24,6 +26,7 @@ export interface PublicListSummary {
   description: string | null;
   updatedAt: Date;
   placeCount: number;
+  tags: TagSummary[];
 }
 
 /**
@@ -36,6 +39,7 @@ export interface PublicPlaceEntry {
   description: string | null;
   heroImageUrl: string | null;
   position: number;
+  tags: TagSummary[];
 }
 
 /**
@@ -47,5 +51,6 @@ export interface PublicListDetail {
   slug: string;
   description: string | null;
   updatedAt: Date;
+  tags: TagSummary[];
   places: PublicPlaceEntry[];
 }

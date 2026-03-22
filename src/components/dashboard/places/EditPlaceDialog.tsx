@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EditTagsForm } from "@/components/shared/EditTagsForm";
 
 interface EditPlaceDialogProps {
   place: {
@@ -22,6 +23,7 @@ interface EditPlaceDialogProps {
     name: string;
     address: string;
     description?: string | null;
+    tags?: string[];
   };
   /** When provided, ownership is verified via list membership and the list page
    *  is revalidated on save. Omit when editing from the My Places context. */
@@ -164,6 +166,17 @@ export function EditPlaceDialog({
             </Button>
           </div>
         </form>
+
+        {place.tags !== undefined && (
+          <div className="border-t pt-4">
+            <EditTagsForm
+              entityId={place.id}
+              kind="place"
+              initialTags={place.tags}
+              onSuccess={() => onOpenChange(false)}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

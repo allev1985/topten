@@ -1,0 +1,34 @@
+/**
+ * Tag Service public API
+ * @module lib/tag
+ */
+
+export {
+  searchTags,
+  getTagsForList,
+  getTagsForPlace,
+  setListTags,
+  setPlaceTags,
+} from "./service";
+
+export { TagServiceError } from "./errors";
+
+export {
+  normaliseTagSlug,
+  normaliseTagLabel,
+  MAX_TAGS_PER_ENTITY,
+  MAX_TAG_LENGTH,
+} from "./slug";
+
+export {
+  GOOGLE_PLACES_TAXONOMY,
+  findTaxonomyEntry,
+} from "./google-places-taxonomy";
+
+export type {
+  TagSummary,
+  TagRecord,
+  SetTagsResult,
+  TaggableKind,
+} from "./types";
+export type { TaxonomyEntry } from "./google-places-taxonomy";
