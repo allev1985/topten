@@ -27,6 +27,7 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<TagSummary[]>([]);
   const [active, setActive] = useState(-1);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [, startSearch] = useTransition();
   const [isSaving, startSave] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,16 +64,21 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  function applyTags(nextTags: string[]) {
+  function applyTags(nextTags: string[], prevTags: string[]) {
+    setSaveError(null);
     setTags(nextTags);
     const formData = new FormData();
     formData.set("entityId", placeId);
     formData.set("tags", JSON.stringify(nextTags));
     startSave(async () => {
-      await setPlaceTagsAction(
+      const res = await setPlaceTagsAction(
         { data: null, error: null, fieldErrors: {}, isSuccess: false },
         formData
       );
+      if (!res.isSuccess) {
+        setTags(prevTags);
+        setSaveError(res.error ?? "Failed to save tags.");
+      }
     });
   }
 
@@ -87,12 +93,15 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
     setQuery("");
     setSuggestions([]);
     setActive(-1);
-    applyTags([...tags, clean]);
+    applyTags([...tags, clean], tags);
   }
 
   function removeTag(label: string) {
     setSuggestions([]);
-    applyTags(tags.filter((t) => t !== label));
+    applyTags(
+      tags.filter((t) => t !== label),
+      tags
+    );
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -142,6 +151,7 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
             aria-activedescendant={
               active >= 0 ? `${uid}-option-${active}` : undefined
             }
+            aria-label="Add a tag"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
@@ -156,6 +166,12 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
           />
         )}
       </div>
+
+      {saveError && (
+        <p role="alert" className="text-destructive mt-1 text-xs">
+          {saveError}
+        </p>
+      )}
 
       {suggestions.length > 0 && (
         <ul
