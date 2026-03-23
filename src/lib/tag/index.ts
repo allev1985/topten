@@ -7,6 +7,8 @@ export {
   searchTags,
   getTagsForList,
   getTagsForPlace,
+  getTagsForLists,
+  getTagsForPlaces,
   setListTags,
   setPlaceTags,
 } from "./service";
@@ -22,6 +24,7 @@ export {
 
 export type {
   TagSummary,
+  EntityTagSummary,
   TagRecord,
   SetTagsResult,
   TaggableKind,

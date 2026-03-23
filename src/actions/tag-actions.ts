@@ -95,7 +95,7 @@ export async function setListTagsAction(
       userId: auth.userId,
       labels: result.data.tags,
     });
-    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/lists/${result.data.entityId}`);
     try {
       await invalidatePublicListCaches(
         auth.userId,
@@ -156,7 +156,7 @@ export async function setPlaceTagsAction(
       userId: auth.userId,
       labels: result.data.tags,
     });
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/places");
     try {
       await invalidatePublicListCaches(auth.userId, ...(listSlugs ?? []));
     } catch (err) {

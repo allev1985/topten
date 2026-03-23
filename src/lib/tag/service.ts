@@ -28,7 +28,7 @@ import {
 } from "./errors";
 import { normaliseTagSlug, normaliseTagLabel } from "./slug";
 import { config } from "@/lib/config";
-import type { TagSummary, SetTagsResult, TaggableKind } from "./types";
+import type { TagSummary, EntityTagSummary, SetTagsResult, TaggableKind } from "./types";
 
 const log = createServiceLogger("tag-service");
 
@@ -101,6 +101,42 @@ export async function getTagsForPlace(placeId: string): Promise<TagSummary[]> {
     return await tagRepository.getTagsForPlace(placeId);
   } catch (err) {
     log.error({ method: "getTagsForPlace", placeId, err }, "DB error");
+    throw tagServiceError("Failed to load tags.", err);
+  }
+}
+
+/**
+ * Batch-fetch active tags for multiple lists.
+ *
+ * @param listIds - List UUIDs
+ * @returns One EntityTagSummary per (list, tag) pair; includes entityId for grouping
+ * @throws {TagServiceError} code SERVICE_ERROR on DB failure
+ */
+export async function getTagsForLists(
+  listIds: string[]
+): Promise<EntityTagSummary[]> {
+  try {
+    return await tagRepository.getTagsForLists(listIds);
+  } catch (err) {
+    log.error({ method: "getTagsForLists", err }, "DB error");
+    throw tagServiceError("Failed to load tags.", err);
+  }
+}
+
+/**
+ * Batch-fetch active tags for multiple places.
+ *
+ * @param placeIds - Place UUIDs
+ * @returns One EntityTagSummary per (place, tag) pair; includes entityId for grouping
+ * @throws {TagServiceError} code SERVICE_ERROR on DB failure
+ */
+export async function getTagsForPlaces(
+  placeIds: string[]
+): Promise<EntityTagSummary[]> {
+  try {
+    return await tagRepository.getTagsForPlaces(placeIds);
+  } catch (err) {
+    log.error({ method: "getTagsForPlaces", err }, "DB error");
     throw tagServiceError("Failed to load tags.", err);
   }
 }
@@ -191,7 +227,7 @@ async function resolveTagIds(
   userId: string
 ): Promise<Map<string, string>> {
   const slugs = normalised.map((n) => n.slug);
-  const existing = await tagRepository.getTagsBySlugs(slugs);
+  const existing = await tagRepository.getTagsBySlugs({ slugs, userId });
   const bySlug = new Map(existing.map((t) => [t.slug, t.id]));
 
   const toInsert = normalised.filter((n) => !bySlug.has(n.slug));

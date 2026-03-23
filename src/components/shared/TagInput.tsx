@@ -170,6 +170,9 @@ export function TagInput({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
+            onBlur={() => {
+              if (query.trim()) commit(query);
+            }}
             placeholder={selected.length === 0 ? placeholder : ""}
             maxLength={config.tags.maxLabelLength}
             disabled={disabled}
@@ -178,7 +181,10 @@ export function TagInput({
         )}
       </div>
       {suggestions.length > 0 && (
-        <ul className="bg-popover border-input max-h-48 overflow-auto rounded-md border shadow-md">
+        <ul
+          className="bg-popover border-input max-h-48 overflow-auto rounded-md border shadow-md"
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {suggestions.map((s, i) => (
             <li key={s.id}>
               <button

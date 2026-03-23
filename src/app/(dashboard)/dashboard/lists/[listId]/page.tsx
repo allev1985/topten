@@ -10,6 +10,7 @@ import {
 } from "@/lib/place";
 import { getListsByUser } from "@/lib/list";
 import { PlaceList } from "./_components/PlaceList";
+import { ListTagsSection } from "./_components/ListTagsSection";
 
 interface ListDetailPageProps {
   params: Promise<{ listId: string }>;
@@ -69,6 +70,7 @@ export default async function ListDetailPage({
             {list.description}
           </p>
         )}
+        <ListTagsSection listId={list.id} initialTags={list.tags ?? []} />
       </div>
 
       {errorMessage ? (

@@ -35,5 +35,13 @@ export interface SetTagsResult {
   listSlugs?: string[];
 }
 
+/**
+ * Tag summary with the entity it is attached to.
+ * Returned by batch tag-fetch operations (getTagsForLists, getTagsForPlaces).
+ */
+export interface EntityTagSummary extends TagSummary {
+  entityId: string;
+}
+
 /** Entity kinds that can be tagged. */
 export type TaggableKind = "list" | "place";

@@ -22,6 +22,7 @@
  */
 
 import * as placeRepository from "@/db/repositories/place.repository";
+import { getTagsForPlaces } from "@/lib/tag";
 import {
   PlaceServiceError,
   notFoundError,
@@ -58,12 +59,27 @@ export async function getPlacesByList(listId: string): Promise<PlaceSummary[]> {
   try {
     const rows = await placeRepository.getPlacesByList(listId);
 
+    // Batch-fetch tags for all places in a single query
+    const placeIds = rows.map((r) => r.id);
+    const tagRows = await getTagsForPlaces(placeIds);
+    const tagsByPlaceId = new Map<string, string[]>();
+    for (const t of tagRows) {
+      const labels = tagsByPlaceId.get(t.entityId) ?? [];
+      labels.push(t.label);
+      tagsByPlaceId.set(t.entityId, labels);
+    }
+
+    const places = rows.map((r) => ({
+      ...r,
+      tags: tagsByPlaceId.get(r.id) ?? [],
+    }));
+
     log.info(
-      { method: "getPlacesByList", listId, count: rows.length },
+      { method: "getPlacesByList", listId, count: places.length },
       "Places fetched"
     );
 
-    return rows;
+    return places;
   } catch (err) {
     log.error({ method: "getPlacesByList", listId, err }, "DB error");
     throw placeServiceError("Failed to load places. Please try again.", err);
@@ -141,12 +157,27 @@ export async function getAllPlacesByUser({
   try {
     const rows = await placeRepository.getAllPlacesByUser({ userId });
 
+    // Batch-fetch tags for all places in a single query
+    const placeIds = rows.map((r) => r.id);
+    const tagRows = await getTagsForPlaces(placeIds);
+    const tagsByPlaceId = new Map<string, string[]>();
+    for (const t of tagRows) {
+      const labels = tagsByPlaceId.get(t.entityId) ?? [];
+      labels.push(t.label);
+      tagsByPlaceId.set(t.entityId, labels);
+    }
+
+    const places = rows.map((r) => ({
+      ...r,
+      tags: tagsByPlaceId.get(r.id) ?? [],
+    }));
+
     log.info(
-      { method: "getAllPlacesByUser", userId, count: rows.length },
+      { method: "getAllPlacesByUser", userId, count: places.length },
       "All places fetched"
     );
 
-    return rows;
+    return places;
   } catch (err) {
     log.error({ method: "getAllPlacesByUser", userId, err }, "DB error");
     throw placeServiceError("Failed to load places. Please try again.", err);

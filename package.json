@@ -23,7 +23,7 @@
     "test:e2e:ui": "playwright test --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "npx tsx src/db/seed/index.ts",
+    "db:seed": "tsx --env-file .env src/db/seed/index.ts",
     "db:studio": "drizzle-kit studio",
     "dev:start": "docker compose up -d",
     "dev:stop": "docker compose down",
@@ -49,6 +49,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.7",
+    "import-in-the-middle": "^3.0.0",
     "ioredis": "^5.10.1",
     "lucide-react": "^0.555.0",
     "next": "16.0.5",
@@ -58,6 +59,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "require-in-the-middle": "^8.0.1",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.13"
@@ -86,6 +88,7 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "shadcn": "^3.5.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.0.14"
   }
