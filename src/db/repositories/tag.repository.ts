@@ -108,10 +108,14 @@ export async function getTagsBySlugs({
 }
 
 /**
- * Insert new custom tag rows.
+ * Insert new custom tag rows, ignoring conflicts on the per-user unique index.
+ *
+ * Uses ON CONFLICT DO NOTHING so concurrent inserts of the same (slug, userId)
+ * pair are silently absorbed. Only the rows that were actually inserted are
+ * returned; callers that need a complete set should re-fetch via getTagsBySlugs.
  *
  * @param values - Rows to insert (slug, label, userId)
- * @returns The inserted tag rows
+ * @returns Tag rows that were newly inserted (excludes any that conflicted)
  */
 export async function insertTags(
   values: Array<{ slug: string; label: string; userId: string }>
@@ -120,6 +124,10 @@ export async function insertTags(
   return db
     .insert(tags)
     .values(values.map((v) => ({ ...v, isSystem: false })))
+    .onConflictDoNothing({
+      target: [tags.slug, tags.userId],
+      where: eq(tags.isSystem, false),
+    })
     .returning();
 }
 

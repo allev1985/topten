@@ -18,9 +18,12 @@ CREATE TABLE "tags" (
   "created_at" timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX "tags_slug_idx"      ON "tags" ("slug");
-CREATE INDEX        "tags_is_system_idx" ON "tags" ("is_system");
-CREATE INDEX        "tags_user_id_idx"   ON "tags" ("user_id");
+-- System tags are globally unique by slug.
+CREATE UNIQUE INDEX "tags_slug_system_idx" ON "tags" ("slug")          WHERE is_system = true;
+-- Custom tags are unique per (user_id, slug) so different users can share the same label.
+CREATE UNIQUE INDEX "tags_slug_user_idx"   ON "tags" ("slug", "user_id") WHERE is_system = false;
+CREATE INDEX        "tags_is_system_idx"   ON "tags" ("is_system");
+CREATE INDEX        "tags_user_id_idx"     ON "tags" ("user_id");
 
 -- ---------------------------------------------------------------------------
 -- place_tags

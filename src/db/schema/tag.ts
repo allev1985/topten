@@ -8,6 +8,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./user";
 import { places } from "./place";
 
@@ -34,7 +35,15 @@ export const tags = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("tags_slug_idx").on(table.slug),
+    // System tags are globally unique by slug (one canonical row per concept).
+    uniqueIndex("tags_slug_system_idx")
+      .on(table.slug)
+      .where(sql`is_system = true`),
+    // Custom tags are unique per user — two users may independently create the
+    // same slug without conflict.
+    uniqueIndex("tags_slug_user_idx")
+      .on(table.slug, table.userId)
+      .where(sql`is_system = false`),
     index("tags_is_system_idx").on(table.isSystem),
     index("tags_user_id_idx").on(table.userId),
   ]

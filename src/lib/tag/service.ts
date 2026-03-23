@@ -242,6 +242,10 @@ function normaliseLabels(labels: string[]): NormalisedTag[] {
 
 /**
  * Resolve a list of labels to tag ids, inserting new custom tags as needed.
+ *
+ * After inserting, slugs are re-fetched so that any rows absorbed by
+ * ON CONFLICT DO NOTHING (concurrent inserts of the same slug by the same
+ * user) are still included in the result map.
  */
 async function resolveTagIds(
   normalised: NormalisedTag[],
@@ -252,12 +256,14 @@ async function resolveTagIds(
   const bySlug = new Map(existing.map((t) => [t.slug, t.id]));
 
   const toInsert = normalised.filter((n) => !bySlug.has(n.slug));
-  if (toInsert.length > 0) {
-    const inserted = await tagRepository.insertTags(
-      toInsert.map((n) => ({ slug: n.slug, label: n.label, userId }))
-    );
-    for (const t of inserted) bySlug.set(t.slug, t.id);
-  }
+  if (toInsert.length === 0) return bySlug;
 
-  return bySlug;
+  await tagRepository.insertTags(
+    toInsert.map((n) => ({ slug: n.slug, label: n.label, userId }))
+  );
+
+  // Re-fetch to capture any rows that conflicted (race condition) rather than
+  // relying solely on the rows returned by INSERT ... ON CONFLICT DO NOTHING.
+  const resolved = await tagRepository.getTagsBySlugs({ slugs, userId });
+  return new Map(resolved.map((t) => [t.slug, t.id]));
 }

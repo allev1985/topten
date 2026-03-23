@@ -145,10 +145,12 @@ describe("setPlaceTags", () => {
   });
 
   it("inserts new custom tags when no existing match", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([]);
-    repo.insertTags.mockResolvedValue([
-      { ...tagCustom, userId: USER_ID, createdAt: new Date(), deletedAt: null },
-    ]);
+    const customRow = { ...tagCustom, userId: USER_ID, createdAt: new Date() };
+    // First call: nothing found; second call (after insert): tag now exists
+    repo.getTagsBySlugs
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([customRow]);
+    repo.insertTags.mockResolvedValue([customRow]);
     repo.getTagsForPlace.mockResolvedValue([tagCustom]);
 
     const { tags } = await setPlaceTags({
