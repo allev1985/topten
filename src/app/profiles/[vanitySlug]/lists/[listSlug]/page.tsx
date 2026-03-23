@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPublicProfile, getPublicListDetail } from "@/lib/public";
 import { PublicPlaceList } from "@/components/public/PublicPlaceList";
+import { TagBadgeList } from "@/components/shared/TagBadgeList";
 
 interface ListPageProps {
   params: Promise<{ vanitySlug: string; listSlug: string }>;
@@ -98,6 +99,7 @@ export default async function PublicListPage({
         {listDetail.description && (
           <p className="text-muted-foreground mt-2">{listDetail.description}</p>
         )}
+        <TagBadgeList tags={listDetail.tags} className="mt-3" />
         <p className="text-muted-foreground mt-1 text-sm">
           Updated{" "}
           {listDetail.updatedAt.toLocaleDateString("en-US", {

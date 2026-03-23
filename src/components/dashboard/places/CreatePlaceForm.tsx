@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/shared/TagInput";
 
 interface CreatePlaceFormProps {
   /** When provided, the new place is attached to this list. Omit for standalone. */
@@ -293,6 +294,15 @@ export function CreatePlaceForm({
             </p>
           )}
         </div>
+      )}
+
+      {/* Tags — optional, only shown after a place is selected */}
+      {selectedPlace && (
+        <TagInput
+          name="tags"
+          disabled={isPending}
+          error={state.fieldErrors.tags?.[0]}
+        />
       )}
 
       <div className="flex justify-end gap-2">

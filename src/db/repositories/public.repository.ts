@@ -13,6 +13,8 @@ import { users } from "@/db/schema/user";
 import { lists } from "@/db/schema/list";
 import { listPlaces } from "@/db/schema/listPlace";
 import { places } from "@/db/schema/place";
+import * as tagRepository from "@/db/repositories/tag.repository";
+import { groupTagsByEntity } from "@/db/repositories/helpers/tag-helpers";
 import type {
   PublicProfile,
   PublicListSummary,
@@ -55,7 +57,7 @@ export async function getPublicProfileBySlug(
 export async function getPublicListsForProfile(
   userId: string
 ): Promise<PublicListSummary[]> {
-  return db
+  const rows = await db
     .select({
       id: lists.id,
       title: lists.title,
@@ -78,6 +80,16 @@ export async function getPublicListsForProfile(
     )
     .groupBy(lists.id)
     .orderBy(desc(lists.publishedAt));
+
+  const tagRows = await tagRepository.getTagsForListsViaPlaces(
+    rows.map((r) => r.id)
+  );
+  const tagsByList = groupTagsByEntity(tagRows);
+
+  return rows.map((row) => ({
+    ...row,
+    tags: tagsByList.get(row.id) ?? [],
+  }));
 }
 
 /**
@@ -144,6 +156,12 @@ export async function getPublicListDetail({
     )
     .orderBy(asc(listPlaces.position));
 
+  const [listTagRows, placeTagRows] = await Promise.all([
+    tagRepository.getTagsForListViaPlaces(listRow.id),
+    tagRepository.getTagsForPlaces(placeRows.map((r) => r.id)),
+  ]);
+  const tagsByPlace = groupTagsByEntity(placeTagRows);
+
   const placeEntries: PublicPlaceEntry[] = placeRows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -151,6 +169,7 @@ export async function getPublicListDetail({
     description: row.description ?? null,
     heroImageUrl: row.heroImageUrl,
     position: row.position,
+    tags: tagsByPlace.get(row.id) ?? [],
   }));
 
   return {
@@ -159,6 +178,7 @@ export async function getPublicListDetail({
     slug: listRow.slug,
     description: listRow.description ?? null,
     updatedAt: listRow.updatedAt,
+    tags: listTagRows,
     places: placeEntries,
   };
 }

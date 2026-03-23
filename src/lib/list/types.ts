@@ -15,6 +15,8 @@ export interface ListSummary {
   isPublished: boolean;
   createdAt: Date;
   placeCount: number;
+  /** Tag labels attached to this list. Populated by getListsByUser. */
+  tags?: string[];
 }
 
 /**

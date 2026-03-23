@@ -57,6 +57,14 @@ const {
   mockDeletePlaceWithCascade: vi.fn(),
 }));
 
+const { mockGetTagsForPlaces } = vi.hoisted(() => ({
+  mockGetTagsForPlaces: vi.fn(),
+}));
+
+vi.mock("@/lib/tag", () => ({
+  getTagsForPlaces: mockGetTagsForPlaces,
+}));
+
 vi.mock("@/db/repositories/place.repository", () => ({
   getPlacesByList: mockGetPlacesByList,
   getAvailablePlacesForList: mockGetAvailablePlacesForList,
@@ -122,6 +130,7 @@ beforeEach(() => {
   mockGetPlaceInListByOwner.mockResolvedValue(null);
   mockGetPlaceByOwner.mockResolvedValue(false);
   mockDeletePlaceWithCascade.mockResolvedValue(null);
+  mockGetTagsForPlaces.mockResolvedValue([]);
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -135,7 +144,7 @@ describe("Place Service", () => {
       const result = await getPlacesByList(LIST_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(placeSummaryRow);
+      expect(result[0]).toEqual({ ...placeSummaryRow, tags: [] });
     });
 
     it("returns empty array when list has no places", async () => {
@@ -585,7 +594,7 @@ describe("Place Service", () => {
       const result = await getAllPlacesByUser({ userId: USER_ID });
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(placeWithCount);
+      expect(result[0]).toEqual({ ...placeWithCount, tags: [] });
     });
 
     it("returns empty array when user has no places", async () => {

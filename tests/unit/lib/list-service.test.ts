@@ -29,6 +29,14 @@ const {
   mockGetVanitySlugByUserId: vi.fn(),
 }));
 
+const { mockGetTagsForListsViaPlaces } = vi.hoisted(() => ({
+  mockGetTagsForListsViaPlaces: vi.fn(),
+}));
+
+vi.mock("@/lib/tag", () => ({
+  getTagsForListsViaPlaces: mockGetTagsForListsViaPlaces,
+}));
+
 vi.mock("@/db/repositories/list.repository", () => ({
   getListsByUser: mockGetListsByUser,
   insertList: mockInsertList,
@@ -78,6 +86,7 @@ beforeEach(() => {
 
   // sensible defaults
   mockGetVanitySlugByUserId.mockResolvedValue(VANITY_SLUG);
+  mockGetTagsForListsViaPlaces.mockResolvedValue([]);
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -91,7 +100,7 @@ describe("List Service", () => {
       const result = await getListsByUser(USER_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(listSummaryRow);
+      expect(result[0]).toEqual({ ...listSummaryRow, tags: [] });
     });
 
     it("returns empty array when user has no lists", async () => {

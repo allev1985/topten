@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { TagBadgeList } from "@/components/shared/TagBadgeList";
 
 interface PublicListCardProps {
   list: PublicListSummary;
@@ -44,6 +45,7 @@ export function PublicListCard({
               {list.description}
             </CardDescription>
           )}
+          <TagBadgeList tags={list.tags} size="sm" className="mt-1" />
         </CardHeader>
         <CardFooter className="text-muted-foreground gap-3 text-xs">
           <span>

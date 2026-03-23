@@ -13,3 +13,4 @@ export * as userRepository from "./user.repository";
 export * as profileRepository from "./profile.repository";
 export * as publicRepository from "./public.repository";
 export * as placeRepository from "./place.repository";
+export * as tagRepository from "./tag.repository";

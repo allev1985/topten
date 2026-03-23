@@ -556,3 +556,37 @@ export async function deletePlaceWithCascade({
     return { deletedListPlaceCount: cascadedRows.length, listSlugs };
   });
 }
+
+/**
+ * Fetch the slugs of all published, active lists that contain a given place,
+ * scoped to a specific owner.
+ *
+ * Used to determine which public list detail caches must be invalidated when
+ * a place's tags are updated.
+ *
+ * @param placeId - The place's UUID
+ * @param userId  - The list owner's UUID
+ * @returns Array of list slugs (may be empty)
+ */
+export async function getPublishedListSlugsForPlace({
+  placeId,
+  userId,
+}: {
+  placeId: string;
+  userId: string;
+}): Promise<string[]> {
+  const rows = await db
+    .select({ slug: lists.slug })
+    .from(listPlaces)
+    .innerJoin(lists, eq(listPlaces.listId, lists.id))
+    .where(
+      and(
+        eq(listPlaces.placeId, placeId),
+        eq(lists.userId, userId),
+        eq(lists.isPublished, true),
+        isNull(listPlaces.deletedAt),
+        isNull(lists.deletedAt)
+      )
+    );
+  return rows.map((r) => r.slug);
+}

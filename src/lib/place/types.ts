@@ -10,6 +10,8 @@ export interface PlaceSummary {
   address: string;
   description: string | null;
   heroImageUrl: string | null;
+  /** Tag labels attached to this place. Populated by getPlacesByList & getAllPlacesByUser. */
+  tags?: string[];
 }
 
 /**
@@ -70,6 +72,8 @@ export interface PlaceWithListCount {
   heroImageUrl: string | null;
   /** Number of active (non-deleted) ListPlace rows for this place */
   activeListCount: number;
+  /** Tag labels attached to this place. Populated by getAllPlacesByUser. */
+  tags?: string[];
 }
 
 /** Result of a successful deletePlace operation */

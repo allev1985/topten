@@ -13,6 +13,7 @@ import {
   deletePlace,
   PlaceServiceError,
 } from "@/lib/place";
+import { setPlaceTags } from "@/lib/tag";
 import { config } from "@/lib/config";
 import {
   searchPlaces,
@@ -82,6 +83,7 @@ export async function createPlaceAction(
     longitude: typeof rawLng === "string" ? rawLng : undefined,
     description: formData.get("description") || undefined,
     heroImageUrl: formData.get("heroImageUrl") || undefined,
+    tags: formData.get("tags") ?? "",
   });
 
   if (!result.success) {
@@ -105,6 +107,21 @@ export async function createPlaceAction(
       description: result.data.description,
       heroImageUrl: result.data.heroImageUrl,
     });
+
+    if (result.data.tags.length > 0) {
+      try {
+        await setPlaceTags({
+          placeId: created.place.id,
+          userId: auth.userId,
+          labels: result.data.tags,
+        });
+      } catch (err) {
+        log.warn(
+          { method: "createPlaceAction", placeId: created.place.id, err },
+          "Failed to set tags on new place"
+        );
+      }
+    }
 
     if (listId) {
       revalidatePath(config.routes.dashboard.listDetail(listId));
