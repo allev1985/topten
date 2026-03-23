@@ -28,7 +28,12 @@ import {
 } from "./errors";
 import { normaliseTagSlug, normaliseTagLabel } from "./slug";
 import { config } from "@/lib/config";
-import type { TagSummary, EntityTagSummary, SetTagsResult, TaggableKind } from "./types";
+import type {
+  TagSummary,
+  EntityTagSummary,
+  SetTagsResult,
+  TaggableKind,
+} from "./types";
 
 const log = createServiceLogger("tag-service");
 

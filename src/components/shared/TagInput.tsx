@@ -225,7 +225,11 @@ export function TagInput({
         </ul>
       )}
       {error && (
-        <p id={`${name}-error`} role="alert" className="text-destructive text-xs">
+        <p
+          id={`${name}-error`}
+          role="alert"
+          className="text-destructive text-xs"
+        >
           {error}
         </p>
       )}

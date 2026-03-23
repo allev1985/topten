@@ -17,16 +17,13 @@ interface ListTagsSectionProps {
  * Shows current tag badges when collapsed; reveals the EditTagsForm
  * inline when the user clicks "Edit tags" / "Add tags".
  */
-export function ListTagsSection({
-  listId,
-  initialTags,
-}: ListTagsSectionProps) {
+export function ListTagsSection({ listId, initialTags }: ListTagsSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   if (isEditing) {
     return (
       <div className="mt-4">
-        <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+        <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
           Tags
         </p>
         <EditTagsForm
@@ -50,13 +47,13 @@ export function ListTagsSection({
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-1.5">
-      {initialTags.length > 0 ? (
-        initialTags.map((label) => (
-          <Badge key={label} variant="secondary" className="text-xs">
-            {label}
-          </Badge>
-        ))
-      ) : null}
+      {initialTags.length > 0
+        ? initialTags.map((label) => (
+            <Badge key={label} variant="secondary" className="text-xs">
+              {label}
+            </Badge>
+          ))
+        : null}
       <Button
         type="button"
         variant="ghost"

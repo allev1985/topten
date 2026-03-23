@@ -164,9 +164,8 @@ describe("setListTagsAction", () => {
 
   it("proceeds normally when cache invalidation throws", async () => {
     mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
-    const { invalidatePublicListCaches: mockInvalidate } = await import(
-      "@/lib/public"
-    );
+    const { invalidatePublicListCaches: mockInvalidate } =
+      await import("@/lib/public");
     (mockInvalidate as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("cache down")
     );
@@ -275,9 +274,8 @@ describe("setPlaceTagsAction", () => {
 
   it("proceeds normally when cache invalidation throws", async () => {
     mockSetPlaceTags.mockResolvedValue({ tags: [], listSlugs: ["list-a"] });
-    const { invalidatePublicListCaches: mockInvalidate } = await import(
-      "@/lib/public"
-    );
+    const { invalidatePublicListCaches: mockInvalidate } =
+      await import("@/lib/public");
     (mockInvalidate as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("cache down")
     );

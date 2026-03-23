@@ -228,7 +228,10 @@ describe("setListTags", () => {
       labels: ["Cafe", "cafe", "CAFE!"],
     });
 
-    expect(repo.getTagsBySlugs).toHaveBeenCalledWith({ slugs: ["cafe"], userId: USER_ID });
+    expect(repo.getTagsBySlugs).toHaveBeenCalledWith({
+      slugs: ["cafe"],
+      userId: USER_ID,
+    });
   });
 
   it("clears all tags when given an empty label array", async () => {
