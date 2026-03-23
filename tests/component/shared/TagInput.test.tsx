@@ -14,7 +14,7 @@ vi.mock("@/actions/tag-actions", () => ({
 // ─── Import after mocks ───────────────────────────────────────────────────────
 
 import { TagInput } from "@/components/shared/TagInput";
-import { MAX_TAGS_PER_ENTITY } from "@/lib/tag/slug";
+import { config } from "@/lib/config/client";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,7 +55,9 @@ describe("TagInput", () => {
 
   it("shows the capacity counter", () => {
     render(<TagInput name="tags" defaultValue={["Cafe"]} />);
-    expect(screen.getByText(`(1/${MAX_TAGS_PER_ENTITY})`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`(1/${config.tags.maxPerEntity})`)
+    ).toBeInTheDocument();
   });
 
   it("surfaces an error message when provided", () => {
@@ -138,7 +140,10 @@ describe("TagInput", () => {
   // ── Capacity ───────────────────────────────────────────────────────────────
 
   it("hides the text input when at capacity", () => {
-    const full = Array.from({ length: MAX_TAGS_PER_ENTITY }, (_, i) => `t${i}`);
+    const full = Array.from(
+      { length: config.tags.maxPerEntity },
+      (_, i) => `t${i}`
+    );
     const { container } = render(<TagInput name="tags" defaultValue={full} />);
 
     expect(

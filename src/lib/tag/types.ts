@@ -29,6 +29,10 @@ export interface TagRecord {
 /** Result of a setListTags / setPlaceTags operation. */
 export interface SetTagsResult {
   tags: TagSummary[];
+  /** Slug of the updated list. Present only for setListTags results. */
+  listSlug?: string;
+  /** Slugs of published lists that contain the updated place. Present only for setPlaceTags results. */
+  listSlugs?: string[];
 }
 
 /** Entity kinds that can be tagged. */

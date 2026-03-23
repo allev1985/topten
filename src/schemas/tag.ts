@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_TAGS_PER_ENTITY, MAX_TAG_LENGTH } from "@/lib/tag/slug";
+import { config } from "@/lib/config/client";
 
 /**
  * Schema for a single tag label.
@@ -8,7 +8,10 @@ export const tagLabelSchema = z
   .string()
   .trim()
   .min(1, "Tag cannot be empty")
-  .max(MAX_TAG_LENGTH, `Tag must be ${MAX_TAG_LENGTH} characters or fewer`);
+  .max(
+    config.tags.maxLabelLength,
+    `Tag must be ${config.tags.maxLabelLength} characters or fewer`
+  );
 
 /**
  * Schema for the tags field on create/update forms.
@@ -26,8 +29,8 @@ export const tagsFieldSchema = z.preprocess(
   z
     .array(tagLabelSchema)
     .max(
-      MAX_TAGS_PER_ENTITY,
-      `A maximum of ${MAX_TAGS_PER_ENTITY} tags is allowed`
+      config.tags.maxPerEntity,
+      `A maximum of ${config.tags.maxPerEntity} tags is allowed`
     )
 );
 

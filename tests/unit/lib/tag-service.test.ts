@@ -32,6 +32,12 @@ const repo = vi.hoisted(() => ({
 
 vi.mock("@/db/repositories/tag.repository", () => repo);
 
+const placeRepo = vi.hoisted(() => ({
+  getPublishedListSlugsForPlace: vi.fn(),
+}));
+
+vi.mock("@/db/repositories/place.repository", () => placeRepo);
+
 // ─── Test data ────────────────────────────────────────────────────────────────
 
 const USER_ID = "user-abc";
@@ -117,7 +123,7 @@ describe("getTagsForPlace", () => {
 
 describe("setListTags", () => {
   beforeEach(() => {
-    repo.isListOwnedByUser.mockResolvedValue(true);
+    repo.isListOwnedByUser.mockResolvedValue({ slug: "list-slug" });
     repo.getTagsBySlugs.mockResolvedValue([]);
     repo.insertTags.mockResolvedValue([]);
     repo.getListTagJunctions.mockResolvedValue([]);
@@ -128,7 +134,7 @@ describe("setListTags", () => {
   });
 
   it("throws NOT_FOUND when the list is not owned by the user", async () => {
-    repo.isListOwnedByUser.mockResolvedValue(false);
+    repo.isListOwnedByUser.mockResolvedValue(null);
     await expect(
       setListTags({ listId: LIST_ID, userId: USER_ID, labels: ["Cafe"] })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
@@ -251,6 +257,18 @@ describe("setListTags", () => {
       setListTags({ listId: LIST_ID, userId: USER_ID, labels: ["Cafe"] })
     ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
   });
+
+  it("returns listSlug in the result", async () => {
+    repo.getTagsForList.mockResolvedValue([tagCafe]);
+
+    const result = await setListTags({
+      listId: LIST_ID,
+      userId: USER_ID,
+      labels: ["Cafe"],
+    });
+
+    expect(result.listSlug).toBe("list-slug");
+  });
 });
 
 // ─── setPlaceTags ─────────────────────────────────────────────────────────────
@@ -265,6 +283,7 @@ describe("setPlaceTags", () => {
     repo.softDeletePlaceTags.mockResolvedValue(undefined);
     repo.insertPlaceTags.mockResolvedValue(undefined);
     repo.getTagsForPlace.mockResolvedValue([]);
+    placeRepo.getPublishedListSlugsForPlace.mockResolvedValue([]);
   });
 
   it("throws NOT_FOUND when the place is not owned by the user", async () => {
@@ -295,5 +314,25 @@ describe("setPlaceTags", () => {
       tagIds: ["t2"],
     });
     expect(repo.insertListTags).not.toHaveBeenCalled();
+  });
+
+  it("returns listSlugs from published lists containing the place", async () => {
+    placeRepo.getPublishedListSlugsForPlace.mockResolvedValue([
+      "my-list",
+      "another-list",
+    ]);
+    repo.getTagsForPlace.mockResolvedValue([tagBar]);
+
+    const result = await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: ["Bar"],
+    });
+
+    expect(result.listSlugs).toEqual(["my-list", "another-list"]);
+    expect(placeRepo.getPublishedListSlugsForPlace).toHaveBeenCalledWith({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+    });
   });
 });

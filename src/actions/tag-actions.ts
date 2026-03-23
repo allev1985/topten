@@ -90,14 +90,17 @@ export async function setListTagsAction(
   }
 
   try {
-    const { tags } = await setListTags({
+    const { tags, listSlug } = await setListTags({
       listId: result.data.entityId,
       userId: auth.userId,
       labels: result.data.tags,
     });
     revalidatePath("/dashboard");
     try {
-      await invalidatePublicListCaches(auth.userId);
+      await invalidatePublicListCaches(
+        auth.userId,
+        ...(listSlug ? [listSlug] : [])
+      );
     } catch (err) {
       log.warn(
         { method: "setListTagsAction", err },
@@ -148,12 +151,20 @@ export async function setPlaceTagsAction(
   }
 
   try {
-    const { tags } = await setPlaceTags({
+    const { tags, listSlugs } = await setPlaceTags({
       placeId: result.data.entityId,
       userId: auth.userId,
       labels: result.data.tags,
     });
     revalidatePath("/dashboard");
+    try {
+      await invalidatePublicListCaches(auth.userId, ...(listSlugs ?? []));
+    } catch (err) {
+      log.warn(
+        { method: "setPlaceTagsAction", err },
+        "Cache invalidation failed"
+      );
+    }
     return { data: { tags }, error: null, fieldErrors: {}, isSuccess: true };
   } catch (err) {
     const message =

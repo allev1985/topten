@@ -13,12 +13,7 @@ export {
 
 export { TagServiceError } from "./errors";
 
-export {
-  normaliseTagSlug,
-  normaliseTagLabel,
-  MAX_TAGS_PER_ENTITY,
-  MAX_TAG_LENGTH,
-} from "./slug";
+export { normaliseTagSlug, normaliseTagLabel } from "./slug";
 
 export {
   GOOGLE_PLACES_TAXONOMY,

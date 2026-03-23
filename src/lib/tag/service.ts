@@ -18,6 +18,7 @@
  */
 
 import * as tagRepository from "@/db/repositories/tag.repository";
+import * as placeRepository from "@/db/repositories/place.repository";
 import { createServiceLogger } from "@/lib/services/logging";
 import {
   TagServiceError,
@@ -25,11 +26,8 @@ import {
   validationError,
   tagServiceError,
 } from "./errors";
-import {
-  normaliseTagSlug,
-  normaliseTagLabel,
-  MAX_TAGS_PER_ENTITY,
-} from "./slug";
+import { normaliseTagSlug, normaliseTagLabel } from "./slug";
+import { config } from "@/lib/config";
 import type { TagSummary, SetTagsResult, TaggableKind } from "./types";
 
 const log = createServiceLogger("tag-service");
@@ -227,19 +225,28 @@ async function setEntityTags({
   );
 
   const normalised = normaliseLabels(labels);
-  if (normalised.length > MAX_TAGS_PER_ENTITY) {
+  if (normalised.length > config.tags.maxPerEntity) {
     throw validationError(
-      `A maximum of ${MAX_TAGS_PER_ENTITY} tags is allowed.`
+      `A maximum of ${config.tags.maxPerEntity} tags is allowed.`
     );
   }
 
-  // Ownership check
-  const owned =
-    kind === "list"
-      ? await tagRepository.isListOwnedByUser({ listId: entityId, userId })
-      : await tagRepository.isPlaceOwnedByUser({ placeId: entityId, userId });
-
-  if (!owned) throw notFoundError();
+  // Ownership check — for lists, also captures the slug for cache invalidation
+  let listSlug: string | undefined;
+  if (kind === "list") {
+    const listOwnership = await tagRepository.isListOwnedByUser({
+      listId: entityId,
+      userId,
+    });
+    if (!listOwnership) throw notFoundError();
+    listSlug = listOwnership.slug;
+  } else {
+    const placeOwned = await tagRepository.isPlaceOwnedByUser({
+      placeId: entityId,
+      userId,
+    });
+    if (!placeOwned) throw notFoundError();
+  }
 
   try {
     const tagIdsBySlug = await resolveTagIds(normalised, userId);
@@ -281,10 +288,17 @@ async function setEntityTags({
       });
     }
 
-    const result =
+    const [result, listSlugs] = await Promise.all([
       kind === "list"
-        ? await tagRepository.getTagsForList(entityId)
-        : await tagRepository.getTagsForPlace(entityId);
+        ? tagRepository.getTagsForList(entityId)
+        : tagRepository.getTagsForPlace(entityId),
+      kind === "place"
+        ? placeRepository.getPublishedListSlugsForPlace({
+            placeId: entityId,
+            userId,
+          })
+        : Promise.resolve(undefined),
+    ]);
 
     log.info(
       {
@@ -299,7 +313,7 @@ async function setEntityTags({
       "Tags set"
     );
 
-    return { tags: result };
+    return { tags: result, listSlug, listSlugs };
   } catch (err) {
     if (err instanceof TagServiceError) throw err;
     log.error(

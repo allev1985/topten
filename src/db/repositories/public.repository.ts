@@ -14,38 +14,13 @@ import { lists } from "@/db/schema/list";
 import { listPlaces } from "@/db/schema/listPlace";
 import { places } from "@/db/schema/place";
 import * as tagRepository from "@/db/repositories/tag.repository";
-import type { TagSummary } from "@/lib/tag/types";
+import { groupTagsByEntity } from "@/db/repositories/helpers/tag-helpers";
 import type {
   PublicProfile,
   PublicListSummary,
   PublicListDetail,
   PublicPlaceEntry,
 } from "@/lib/public/types";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Group flat entity-tag rows into a Map keyed by entity id.
- *
- * @param rows - Flat rows from a batch tag query
- * @returns Map of entityId → TagSummary[]
- */
-function groupTagsByEntity(
-  rows: tagRepository.EntityTagRow[]
-): Map<string, TagSummary[]> {
-  const map = new Map<string, TagSummary[]>();
-  for (const row of rows) {
-    const arr = map.get(row.entityId) ?? [];
-    arr.push({
-      id: row.id,
-      slug: row.slug,
-      label: row.label,
-      isSystem: row.isSystem,
-    });
-    map.set(row.entityId, arr);
-  }
-  return map;
-}
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 

@@ -3,11 +3,7 @@
  * @module lib/tag/slug
  */
 
-/** Maximum number of tags allowed on a single entity. */
-export const MAX_TAGS_PER_ENTITY = 10;
-
-/** Maximum length of a tag label / slug. */
-export const MAX_TAG_LENGTH = 64;
+import { config } from "@/lib/config/client";
 
 /**
  * Normalise a raw tag label to its canonical slug form.
@@ -27,7 +23,7 @@ export function normaliseTagSlug(raw: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, MAX_TAG_LENGTH);
+    .slice(0, config.tags.maxLabelLength);
 }
 
 /**
@@ -40,5 +36,5 @@ export function normaliseTagSlug(raw: string): string {
  * @returns Cleaned display label
  */
 export function normaliseTagLabel(raw: string): string {
-  return raw.trim().replace(/\s+/g, " ").slice(0, MAX_TAG_LENGTH);
+  return raw.trim().replace(/\s+/g, " ").slice(0, config.tags.maxLabelLength);
 }
