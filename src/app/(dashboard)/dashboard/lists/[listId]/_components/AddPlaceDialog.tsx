@@ -7,15 +7,14 @@ import type { AddExistingPlaceSuccessData } from "@/actions/place-actions";
 import type { ActionState } from "@/types/forms";
 import type { PlaceSummary } from "@/lib/place/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { CreatePlaceForm } from "@/components/dashboard/places/CreatePlaceForm";
 
 interface AddPlaceDialogProps {
@@ -31,47 +30,33 @@ const buildAddExistingInitial =
     isSuccess: false,
   });
 
-// ── Dialog ────────────────────────────────────────────────────────────────────
-
 /**
- * Dialog for adding a place to a list.
+ * Bottom sheet for adding a place to a list.
  *
- * Two paths:
- *   A — Search existing places (client-side filter by name) and attach one.
- *       Only shown when availablePlaces is non-empty.
- *   B — Create a brand-new place with a name and address.
+ * Two sections:
+ *   A — "Add a new place": Google Places search via CreatePlaceForm.
+ *   B — "Add from existing": 3-column grid of places not already in the list,
+ *       with checkboxes to enable multi-select and bulk add.
  *
- * If availablePlaces is empty, defaults to Path B.
- * Closes automatically on success of either path.
- *
- * `createFormKey` is incremented on every close so that <CreatePlaceForm> is
- * remounted fresh on the next open, resetting its useActionState to the
- * initial value and preventing stale success/error from persisting.
+ * Section B is hidden when there are no available places.
+ * `createFormKey` is incremented on every close to remount CreatePlaceForm fresh.
  */
 export function AddPlaceDialog({
   listId,
   availablePlaces,
 }: AddPlaceDialogProps): JSX.Element {
   const hasAvailable = availablePlaces.length > 0;
-  const [open, setOpen] = useState(false);
-  const [path, setPath] = useState<"search" | "create">(
-    hasAvailable ? "search" : "create"
-  );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPlace, setSelectedPlace] = useState<PlaceSummary | null>(null);
-  const [createFormKey, setCreateFormKey] = useState(0);
 
-  const [addState, setAddState] = useState<
-    ActionState<AddExistingPlaceSuccessData>
-  >(buildAddExistingInitial());
+  const [open, setOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [addError, setAddError] = useState<string | null>(null);
+  const [createFormKey, setCreateFormKey] = useState(0);
   const [isAddPending, startAddTransition] = useTransition();
 
   const closeAndReset = () => {
     setOpen(false);
-    setSearchTerm("");
-    setSelectedPlace(null);
-    setAddState(buildAddExistingInitial());
-    setPath(hasAvailable ? "search" : "create");
+    setSelectedIds(new Set());
+    setAddError(null);
     setCreateFormKey((k) => k + 1);
   };
 
@@ -83,146 +68,150 @@ export function AddPlaceDialog({
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const togglePlace = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleAddSelected = () => {
+    if (selectedIds.size === 0) return;
+    setAddError(null);
+
     startAddTransition(async () => {
-      const result = await addExistingPlaceToListAction(addState, formData);
-      setAddState(result);
-      if (result.isSuccess) {
+      let lastError: string | null = null;
+      for (const placeId of selectedIds) {
+        const formData = new FormData();
+        formData.set("listId", listId);
+        formData.set("placeId", placeId);
+        const result = await addExistingPlaceToListAction(
+          buildAddExistingInitial(),
+          formData
+        );
+        if (!result.isSuccess) {
+          lastError = result.error ?? "Failed to add place.";
+        }
+      }
+      if (lastError) {
+        setAddError(lastError);
+      } else {
         closeAndReset();
       }
     });
   };
 
-  const filteredPlaces = availablePlaces.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetTrigger asChild>
         <Button size="sm">Add a place</Button>
-      </DialogTrigger>
+      </SheetTrigger>
 
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add a place</DialogTitle>
-        </DialogHeader>
+      <SheetContent
+        side="bottom"
+        className="max-h-[70vh] w-full overflow-y-auto rounded-t-2xl"
+      >
+        <SheetHeader className="mb-6">
+          <SheetTitle>Add a place</SheetTitle>
+        </SheetHeader>
 
-        {/* Path toggle — only shown when available places exist */}
-        {hasAvailable && (
-          <div className="flex gap-2 border-b pb-3">
-            <button
-              type="button"
-              onClick={() => setPath("search")}
-              className={`text-sm font-medium transition-colors ${
-                path === "search"
-                  ? "text-primary border-primary border-b-2 pb-1"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              From existing places
-            </button>
-            <button
-              type="button"
-              onClick={() => setPath("create")}
-              className={`text-sm font-medium transition-colors ${
-                path === "create"
-                  ? "text-primary border-primary border-b-2 pb-1"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Create new
-            </button>
+        <div className="flex flex-col gap-8">
+          {/* ── Section A: Add a new place via Google search ──────────────── */}
+          <div>
+            <h3 className="text-muted-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
+              Add a new place
+            </h3>
+            <CreatePlaceForm
+              key={createFormKey}
+              listId={listId}
+              onSuccess={closeAndReset}
+              onCancel={closeAndReset}
+              submitLabel="Add place"
+            />
           </div>
-        )}
 
-        {/* ── Path A: Search existing places ───────────────────────────────── */}
-        {path === "search" && (
-          <form onSubmit={handleAddSubmit} className="space-y-4">
-            <input type="hidden" name="listId" value={listId} />
-            {selectedPlace && (
-              <input type="hidden" name="placeId" value={selectedPlace.id} />
-            )}
+          {/* ── Section B: Add from existing places ───────────────────────── */}
+          {hasAvailable && (
+            <div className="flex flex-col gap-4">
+              <h3 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+                Add from existing
+              </h3>
 
-            {addState.error && (
-              <p role="alert" className="text-destructive text-sm">
-                {addState.error}
-              </p>
-            )}
+              {addError && (
+                <p role="alert" className="text-destructive text-sm">
+                  {addError}
+                </p>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="place-search">Search by name</Label>
-              <Input
-                id="place-search"
-                placeholder="Type to filter places…"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setSelectedPlace(null);
-                }}
-                autoComplete="off"
-              />
-            </div>
-
-            {searchTerm && filteredPlaces.length === 0 && (
-              <p className="text-muted-foreground text-sm">No places found.</p>
-            )}
-
-            {filteredPlaces.length > 0 && (
-              <ul className="max-h-48 divide-y overflow-y-auto rounded-md border">
-                {filteredPlaces.map((place) => (
-                  <li key={place.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPlace(place);
-                        setSearchTerm(place.name);
-                      }}
-                      className={`hover:bg-muted w-full px-3 py-2 text-left text-sm transition-colors ${
-                        selectedPlace?.id === place.id
-                          ? "bg-muted font-medium"
-                          : ""
-                      }`}
+              <div className="grid grid-cols-3 gap-3">
+                {availablePlaces.map((place) => {
+                  const checked = selectedIds.has(place.id);
+                  return (
+                    <div
+                      key={place.id}
+                      onClick={() => !isAddPending && togglePlace(place.id)}
+                      className={`relative flex cursor-pointer flex-col gap-2 rounded-lg border p-3 transition-colors select-none ${
+                        checked
+                          ? "border-primary bg-primary/5"
+                          : "hover:bg-muted/50"
+                      } ${isAddPending ? "cursor-not-allowed opacity-50" : ""}`}
                     >
-                      <span className="block font-medium">{place.name}</span>
-                      <span className="text-muted-foreground block text-xs">
-                        {place.address}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <div className="absolute top-2 right-2">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => togglePlace(place.id)}
+                          disabled={isAddPending}
+                          aria-label={`Select ${place.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isAddPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!selectedPlace || isAddPending}>
-                {isAddPending ? "Adding…" : "Add to list"}
-              </Button>
+                      {place.heroImageUrl && (
+                        <img
+                          src={place.heroImageUrl}
+                          alt={place.name}
+                          className="h-20 w-full rounded-md object-cover"
+                        />
+                      )}
+
+                      <div className="min-w-0 pr-6">
+                        <p className="truncate text-sm font-medium">
+                          {place.name}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {place.address}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-muted-foreground text-sm">
+                  {selectedIds.size === 0
+                    ? "Select places to add"
+                    : `${selectedIds.size} selected`}
+                </p>
+                <Button
+                  type="button"
+                  onClick={handleAddSelected}
+                  disabled={selectedIds.size === 0 || isAddPending}
+                >
+                  {isAddPending
+                    ? "Adding…"
+                    : `Add ${selectedIds.size > 0 ? selectedIds.size : ""} to list`}
+                </Button>
+              </div>
             </div>
-          </form>
-        )}
-
-        {/* ── Path B: Create new place ──────────────────────────────────────── */}
-        {path === "create" && (
-          <CreatePlaceForm
-            key={createFormKey}
-            listId={listId}
-            onSuccess={closeAndReset}
-            onCancel={() => handleOpenChange(false)}
-            submitLabel="Create place"
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

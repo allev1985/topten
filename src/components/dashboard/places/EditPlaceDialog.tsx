@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
 interface EditPlaceDialogProps {
   place: {
     id: string;
@@ -57,7 +58,7 @@ export function EditPlaceDialog({
     buildInitialState()
   );
 
-  // Reset form when the dialog opens (handles switching to a different place)
+  // Reset form when the sheet opens (handles switching to a different place)
   useEffect(() => {
     if (open) {
       initialValues.current = { description: place.description ?? "" };
@@ -87,9 +88,10 @@ export function EditPlaceDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-md"
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="max-h-[55vh] w-full overflow-y-auto rounded-t-2xl"
         onPointerDownOutside={(e) => {
           if (isPending) e.preventDefault();
         }}
@@ -97,16 +99,16 @@ export function EditPlaceDialog({
           if (isPending) e.preventDefault();
         }}
       >
-        <DialogHeader>
+        <SheetHeader className="mb-4">
           <div className="flex items-center gap-3">
-            <DialogTitle>Edit place</DialogTitle>
+            <SheetTitle>Edit place</SheetTitle>
             {isDirty && (
               <Badge variant="secondary" className="text-xs">
                 Unsaved changes
               </Badge>
             )}
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="placeId" value={place.id} />
@@ -149,7 +151,7 @@ export function EditPlaceDialog({
             )}
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pb-2">
             <Button
               type="button"
               variant="outline"
@@ -163,7 +165,7 @@ export function EditPlaceDialog({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

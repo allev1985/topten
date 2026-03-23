@@ -3,11 +3,11 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { CreatePlaceForm } from "@/components/dashboard/places/CreatePlaceForm";
 
 interface AddPlaceDialogProps {
@@ -31,12 +31,13 @@ export function AddPlaceDialog({
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={isFormPending ? undefined : handleOpenChange}
     >
-      <DialogContent
-        className="sm:max-w-md"
+      <SheetContent
+        side="bottom"
+        className="max-h-[70vh] w-full overflow-y-auto rounded-t-2xl"
         onPointerDownOutside={(e) => {
           if (isFormPending) e.preventDefault();
         }}
@@ -44,9 +45,9 @@ export function AddPlaceDialog({
           if (isFormPending) e.preventDefault();
         }}
       >
-        <DialogHeader>
-          <DialogTitle>New place</DialogTitle>
-        </DialogHeader>
+        <SheetHeader className="mb-4">
+          <SheetTitle>New place</SheetTitle>
+        </SheetHeader>
 
         <CreatePlaceForm
           key={formKey}
@@ -54,7 +55,7 @@ export function AddPlaceDialog({
           onCancel={() => handleOpenChange(false)}
           onPendingChange={setIsFormPending}
         />
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
