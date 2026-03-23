@@ -130,7 +130,7 @@ export function TagInput({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium">
+      <label htmlFor={`${name}-tag-input`} className="text-sm font-medium">
         {label}
         <span className="text-muted-foreground ml-1 text-xs font-normal">
           ({selected.length}/{config.tags.maxPerEntity})
@@ -165,6 +165,7 @@ export function TagInput({
         {!atCapacity && (
           <input
             ref={inputRef}
+            id={`${name}-tag-input`}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
