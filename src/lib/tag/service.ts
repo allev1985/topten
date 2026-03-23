@@ -170,13 +170,12 @@ export async function setPlaceTags({
     );
   }
 
-  const placeOwned = await tagRepository.isPlaceOwnedByUser({
-    placeId,
-    userId,
-  });
-  if (!placeOwned) throw notFoundError();
-
   try {
+    const placeOwned = await tagRepository.isPlaceOwnedByUser({
+      placeId,
+      userId,
+    });
+    if (!placeOwned) throw notFoundError();
     const tagIdsBySlug = await resolveTagIds(normalised, userId);
     const desiredIds = new Set(tagIdsBySlug.values());
 

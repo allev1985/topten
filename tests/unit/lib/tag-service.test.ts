@@ -137,6 +137,13 @@ describe("setPlaceTags", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("wraps isPlaceOwnedByUser DB errors in SERVICE_ERROR", async () => {
+    repo.isPlaceOwnedByUser.mockRejectedValue(new Error("db failure"));
+    await expect(
+      setPlaceTags({ placeId: PLACE_ID, userId: USER_ID, labels: ["Bar"] })
+    ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
+  });
+
   it("throws VALIDATION_ERROR when labels exceed the max", async () => {
     const labels = Array.from({ length: 11 }, (_, i) => `tag${i}`);
     await expect(
