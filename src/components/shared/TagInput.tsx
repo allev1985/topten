@@ -214,11 +214,6 @@ export function TagInput({
                 )}
               >
                 <span>{s.label}</span>
-                {s.isSystem && (
-                  <span className="text-muted-foreground text-xs">
-                    Google Places
-                  </span>
-                )}
               </button>
             </li>
           ))}

@@ -5,11 +5,9 @@
 
 export {
   searchTags,
-  getTagsForList,
   getTagsForPlace,
-  getTagsForLists,
   getTagsForPlaces,
-  setListTags,
+  getTagsForListsViaPlaces,
   setPlaceTags,
 } from "./service";
 
@@ -17,16 +15,12 @@ export { TagServiceError } from "./errors";
 
 export { normaliseTagSlug, normaliseTagLabel } from "./slug";
 
-export {
-  GOOGLE_PLACES_TAXONOMY,
-  findTaxonomyEntry,
-} from "./google-places-taxonomy";
+export { SYSTEM_TAG_TAXONOMY, findTaxonomyEntry } from "./system-tags";
 
 export type {
   TagSummary,
   EntityTagSummary,
   TagRecord,
   SetTagsResult,
-  TaggableKind,
 } from "./types";
-export type { TaxonomyEntry } from "./google-places-taxonomy";
+export type { TaxonomyEntry } from "./system-tags";

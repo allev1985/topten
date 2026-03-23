@@ -1,10 +1,9 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { setListTagsAction, setPlaceTagsAction } from "@/actions/tag-actions";
+import { setPlaceTagsAction } from "@/actions/tag-actions";
 import type { SetTagsSuccessData } from "@/actions/tag-actions";
 import type { ActionState } from "@/types/forms";
-import type { TaggableKind } from "@/lib/tag";
 import { Button } from "@/components/ui/button";
 import { TagInput } from "./TagInput";
 
@@ -12,10 +11,8 @@ import { TagInput } from "./TagInput";
  * Props for {@link EditTagsForm}.
  */
 export interface EditTagsFormProps {
-  /** The list or place UUID whose tag set is being edited. */
+  /** The place UUID whose tag set is being edited. */
   entityId: string;
-  /** Which junction table to write to. */
-  kind: TaggableKind;
   /** Current tag labels to pre-populate the input. */
   initialTags: string[];
   /** Called after a successful save. */
@@ -30,24 +27,24 @@ const initialState: ActionState<SetTagsSuccessData> = {
 };
 
 /**
- * Self-contained form for replacing the tag set on an existing list or place.
+ * Self-contained form for replacing the tag set on a place.
  *
- * Dispatches to {@link setListTagsAction} or {@link setPlaceTagsAction} based
- * on `kind`. Designed to be composed alongside the primary edit form inside a
- * dialog — it carries its own submit button and does not interfere with the
- * sibling form's state.
+ * Designed to be composed alongside the primary edit form inside a dialog —
+ * it carries its own submit button and does not interfere with the sibling
+ * form's state.
  *
  * @param props - {@link EditTagsFormProps}
  * @returns A tag-editing form
  */
 export function EditTagsForm({
   entityId,
-  kind,
   initialTags,
   onSuccess,
 }: EditTagsFormProps) {
-  const action = kind === "list" ? setListTagsAction : setPlaceTagsAction;
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const [state, formAction, isPending] = useActionState(
+    setPlaceTagsAction,
+    initialState
+  );
 
   useEffect(() => {
     if (state.isSuccess) onSuccess?.();

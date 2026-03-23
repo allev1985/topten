@@ -1,21 +1,19 @@
 /**
- * Google Places type taxonomy — curated subset for use as system tags.
+ * System tag taxonomy — curated subset of place categories for use as
+ * built-in tags.
  *
- * Google's full Table-A type list includes ~100+ entries, many of which are
- * administrative (e.g. `administrative_area_level_3`, `plus_code`) and not
- * useful as human-facing labels. This module ships the subset a creator would
- * plausibly attach to a list or place.
+ * The full place-type list includes ~100+ entries, many of which are
+ * administrative and not useful as human-facing labels. This module ships the
+ * subset a creator would plausibly attach to a place.
  *
- * Slugs match Google's snake_case identifiers with underscores swapped for
- * hyphens so they fit the platform slug convention. Labels are the
- * human-readable display form.
+ * Slugs use hyphen-separated lowercase, matching the platform slug convention.
+ * Labels are the human-readable display form.
  *
- * @see https://developers.google.com/maps/documentation/places/web-service/supported_types
  * @see docs/decisions/tags.md
- * @module lib/tag/google-places-taxonomy
+ * @module lib/tag/system-tags
  */
 
-/** A single entry in the Google Places system-tag taxonomy. */
+/** A single entry in the system tag taxonomy. */
 export interface TaxonomyEntry {
   /** Normalised slug, e.g. `coffee-shop` */
   slug: string;
@@ -24,10 +22,10 @@ export interface TaxonomyEntry {
 }
 
 /**
- * Curated Google Places types shipped as system default tags.
+ * Curated system tags shipped as built-in defaults.
  * Ordered alphabetically by slug.
  */
-export const GOOGLE_PLACES_TAXONOMY: readonly TaxonomyEntry[] = [
+export const SYSTEM_TAG_TAXONOMY: readonly TaxonomyEntry[] = [
   { slug: "amusement-park", label: "Amusement Park" },
   { slug: "aquarium", label: "Aquarium" },
   { slug: "art-gallery", label: "Art Gallery" },
@@ -78,5 +76,5 @@ export const GOOGLE_PLACES_TAXONOMY: readonly TaxonomyEntry[] = [
  * @returns The matching entry, or undefined if not in the taxonomy
  */
 export function findTaxonomyEntry(slug: string): TaxonomyEntry | undefined {
-  return GOOGLE_PLACES_TAXONOMY.find((t) => t.slug === slug);
+  return SYSTEM_TAG_TAXONOMY.find((t) => t.slug === slug);
 }

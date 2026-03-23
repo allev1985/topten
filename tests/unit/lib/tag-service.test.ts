@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   searchTags,
-  getTagsForList,
   getTagsForPlace,
-  setListTags,
+  getTagsForListsViaPlaces,
   setPlaceTags,
   TagServiceError,
 } from "@/lib/tag";
@@ -14,20 +13,14 @@ const repo = vi.hoisted(() => ({
   searchTagsBySlugPrefix: vi.fn(),
   getTagsBySlugs: vi.fn(),
   insertTags: vi.fn(),
-  isListOwnedByUser: vi.fn(),
   isPlaceOwnedByUser: vi.fn(),
-  getTagsForList: vi.fn(),
-  getListTagJunctions: vi.fn(),
-  insertListTags: vi.fn(),
-  restoreListTags: vi.fn(),
-  softDeleteListTags: vi.fn(),
   getTagsForPlace: vi.fn(),
-  getPlaceTagJunctions: vi.fn(),
-  insertPlaceTags: vi.fn(),
-  restorePlaceTags: vi.fn(),
-  softDeletePlaceTags: vi.fn(),
-  getTagsForLists: vi.fn(),
   getTagsForPlaces: vi.fn(),
+  getPlaceTagIds: vi.fn(),
+  insertPlaceTags: vi.fn(),
+  deletePlaceTagsByTagIds: vi.fn(),
+  deleteOrphanedCustomTags: vi.fn(),
+  getTagsForListsViaPlaces: vi.fn(),
 }));
 
 vi.mock("@/db/repositories/tag.repository", () => repo);
@@ -85,23 +78,7 @@ describe("searchTags", () => {
   });
 });
 
-// ─── getTagsForList / getTagsForPlace ─────────────────────────────────────────
-
-describe("getTagsForList", () => {
-  it("delegates to the repository", async () => {
-    repo.getTagsForList.mockResolvedValue([tagCafe, tagBar]);
-    const result = await getTagsForList(LIST_ID);
-    expect(repo.getTagsForList).toHaveBeenCalledWith(LIST_ID);
-    expect(result).toEqual([tagCafe, tagBar]);
-  });
-
-  it("wraps DB errors", async () => {
-    repo.getTagsForList.mockRejectedValue(new Error("boom"));
-    await expect(getTagsForList(LIST_ID)).rejects.toBeInstanceOf(
-      TagServiceError
-    );
-  });
-});
+// ─── getTagsForPlace ──────────────────────────────────────────────────────────
 
 describe("getTagsForPlace", () => {
   it("delegates to the repository", async () => {
@@ -119,158 +96,22 @@ describe("getTagsForPlace", () => {
   });
 });
 
-// ─── setListTags ──────────────────────────────────────────────────────────────
+// ─── getTagsForListsViaPlaces ─────────────────────────────────────────────────
 
-describe("setListTags", () => {
-  beforeEach(() => {
-    repo.isListOwnedByUser.mockResolvedValue({ slug: "list-slug" });
-    repo.getTagsBySlugs.mockResolvedValue([]);
-    repo.insertTags.mockResolvedValue([]);
-    repo.getListTagJunctions.mockResolvedValue([]);
-    repo.restoreListTags.mockResolvedValue(undefined);
-    repo.softDeleteListTags.mockResolvedValue(undefined);
-    repo.insertListTags.mockResolvedValue(undefined);
-    repo.getTagsForList.mockResolvedValue([]);
+describe("getTagsForListsViaPlaces", () => {
+  it("delegates to the repository", async () => {
+    const entityRow = { ...tagCafe, entityId: LIST_ID };
+    repo.getTagsForListsViaPlaces.mockResolvedValue([entityRow]);
+    const result = await getTagsForListsViaPlaces([LIST_ID]);
+    expect(repo.getTagsForListsViaPlaces).toHaveBeenCalledWith([LIST_ID]);
+    expect(result).toEqual([entityRow]);
   });
 
-  it("throws NOT_FOUND when the list is not owned by the user", async () => {
-    repo.isListOwnedByUser.mockResolvedValue(null);
-    await expect(
-      setListTags({ listId: LIST_ID, userId: USER_ID, labels: ["Cafe"] })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-  });
-
-  it("throws VALIDATION_ERROR when labels exceed the max", async () => {
-    const labels = Array.from({ length: 11 }, (_, i) => `tag${i}`);
-    await expect(
-      setListTags({ listId: LIST_ID, userId: USER_ID, labels })
-    ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
-  });
-
-  it("inserts new custom tags when no existing match", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([]);
-    repo.insertTags.mockResolvedValue([
-      { ...tagCustom, userId: USER_ID, createdAt: new Date(), deletedAt: null },
-    ]);
-    repo.getTagsForList.mockResolvedValue([tagCustom]);
-
-    const { tags } = await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: ["Hidden Gem"],
-    });
-
-    expect(repo.insertTags).toHaveBeenCalledWith([
-      { slug: "hidden-gem", label: "Hidden Gem", userId: USER_ID },
-    ]);
-    expect(repo.insertListTags).toHaveBeenCalledWith({
-      listId: LIST_ID,
-      tagIds: ["t3"],
-    });
-    expect(tags).toEqual([tagCustom]);
-  });
-
-  it("reuses existing tag rows instead of inserting duplicates", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([
-      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
-    ]);
-    repo.getTagsForList.mockResolvedValue([tagCafe]);
-
-    await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: ["Cafe"],
-    });
-
-    expect(repo.insertTags).not.toHaveBeenCalled();
-    expect(repo.insertListTags).toHaveBeenCalledWith({
-      listId: LIST_ID,
-      tagIds: ["t1"],
-    });
-  });
-
-  it("computes diff: restores soft-deleted, soft-deletes removed, inserts new", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([
-      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
-      { ...tagBar, userId: null, createdAt: new Date(), deletedAt: null },
-    ]);
-    repo.getListTagJunctions.mockResolvedValue([
-      // Cafe was previously removed → should be restored
-      { id: "j1", tagId: "t1", deletedAt: new Date() },
-      // Custom tag is active but not in the new set → should be soft-deleted
-      { id: "j2", tagId: "t3", deletedAt: null },
-    ]);
-    repo.getTagsForList.mockResolvedValue([tagCafe, tagBar]);
-
-    await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: ["Cafe", "Bar"],
-    });
-
-    expect(repo.restoreListTags).toHaveBeenCalledWith(["j1"]);
-    expect(repo.softDeleteListTags).toHaveBeenCalledWith(["j2"]);
-    expect(repo.insertListTags).toHaveBeenCalledWith({
-      listId: LIST_ID,
-      tagIds: ["t2"],
-    });
-  });
-
-  it("de-duplicates labels that normalise to the same slug", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([
-      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
-    ]);
-    repo.getTagsForList.mockResolvedValue([tagCafe]);
-
-    await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: ["Cafe", "cafe", "CAFE!"],
-    });
-
-    expect(repo.getTagsBySlugs).toHaveBeenCalledWith({
-      slugs: ["cafe"],
-      userId: USER_ID,
-    });
-  });
-
-  it("clears all tags when given an empty label array", async () => {
-    repo.getListTagJunctions.mockResolvedValue([
-      { id: "j1", tagId: "t1", deletedAt: null },
-    ]);
-    repo.getTagsForList.mockResolvedValue([]);
-
-    const { tags } = await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: [],
-    });
-
-    expect(repo.softDeleteListTags).toHaveBeenCalledWith(["j1"]);
-    expect(repo.insertListTags).toHaveBeenCalledWith({
-      listId: LIST_ID,
-      tagIds: [],
-    });
-    expect(tags).toEqual([]);
-  });
-
-  it("wraps DB errors in SERVICE_ERROR", async () => {
-    repo.getTagsBySlugs.mockRejectedValue(new Error("boom"));
-    await expect(
-      setListTags({ listId: LIST_ID, userId: USER_ID, labels: ["Cafe"] })
-    ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
-  });
-
-  it("returns listSlug in the result", async () => {
-    repo.getTagsForList.mockResolvedValue([tagCafe]);
-
-    const result = await setListTags({
-      listId: LIST_ID,
-      userId: USER_ID,
-      labels: ["Cafe"],
-    });
-
-    expect(result.listSlug).toBe("list-slug");
+  it("wraps DB errors", async () => {
+    repo.getTagsForListsViaPlaces.mockRejectedValue(new Error("boom"));
+    await expect(getTagsForListsViaPlaces([LIST_ID])).rejects.toBeInstanceOf(
+      TagServiceError
+    );
   });
 });
 
@@ -281,10 +122,10 @@ describe("setPlaceTags", () => {
     repo.isPlaceOwnedByUser.mockResolvedValue(true);
     repo.getTagsBySlugs.mockResolvedValue([]);
     repo.insertTags.mockResolvedValue([]);
-    repo.getPlaceTagJunctions.mockResolvedValue([]);
-    repo.restorePlaceTags.mockResolvedValue(undefined);
-    repo.softDeletePlaceTags.mockResolvedValue(undefined);
+    repo.getPlaceTagIds.mockResolvedValue([]);
     repo.insertPlaceTags.mockResolvedValue(undefined);
+    repo.deletePlaceTagsByTagIds.mockResolvedValue(undefined);
+    repo.deleteOrphanedCustomTags.mockResolvedValue(undefined);
     repo.getTagsForPlace.mockResolvedValue([]);
     placeRepo.getPublishedListSlugsForPlace.mockResolvedValue([]);
   });
@@ -296,27 +137,129 @@ describe("setPlaceTags", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("uses the place repository branch", async () => {
-    repo.getTagsBySlugs.mockResolvedValue([
-      { ...tagBar, userId: null, createdAt: new Date(), deletedAt: null },
+  it("throws VALIDATION_ERROR when labels exceed the max", async () => {
+    const labels = Array.from({ length: 11 }, (_, i) => `tag${i}`);
+    await expect(
+      setPlaceTags({ placeId: PLACE_ID, userId: USER_ID, labels })
+    ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+  });
+
+  it("inserts new custom tags when no existing match", async () => {
+    repo.getTagsBySlugs.mockResolvedValue([]);
+    repo.insertTags.mockResolvedValue([
+      { ...tagCustom, userId: USER_ID, createdAt: new Date(), deletedAt: null },
     ]);
-    repo.getTagsForPlace.mockResolvedValue([tagBar]);
+    repo.getTagsForPlace.mockResolvedValue([tagCustom]);
+
+    const { tags } = await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: ["Hidden Gem"],
+    });
+
+    expect(repo.insertTags).toHaveBeenCalledWith([
+      { slug: "hidden-gem", label: "Hidden Gem", userId: USER_ID },
+    ]);
+    expect(repo.insertPlaceTags).toHaveBeenCalledWith({
+      placeId: PLACE_ID,
+      tagIds: ["t3"],
+    });
+    expect(tags).toEqual([tagCustom]);
+  });
+
+  it("reuses existing tag rows instead of inserting duplicates", async () => {
+    repo.getTagsBySlugs.mockResolvedValue([
+      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
+    ]);
+    repo.getTagsForPlace.mockResolvedValue([tagCafe]);
 
     await setPlaceTags({
       placeId: PLACE_ID,
       userId: USER_ID,
-      labels: ["Bar"],
+      labels: ["Cafe"],
     });
 
-    expect(repo.isPlaceOwnedByUser).toHaveBeenCalledWith({
-      placeId: PLACE_ID,
-      userId: USER_ID,
-    });
+    expect(repo.insertTags).not.toHaveBeenCalled();
     expect(repo.insertPlaceTags).toHaveBeenCalledWith({
       placeId: PLACE_ID,
-      tagIds: ["t2"],
+      tagIds: ["t1"],
     });
-    expect(repo.insertListTags).not.toHaveBeenCalled();
+  });
+
+  it("hard-deletes removed tags from the junction table", async () => {
+    repo.getTagsBySlugs.mockResolvedValue([
+      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
+    ]);
+    // current: cafe + custom; desired: cafe only → custom (t3) should be removed
+    repo.getPlaceTagIds.mockResolvedValue([
+      { id: "j1", tagId: "t1" },
+      { id: "j2", tagId: "t3" },
+    ]);
+    repo.getTagsForPlace.mockResolvedValue([tagCafe]);
+
+    await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: ["Cafe"],
+    });
+
+    expect(repo.deletePlaceTagsByTagIds).toHaveBeenCalledWith({
+      placeId: PLACE_ID,
+      tagIds: ["t3"],
+    });
+    expect(repo.deleteOrphanedCustomTags).toHaveBeenCalledWith(["t3"]);
+  });
+
+  it("does not call deleteOrphanedCustomTags when nothing is removed", async () => {
+    repo.getTagsBySlugs.mockResolvedValue([
+      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
+    ]);
+    repo.getPlaceTagIds.mockResolvedValue([]);
+    repo.getTagsForPlace.mockResolvedValue([tagCafe]);
+
+    await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: ["Cafe"],
+    });
+
+    expect(repo.deleteOrphanedCustomTags).not.toHaveBeenCalled();
+  });
+
+  it("de-duplicates labels that normalise to the same slug", async () => {
+    repo.getTagsBySlugs.mockResolvedValue([
+      { ...tagCafe, userId: null, createdAt: new Date(), deletedAt: null },
+    ]);
+    repo.getTagsForPlace.mockResolvedValue([tagCafe]);
+
+    await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: ["Cafe", "cafe", "CAFE!"],
+    });
+
+    expect(repo.getTagsBySlugs).toHaveBeenCalledWith({
+      slugs: ["cafe"],
+      userId: USER_ID,
+    });
+  });
+
+  it("clears all tags when given an empty label array", async () => {
+    repo.getPlaceTagIds.mockResolvedValue([{ id: "j1", tagId: "t1" }]);
+    repo.getTagsForPlace.mockResolvedValue([]);
+
+    const { tags } = await setPlaceTags({
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      labels: [],
+    });
+
+    expect(repo.deletePlaceTagsByTagIds).toHaveBeenCalledWith({
+      placeId: PLACE_ID,
+      tagIds: ["t1"],
+    });
+    expect(repo.deleteOrphanedCustomTags).toHaveBeenCalledWith(["t1"]);
+    expect(tags).toEqual([]);
   });
 
   it("returns listSlugs from published lists containing the place", async () => {
@@ -337,5 +280,12 @@ describe("setPlaceTags", () => {
       placeId: PLACE_ID,
       userId: USER_ID,
     });
+  });
+
+  it("wraps DB errors in SERVICE_ERROR", async () => {
+    repo.getTagsBySlugs.mockRejectedValue(new Error("boom"));
+    await expect(
+      setPlaceTags({ placeId: PLACE_ID, userId: USER_ID, labels: ["Cafe"] })
+    ).rejects.toMatchObject({ code: "SERVICE_ERROR" });
   });
 });

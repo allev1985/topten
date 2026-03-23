@@ -32,7 +32,6 @@ interface EditTarget {
   id: string;
   title: string;
   description?: string | null;
-  tags?: string[];
 }
 
 interface DashboardClientProps {
@@ -112,7 +111,6 @@ function DashboardContent({
       id: list.id,
       title: list.title,
       description: list.description,
-      tags: list.tags ?? [],
     });
   };
 
@@ -250,7 +248,6 @@ function DashboardContent({
               listId={editTarget.id}
               initialTitle={editTarget.title}
               initialDescription={editTarget.description ?? ""}
-              initialTags={editTarget.tags}
               onSuccess={handleEditSuccess}
             />
           )}

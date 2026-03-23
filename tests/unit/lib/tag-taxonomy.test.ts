@@ -1,35 +1,32 @@
 import { describe, it, expect } from "vitest";
-import {
-  GOOGLE_PLACES_TAXONOMY,
-  findTaxonomyEntry,
-} from "@/lib/tag/google-places-taxonomy";
+import { SYSTEM_TAG_TAXONOMY, findTaxonomyEntry } from "@/lib/tag/system-tags";
 import { normaliseTagSlug } from "@/lib/tag/slug";
 
-describe("GOOGLE_PLACES_TAXONOMY", () => {
+describe("SYSTEM_TAG_TAXONOMY", () => {
   it("contains at least one entry", () => {
-    expect(GOOGLE_PLACES_TAXONOMY.length).toBeGreaterThan(0);
+    expect(SYSTEM_TAG_TAXONOMY.length).toBeGreaterThan(0);
   });
 
   it("every entry has a non-empty slug and label", () => {
-    for (const entry of GOOGLE_PLACES_TAXONOMY) {
+    for (const entry of SYSTEM_TAG_TAXONOMY) {
       expect(entry.slug).toBeTruthy();
       expect(entry.label).toBeTruthy();
     }
   });
 
   it("every slug is already in normalised form", () => {
-    for (const entry of GOOGLE_PLACES_TAXONOMY) {
+    for (const entry of SYSTEM_TAG_TAXONOMY) {
       expect(normaliseTagSlug(entry.slug)).toBe(entry.slug);
     }
   });
 
   it("contains no duplicate slugs", () => {
-    const slugs = GOOGLE_PLACES_TAXONOMY.map((e) => e.slug);
+    const slugs = SYSTEM_TAG_TAXONOMY.map((e) => e.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("includes well-known Google place categories", () => {
-    const slugs = new Set(GOOGLE_PLACES_TAXONOMY.map((e) => e.slug));
+  it("includes common place categories", () => {
+    const slugs = new Set(SYSTEM_TAG_TAXONOMY.map((e) => e.slug));
     expect(slugs.has("restaurant")).toBe(true);
     expect(slugs.has("cafe")).toBe(true);
     expect(slugs.has("bar")).toBe(true);

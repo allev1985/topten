@@ -81,7 +81,9 @@ export async function getPublicListsForProfile(
     .groupBy(lists.id)
     .orderBy(desc(lists.publishedAt));
 
-  const tagRows = await tagRepository.getTagsForLists(rows.map((r) => r.id));
+  const tagRows = await tagRepository.getTagsForListsViaPlaces(
+    rows.map((r) => r.id)
+  );
   const tagsByList = groupTagsByEntity(tagRows);
 
   return rows.map((row) => ({
@@ -155,7 +157,7 @@ export async function getPublicListDetail({
     .orderBy(asc(listPlaces.position));
 
   const [listTagRows, placeTagRows] = await Promise.all([
-    tagRepository.getTagsForList(listRow.id),
+    tagRepository.getTagsForListViaPlaces(listRow.id),
     tagRepository.getTagsForPlaces(placeRows.map((r) => r.id)),
   ]);
   const tagsByPlace = groupTagsByEntity(placeTagRows);

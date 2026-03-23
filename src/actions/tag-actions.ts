@@ -5,12 +5,7 @@ import { setTagsSchema } from "@/schemas/tag";
 import type { ActionState } from "@/types/forms";
 import { mapZodErrors } from "@/lib/utils/validation/zod";
 import { requireAuth } from "@/lib/utils/actions";
-import {
-  searchTags,
-  setListTags,
-  setPlaceTags,
-  TagServiceError,
-} from "@/lib/tag";
+import { searchTags, setPlaceTags, TagServiceError } from "@/lib/tag";
 import type { TagSummary } from "@/lib/tag";
 import { invalidatePublicListCaches } from "@/lib/public";
 import { createServiceLogger } from "@/lib/services/logging";
@@ -52,67 +47,6 @@ export async function searchTagsAction(
       err instanceof TagServiceError
         ? err.message
         : "Tag search failed. Please try again.";
-    return { data: null, error: message, fieldErrors: {}, isSuccess: false };
-  }
-}
-
-// ─── setListTagsAction ────────────────────────────────────────────────────────
-
-/**
- * Replace the full tag set on a list.
- *
- * Ownership is verified in the service layer.
- *
- * @param _prevState - Previous action state (required by useActionState)
- * @param formData   - FormData containing `entityId` (list id) and `tags` (JSON array)
- */
-export async function setListTagsAction(
-  _prevState: ActionState<SetTagsSuccessData>,
-  formData: FormData
-): Promise<ActionState<SetTagsSuccessData>> {
-  const auth = await requireAuth();
-  if ("error" in auth) {
-    return { data: null, error: auth.error, fieldErrors: {}, isSuccess: false };
-  }
-
-  const result = setTagsSchema.safeParse({
-    entityId: formData.get("entityId") ?? "",
-    tags: formData.get("tags") ?? "",
-  });
-
-  if (!result.success) {
-    return {
-      data: null,
-      error: null,
-      fieldErrors: mapZodErrors(result.error.issues),
-      isSuccess: false,
-    };
-  }
-
-  try {
-    const { tags, listSlug } = await setListTags({
-      listId: result.data.entityId,
-      userId: auth.userId,
-      labels: result.data.tags,
-    });
-    revalidatePath(`/dashboard/lists/${result.data.entityId}`);
-    try {
-      await invalidatePublicListCaches(
-        auth.userId,
-        ...(listSlug ? [listSlug] : [])
-      );
-    } catch (err) {
-      log.warn(
-        { method: "setListTagsAction", err },
-        "Cache invalidation failed"
-      );
-    }
-    return { data: { tags }, error: null, fieldErrors: {}, isSuccess: true };
-  } catch (err) {
-    const message =
-      err instanceof TagServiceError
-        ? err.message
-        : "Failed to update tags. Please try again.";
     return { data: null, error: message, fieldErrors: {}, isSuccess: false };
   }
 }

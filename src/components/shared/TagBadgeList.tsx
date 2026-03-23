@@ -17,7 +17,7 @@ export interface TagBadgeListProps {
 /**
  * Read-only row of tag badges for public and dashboard views.
  *
- * System tags (Google Places taxonomy) render with the `secondary` variant;
+ * System tags render with the `secondary` variant;
  * custom tags render with `outline` so viewers can distinguish curated
  * categories from creator-defined labels.
  *

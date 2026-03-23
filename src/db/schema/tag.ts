@@ -9,15 +9,15 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./user";
-import { lists } from "./list";
 import { places } from "./place";
 
 /**
  * Shared tag vocabulary.
  *
  * System tags (is_system = true, user_id = null) are seeded from the
- * Google Places type taxonomy. Custom tags are created on the fly by
- * users and carry the creating user's id for attribution.
+ * built-in taxonomy. Custom tags are created on the fly by
+ * users and carry the creating user's id for attribution. Custom tags
+ * are hard-deleted from this table when they become unreferenced.
  *
  * @see docs/decisions/tags.md
  */
@@ -32,7 +32,6 @@ export const tags = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     uniqueIndex("tags_slug_idx").on(table.slug),
@@ -42,33 +41,10 @@ export const tags = pgTable(
 );
 
 /**
- * Junction: tags attached to a list.
- * Unique on (list_id, tag_id) so re-adding a removed tag restores the row.
- */
-export const listTags = pgTable(
-  "list_tags",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    listId: uuid("list_id")
-      .notNull()
-      .references(() => lists.id),
-    tagId: uuid("tag_id")
-      .notNull()
-      .references(() => tags.id),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  },
-  (table) => [
-    uniqueIndex("list_tags_list_tag_idx").on(table.listId, table.tagId),
-    index("list_tags_tag_id_idx").on(table.tagId),
-  ]
-);
-
-/**
  * Junction: tags attached to a place.
- * Unique on (place_id, tag_id) so re-adding a removed tag restores the row.
+ *
+ * Hard-delete semantics — rows are removed directly when a tag is unset.
+ * The unique index prevents duplicate assignments.
  */
 export const placeTags = pgTable(
   "place_tags",
@@ -83,7 +59,6 @@ export const placeTags = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     uniqueIndex("place_tags_place_tag_idx").on(table.placeId, table.tagId),

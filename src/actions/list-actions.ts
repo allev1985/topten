@@ -13,7 +13,6 @@ import {
   unpublishList,
   ListServiceError,
 } from "@/lib/list";
-import { setListTags } from "@/lib/tag";
 import { invalidatePublicListCaches } from "@/lib/public";
 import { createServiceLogger } from "@/lib/services/logging";
 
@@ -67,7 +66,6 @@ export async function createListAction(
   const rawTitle = formData.get("title");
   const result = createListSchema.safeParse({
     title: typeof rawTitle === "string" ? rawTitle : "",
-    tags: formData.get("tags") ?? "",
   });
 
   if (!result.success) {
@@ -84,20 +82,6 @@ export async function createListAction(
       userId: auth.userId,
       title: result.data.title,
     });
-    if (result.data.tags.length > 0) {
-      try {
-        await setListTags({
-          listId: list.id,
-          userId: auth.userId,
-          labels: result.data.tags,
-        });
-      } catch (err) {
-        log.warn(
-          { method: "createListAction", listId: list.id, err },
-          "Failed to set tags on new list"
-        );
-      }
-    }
     revalidatePath("/dashboard");
     return {
       data: { listId: list.id, slug: list.slug },

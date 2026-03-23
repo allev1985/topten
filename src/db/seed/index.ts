@@ -1,19 +1,18 @@
-import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tags } from "@/db/schema/tag";
-import { GOOGLE_PLACES_TAXONOMY } from "@/lib/tag/google-places-taxonomy";
+import { SYSTEM_TAG_TAXONOMY } from "@/lib/tag/system-tags";
 
 /**
- * Seed system tags from the Google Places taxonomy.
+ * Seed system tags from the built-in taxonomy.
  * Idempotent — re-running upserts on slug and leaves existing rows intact.
  */
 async function seedSystemTags(): Promise<void> {
-  console.log(`Seeding ${GOOGLE_PLACES_TAXONOMY.length} system tags…`);
+  console.log(`Seeding ${SYSTEM_TAG_TAXONOMY.length} system tags…`);
 
   await db
     .insert(tags)
     .values(
-      GOOGLE_PLACES_TAXONOMY.map((t) => ({
+      SYSTEM_TAG_TAXONOMY.map((t) => ({
         slug: t.slug,
         label: t.label,
         isSystem: true,

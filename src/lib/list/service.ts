@@ -21,7 +21,7 @@
 
 import * as listRepository from "@/db/repositories/list.repository";
 import * as userRepository from "@/db/repositories/user.repository";
-import { getTagsForLists } from "@/lib/tag";
+import { getTagsForListsViaPlaces } from "@/lib/tag";
 import {
   ListServiceError,
   notFoundError,
@@ -68,7 +68,7 @@ export async function getListsByUser(userId: string): Promise<ListSummary[]> {
 
     // Batch-fetch tags for all lists in a single query
     const listIds = rows.map((r) => r.id);
-    const tagRows = await getTagsForLists(listIds);
+    const tagRows = await getTagsForListsViaPlaces(listIds);
     const tagsByListId = new Map<string, string[]>();
     for (const t of tagRows) {
       const labels = tagsByListId.get(t.entityId) ?? [];

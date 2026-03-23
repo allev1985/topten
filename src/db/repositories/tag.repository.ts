@@ -1,17 +1,30 @@
 /**
  * Tag Repository
  *
- * Pure data-access functions for the tags, list_tags and place_tags tables.
+ * Pure data-access functions for the tags and place_tags tables.
  * No business logic — slug normalisation, ownership checks and diffing live
  * in the service layer.
+ *
+ * List tags are not stored directly; they are derived on the fly as the
+ * union of place tags for all non-deleted places in a list.
  *
  * @module db/repositories/tag.repository
  */
 
-import { eq, and, or, isNull, inArray, like, asc, desc } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  isNull,
+  isNotNull,
+  inArray,
+  like,
+  asc,
+  desc,
+} from "drizzle-orm";
 import { db } from "@/db";
-import { tags, listTags, placeTags } from "@/db/schema/tag";
-import { lists } from "@/db/schema/list";
+import { tags, placeTags } from "@/db/schema/tag";
+import { listPlaces } from "@/db/schema/listPlace";
 import { places } from "@/db/schema/place";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,12 +36,6 @@ export type TagSummaryRow = {
   slug: string;
   label: string;
   isSystem: boolean;
-};
-
-export type JunctionRow = {
-  id: string;
-  tagId: string;
-  deletedAt: Date | null;
 };
 
 export type EntityTagRow = TagSummaryRow & { entityId: string };
@@ -65,7 +72,6 @@ export async function searchTagsBySlugPrefix({
     .where(
       and(
         like(tags.slug, `${slugPrefix}%`),
-        isNull(tags.deletedAt),
         or(eq(tags.isSystem, true), eq(tags.userId, userId))
       )
     )
@@ -96,7 +102,6 @@ export async function getTagsBySlugs({
     .where(
       and(
         inArray(tags.slug, slugs),
-        isNull(tags.deletedAt),
         or(eq(tags.isSystem, true), eq(tags.userId, userId))
       )
     );
@@ -118,35 +123,39 @@ export async function insertTags(
     .returning();
 }
 
-// ─── Ownership checks ────────────────────────────────────────────────────────
-
 /**
- * Verify a list exists, is active, and is owned by the user.
+ * Hard-delete custom tags that are no longer referenced by any place.
  *
- * @param listId - List UUID
- * @param userId - Requesting user's id
- * @returns The list's slug when it is owned by the user, or null otherwise
+ * Only removes custom (user-created) tags; system tags are never deleted here.
+ * Called after removing tags from a place to keep the vocabulary clean.
+ *
+ * @param tagIds - Candidate tag IDs (recently removed from a place)
  */
-export async function isListOwnedByUser({
-  listId,
-  userId,
-}: {
-  listId: string;
-  userId: string;
-}): Promise<{ slug: string } | null> {
-  const rows = await db
-    .select({ id: lists.id, slug: lists.slug })
-    .from(lists)
-    .where(
-      and(
-        eq(lists.id, listId),
-        eq(lists.userId, userId),
-        isNull(lists.deletedAt)
-      )
+export async function deleteOrphanedCustomTags(
+  tagIds: string[]
+): Promise<void> {
+  if (tagIds.length === 0) return;
+
+  // Find which of the candidate tags are still referenced in place_tags
+  const stillUsed = await db
+    .selectDistinct({ tagId: placeTags.tagId })
+    .from(placeTags)
+    .where(inArray(placeTags.tagId, tagIds));
+
+  const stillUsedIds = new Set(stillUsed.map((r) => r.tagId));
+  const orphanIds = tagIds.filter((id) => !stillUsedIds.has(id));
+
+  if (orphanIds.length === 0) return;
+
+  await db.delete(tags).where(
+    and(
+      inArray(tags.id, orphanIds),
+      isNotNull(tags.userId) // custom tags only; system tags are never hard-deleted here
     )
-    .limit(1);
-  return rows[0] ? { slug: rows[0].slug } : null;
+  );
 }
+
+// ─── Ownership checks ────────────────────────────────────────────────────────
 
 /**
  * Verify a place exists, is active, and is owned by the user.
@@ -176,130 +185,10 @@ export async function isPlaceOwnedByUser({
   return rows.length > 0;
 }
 
-// ─── List tags ───────────────────────────────────────────────────────────────
-
-/**
- * Fetch active tags attached to a list.
- *
- * @param listId - List UUID
- * @returns Tag summaries ordered by label ASC
- */
-export async function getTagsForList(listId: string): Promise<TagSummaryRow[]> {
-  return db
-    .select({
-      id: tags.id,
-      slug: tags.slug,
-      label: tags.label,
-      isSystem: tags.isSystem,
-    })
-    .from(listTags)
-    .innerJoin(tags, eq(tags.id, listTags.tagId))
-    .where(
-      and(
-        eq(listTags.listId, listId),
-        isNull(listTags.deletedAt),
-        isNull(tags.deletedAt)
-      )
-    )
-    .orderBy(asc(tags.label));
-}
-
-/**
- * Batch-fetch active tags for many lists in a single query.
- *
- * @param listIds - List UUIDs
- * @returns Flat rows with an `entityId` column for client-side grouping
- */
-export async function getTagsForLists(
-  listIds: string[]
-): Promise<EntityTagRow[]> {
-  if (listIds.length === 0) return [];
-  return db
-    .select({
-      entityId: listTags.listId,
-      id: tags.id,
-      slug: tags.slug,
-      label: tags.label,
-      isSystem: tags.isSystem,
-    })
-    .from(listTags)
-    .innerJoin(tags, eq(tags.id, listTags.tagId))
-    .where(
-      and(
-        inArray(listTags.listId, listIds),
-        isNull(listTags.deletedAt),
-        isNull(tags.deletedAt)
-      )
-    )
-    .orderBy(asc(tags.label));
-}
-
-/**
- * Fetch all junction rows (including soft-deleted) for a list.
- *
- * @param listId - List UUID
- * @returns Junction rows with their soft-delete state
- */
-export async function getListTagJunctions(
-  listId: string
-): Promise<JunctionRow[]> {
-  return db
-    .select({
-      id: listTags.id,
-      tagId: listTags.tagId,
-      deletedAt: listTags.deletedAt,
-    })
-    .from(listTags)
-    .where(eq(listTags.listId, listId));
-}
-
-/**
- * Insert new list_tags junction rows.
- *
- * @param listId - List UUID
- * @param tagIds - Tag UUIDs to attach
- */
-export async function insertListTags({
-  listId,
-  tagIds,
-}: {
-  listId: string;
-  tagIds: string[];
-}): Promise<void> {
-  if (tagIds.length === 0) return;
-  await db.insert(listTags).values(tagIds.map((tagId) => ({ listId, tagId })));
-}
-
-/**
- * Restore soft-deleted list_tags junction rows (clear deletedAt).
- *
- * @param ids - Junction row UUIDs to restore
- */
-export async function restoreListTags(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
-  await db
-    .update(listTags)
-    .set({ deletedAt: null })
-    .where(inArray(listTags.id, ids));
-}
-
-/**
- * Soft-delete list_tags junction rows.
- *
- * @param ids - Junction row UUIDs to soft-delete
- */
-export async function softDeleteListTags(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
-  await db
-    .update(listTags)
-    .set({ deletedAt: new Date() })
-    .where(inArray(listTags.id, ids));
-}
-
 // ─── Place tags ──────────────────────────────────────────────────────────────
 
 /**
- * Fetch active tags attached to a place.
+ * Fetch all tags attached to a place.
  *
  * @param placeId - Place UUID
  * @returns Tag summaries ordered by label ASC
@@ -316,18 +205,12 @@ export async function getTagsForPlace(
     })
     .from(placeTags)
     .innerJoin(tags, eq(tags.id, placeTags.tagId))
-    .where(
-      and(
-        eq(placeTags.placeId, placeId),
-        isNull(placeTags.deletedAt),
-        isNull(tags.deletedAt)
-      )
-    )
+    .where(eq(placeTags.placeId, placeId))
     .orderBy(asc(tags.label));
 }
 
 /**
- * Batch-fetch active tags for many places in a single query.
+ * Batch-fetch tags for many places in a single query.
  *
  * @param placeIds - Place UUIDs
  * @returns Flat rows with an `entityId` column for client-side grouping
@@ -346,31 +229,23 @@ export async function getTagsForPlaces(
     })
     .from(placeTags)
     .innerJoin(tags, eq(tags.id, placeTags.tagId))
-    .where(
-      and(
-        inArray(placeTags.placeId, placeIds),
-        isNull(placeTags.deletedAt),
-        isNull(tags.deletedAt)
-      )
-    )
+    .where(inArray(placeTags.placeId, placeIds))
     .orderBy(asc(tags.label));
 }
 
 /**
- * Fetch all junction rows (including soft-deleted) for a place.
+ * Fetch the current tag IDs attached to a place.
+ *
+ * Used by the service layer to diff desired vs. current tags.
  *
  * @param placeId - Place UUID
- * @returns Junction rows with their soft-delete state
+ * @returns Rows containing junction id and tagId
  */
-export async function getPlaceTagJunctions(
+export async function getPlaceTagIds(
   placeId: string
-): Promise<JunctionRow[]> {
+): Promise<{ id: string; tagId: string }[]> {
   return db
-    .select({
-      id: placeTags.id,
-      tagId: placeTags.tagId,
-      deletedAt: placeTags.deletedAt,
-    })
+    .select({ id: placeTags.id, tagId: placeTags.tagId })
     .from(placeTags)
     .where(eq(placeTags.placeId, placeId));
 }
@@ -395,27 +270,77 @@ export async function insertPlaceTags({
 }
 
 /**
- * Restore soft-deleted place_tags junction rows (clear deletedAt).
+ * Hard-delete place_tags junction rows by tag ID.
  *
- * @param ids - Junction row UUIDs to restore
+ * @param placeId - Place UUID
+ * @param tagIds - Tag UUIDs to detach from the place
  */
-export async function restorePlaceTags(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
+export async function deletePlaceTagsByTagIds({
+  placeId,
+  tagIds,
+}: {
+  placeId: string;
+  tagIds: string[];
+}): Promise<void> {
+  if (tagIds.length === 0) return;
   await db
-    .update(placeTags)
-    .set({ deletedAt: null })
-    .where(inArray(placeTags.id, ids));
+    .delete(placeTags)
+    .where(
+      and(eq(placeTags.placeId, placeId), inArray(placeTags.tagId, tagIds))
+    );
+}
+
+// ─── Derived list tags ────────────────────────────────────────────────────────
+
+/**
+ * Derive tags for a single list from the tags of its active places.
+ *
+ * Returns the distinct union of all place tags for non-deleted places in
+ * the list. No list_tags table is used; tags belong only to places.
+ *
+ * @param listId - List UUID
+ * @returns Distinct tag summaries ordered by label ASC
+ */
+export async function getTagsForListViaPlaces(
+  listId: string
+): Promise<TagSummaryRow[]> {
+  return db
+    .selectDistinct({
+      id: tags.id,
+      slug: tags.slug,
+      label: tags.label,
+      isSystem: tags.isSystem,
+    })
+    .from(listPlaces)
+    .innerJoin(placeTags, eq(placeTags.placeId, listPlaces.placeId))
+    .innerJoin(tags, eq(tags.id, placeTags.tagId))
+    .where(and(eq(listPlaces.listId, listId), isNull(listPlaces.deletedAt)))
+    .orderBy(asc(tags.label));
 }
 
 /**
- * Soft-delete place_tags junction rows.
+ * Batch-derive tags for many lists from the tags of their active places.
  *
- * @param ids - Junction row UUIDs to soft-delete
+ * @param listIds - List UUIDs
+ * @returns Flat rows with an `entityId` (list id) column for client-side grouping
  */
-export async function softDeletePlaceTags(ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
-  await db
-    .update(placeTags)
-    .set({ deletedAt: new Date() })
-    .where(inArray(placeTags.id, ids));
+export async function getTagsForListsViaPlaces(
+  listIds: string[]
+): Promise<EntityTagRow[]> {
+  if (listIds.length === 0) return [];
+  return db
+    .selectDistinct({
+      entityId: listPlaces.listId,
+      id: tags.id,
+      slug: tags.slug,
+      label: tags.label,
+      isSystem: tags.isSystem,
+    })
+    .from(listPlaces)
+    .innerJoin(placeTags, eq(placeTags.placeId, listPlaces.placeId))
+    .innerJoin(tags, eq(tags.id, placeTags.tagId))
+    .where(
+      and(inArray(listPlaces.listId, listIds), isNull(listPlaces.deletedAt))
+    )
+    .orderBy(asc(tags.label));
 }

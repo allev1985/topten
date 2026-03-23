@@ -9,14 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { EditTagsForm } from "@/components/shared/EditTagsForm";
-
 interface EditListFormProps {
   listId: string;
   initialTitle: string;
   initialDescription?: string;
-  /** Current tag labels on the list. Enables the tag editor when provided. */
-  initialTags?: string[];
   /** Called when the list is successfully updated */
   onSuccess?: () => void;
 }
@@ -39,7 +35,6 @@ export function EditListForm({
   listId,
   initialTitle,
   initialDescription = "",
-  initialTags,
   onSuccess,
 }: EditListFormProps): JSX.Element {
   const [state, formAction, isPending] = useActionState(
@@ -62,88 +57,69 @@ export function EditListForm({
   }, [state.isSuccess, onSuccess]);
 
   return (
-    <>
-      <form action={formAction} className="space-y-4">
-        {/* Hidden list ID */}
-        <input type="hidden" name="listId" value={listId} />
+    <form action={formAction} className="space-y-4">
+      {/* Hidden list ID */}
+      <input type="hidden" name="listId" value={listId} />
 
-        {/* Form-level error */}
-        {state.error && (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
+      {/* Form-level error */}
+      {state.error && (
+        <p role="alert" className="text-destructive text-sm">
+          {state.error}
+        </p>
+      )}
+
+      {/* Title */}
+      <div className="space-y-2">
+        <Label htmlFor="edit-title">Title</Label>
+        <Input
+          id="edit-title"
+          name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={255}
+          aria-describedby={
+            state.fieldErrors.title ? "edit-title-error" : undefined
+          }
+        />
+        {state.fieldErrors.title && (
+          <p
+            id="edit-title-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
+            {state.fieldErrors.title[0]}
           </p>
         )}
+      </div>
 
-        {/* Title */}
-        <div className="space-y-2">
-          <Label htmlFor="edit-title">Title</Label>
-          <Input
-            id="edit-title"
-            name="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={255}
-            aria-describedby={
-              state.fieldErrors.title ? "edit-title-error" : undefined
-            }
-          />
-          {state.fieldErrors.title && (
-            <p
-              id="edit-title-error"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {state.fieldErrors.title[0]}
-            </p>
-          )}
-        </div>
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="edit-description">Description</Label>
+        <Textarea
+          id="edit-description"
+          name="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          placeholder="A short description of this list (optional)"
+          aria-describedby={
+            state.fieldErrors.description ? "edit-description-error" : undefined
+          }
+        />
+        {state.fieldErrors.description && (
+          <p
+            id="edit-description-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
+            {state.fieldErrors.description[0]}
+          </p>
+        )}
+      </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <Label htmlFor="edit-description">Description</Label>
-          <Textarea
-            id="edit-description"
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="A short description of this list (optional)"
-            aria-describedby={
-              state.fieldErrors.description
-                ? "edit-description-error"
-                : undefined
-            }
-          />
-          {state.fieldErrors.description && (
-            <p
-              id="edit-description-error"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {state.fieldErrors.description[0]}
-            </p>
-          )}
-        </div>
-
-        <Button
-          type="submit"
-          disabled={isPending || !isDirty}
-          className="w-full"
-        >
-          {isPending ? "Saving…" : "Save Changes"}
-        </Button>
-      </form>
-
-      {initialTags !== undefined && (
-        <div className="mt-6 border-t pt-4">
-          <EditTagsForm
-            entityId={listId}
-            kind="list"
-            initialTags={initialTags}
-            onSuccess={onSuccess}
-          />
-        </div>
-      )}
-    </>
+      <Button type="submit" disabled={isPending || !isDirty} className="w-full">
+        {isPending ? "Saving…" : "Save Changes"}
+      </Button>
+    </form>
   );
 }

@@ -9,19 +9,15 @@ vi.mock("@/lib/utils/actions", () => ({
   requireAuth: mockRequireAuth,
 }));
 
-const { mockSearchTags, mockSetListTags, mockSetPlaceTags } = vi.hoisted(
-  () => ({
-    mockSearchTags: vi.fn(),
-    mockSetListTags: vi.fn(),
-    mockSetPlaceTags: vi.fn(),
-  })
-);
+const { mockSearchTags, mockSetPlaceTags } = vi.hoisted(() => ({
+  mockSearchTags: vi.fn(),
+  mockSetPlaceTags: vi.fn(),
+}));
 vi.mock("@/lib/tag", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/tag")>();
   return {
     ...actual,
     searchTags: mockSearchTags,
-    setListTags: mockSetListTags,
     setPlaceTags: mockSetPlaceTags,
   };
 });
@@ -32,11 +28,7 @@ vi.mock("@/lib/public", () => ({
 
 // ─── Imports under test ───────────────────────────────────────────────────────
 
-import {
-  searchTagsAction,
-  setListTagsAction,
-  setPlaceTagsAction,
-} from "@/actions/tag-actions";
+import { searchTagsAction, setPlaceTagsAction } from "@/actions/tag-actions";
 import { TagServiceError } from "@/lib/tag";
 import { invalidatePublicListCaches } from "@/lib/public";
 import type { ActionState } from "@/types/forms";
@@ -91,110 +83,6 @@ describe("searchTagsAction", () => {
     const res = await searchTagsAction("cafe");
     expect(res.isSuccess).toBe(false);
     expect(res.error).toContain("search failed");
-  });
-});
-
-// ─── setListTagsAction ────────────────────────────────────────────────────────
-
-describe("setListTagsAction", () => {
-  it("rejects when entityId is missing", async () => {
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(false);
-    expect(res.fieldErrors.entityId).toBeDefined();
-  });
-
-  it("passes parsed labels to the service", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: JSON.stringify(["Cafe", "Bar"]) })
-    );
-    expect(res.isSuccess).toBe(true);
-    expect(mockSetListTags).toHaveBeenCalledWith({
-      listId: "list-1",
-      userId: "user-1",
-      labels: ["Cafe", "Bar"],
-    });
-  });
-
-  it("invalidates both list-summaries and list-detail caches", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
-    await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(invalidatePublicListCaches).toHaveBeenCalledWith(
-      "user-1",
-      "my-list"
-    );
-  });
-
-  it("returns unauthenticated error when session is absent", async () => {
-    mockRequireAuth.mockResolvedValue({ error: "Not logged in" });
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(false);
-    expect(res.error).toBe("Not logged in");
-  });
-
-  it("surfaces TagServiceError messages", async () => {
-    mockSetListTags.mockRejectedValue(new TagServiceError("NOT_FOUND", "nope"));
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(false);
-    expect(res.error).toBe("nope");
-  });
-
-  it("uses a generic message for unknown errors", async () => {
-    mockSetListTags.mockRejectedValue(new Error("unexpected"));
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(false);
-    expect(res.error).toContain("Failed to update tags");
-  });
-
-  it("proceeds normally when cache invalidation throws", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
-    const { invalidatePublicListCaches: mockInvalidate } =
-      await import("@/lib/public");
-    (mockInvalidate as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      new Error("cache down")
-    );
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(true);
-  });
-
-  it("treats absent tags field as an empty array (null ?? '' fallback)", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [] });
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1" })
-    );
-    expect(res.isSuccess).toBe(true);
-    expect(mockSetListTags).toHaveBeenCalledWith(
-      expect.objectContaining({ labels: [] })
-    );
-  });
-
-  it("skips list slug spreading when setListTags returns no listSlug", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [] });
-    const res = await setListTagsAction(
-      initial as ActionState<never>,
-      fd({ entityId: "list-1", tags: "[]" })
-    );
-    expect(res.isSuccess).toBe(true);
   });
 });
 

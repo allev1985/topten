@@ -1,16 +1,19 @@
 /**
  * Tag Service
  *
- * Centralised service for tag vocabulary and entity-tag attachments.
+ * Centralised service for tag vocabulary and place-tag attachments.
  * Delegates all DB access to the tag repository.
  * Used by tag server actions — never called from client code.
  *
+ * Tags belong only to places. List tags are derived on the fly as the
+ * union of all place tags for the places within that list.
+ *
  * Public API:
- *   - searchTags       — autocomplete system + user custom tags by slug prefix
- *   - getTagsForList   — read tags on a list
- *   - getTagsForPlace  — read tags on a place
- *   - setListTags      — replace the full tag set on a list
- *   - setPlaceTags     — replace the full tag set on a place
+ *   - searchTags               — autocomplete system + user custom tags by slug prefix
+ *   - getTagsForPlace          — read tags on a place
+ *   - getTagsForPlaces         — batch read tags on multiple places
+ *   - getTagsForListsViaPlaces — derived list tags (union of place tags per list)
+ *   - setPlaceTags             — replace the full tag set on a place
  *
  * Architecture: src/lib/tag/service.ts → src/actions/tag-actions.ts → client
  * @see docs/decisions/tags.md
@@ -28,12 +31,7 @@ import {
 } from "./errors";
 import { normaliseTagSlug, normaliseTagLabel } from "./slug";
 import { config } from "@/lib/config";
-import type {
-  TagSummary,
-  EntityTagSummary,
-  SetTagsResult,
-  TaggableKind,
-} from "./types";
+import type { TagSummary, EntityTagSummary, SetTagsResult } from "./types";
 
 const log = createServiceLogger("tag-service");
 
@@ -79,23 +77,7 @@ export async function searchTags({
 }
 
 /**
- * Fetch all active tags attached to a list.
- *
- * @param listId - List UUID
- * @returns Tag summaries ordered by label
- * @throws {TagServiceError} code SERVICE_ERROR on DB failure
- */
-export async function getTagsForList(listId: string): Promise<TagSummary[]> {
-  try {
-    return await tagRepository.getTagsForList(listId);
-  } catch (err) {
-    log.error({ method: "getTagsForList", listId, err }, "DB error");
-    throw tagServiceError("Failed to load tags.", err);
-  }
-}
-
-/**
- * Fetch all active tags attached to a place.
+ * Fetch all tags attached to a place.
  *
  * @param placeId - Place UUID
  * @returns Tag summaries ordered by label
@@ -111,25 +93,7 @@ export async function getTagsForPlace(placeId: string): Promise<TagSummary[]> {
 }
 
 /**
- * Batch-fetch active tags for multiple lists.
- *
- * @param listIds - List UUIDs
- * @returns One EntityTagSummary per (list, tag) pair; includes entityId for grouping
- * @throws {TagServiceError} code SERVICE_ERROR on DB failure
- */
-export async function getTagsForLists(
-  listIds: string[]
-): Promise<EntityTagSummary[]> {
-  try {
-    return await tagRepository.getTagsForLists(listIds);
-  } catch (err) {
-    log.error({ method: "getTagsForLists", err }, "DB error");
-    throw tagServiceError("Failed to load tags.", err);
-  }
-}
-
-/**
- * Batch-fetch active tags for multiple places.
+ * Batch-fetch tags for multiple places.
  *
  * @param placeIds - Place UUIDs
  * @returns One EntityTagSummary per (place, tag) pair; includes entityId for grouping
@@ -146,41 +110,36 @@ export async function getTagsForPlaces(
   }
 }
 
-// ─── Mutations ───────────────────────────────────────────────────────────────
-
 /**
- * Replace the full tag set on a list.
+ * Derive tags for multiple lists from the tags of their active places.
  *
- * Unknown labels are inserted as custom tags on the fly; known labels are
- * reused. Previously-attached tags not in the new set are soft-deleted.
- * Previously-removed tags that reappear are restored in place.
+ * Returns the distinct union of place tags per list — no list_tags table
+ * is queried.
  *
- * @param listId - List UUID
- * @param userId - Authenticated user's id (ownership check)
- * @param labels - Desired tag labels (raw; normalised internally)
- * @returns The resulting tag summaries on the list
- * @throws {TagServiceError} code NOT_FOUND if list missing/deleted/wrong owner
- * @throws {TagServiceError} code VALIDATION_ERROR if labels invalid or over limit
+ * @param listIds - List UUIDs
+ * @returns One EntityTagSummary per (list, tag) pair; includes entityId for grouping
  * @throws {TagServiceError} code SERVICE_ERROR on DB failure
  */
-export async function setListTags({
-  listId,
-  userId,
-  labels,
-}: {
-  listId: string;
-  userId: string;
-  labels: string[];
-}): Promise<SetTagsResult> {
-  return setEntityTags({ kind: "list", entityId: listId, userId, labels });
+export async function getTagsForListsViaPlaces(
+  listIds: string[]
+): Promise<EntityTagSummary[]> {
+  try {
+    return await tagRepository.getTagsForListsViaPlaces(listIds);
+  } catch (err) {
+    log.error({ method: "getTagsForListsViaPlaces", err }, "DB error");
+    throw tagServiceError("Failed to load tags.", err);
+  }
 }
+
+// ─── Mutations ───────────────────────────────────────────────────────────────
 
 /**
  * Replace the full tag set on a place.
  *
  * Unknown labels are inserted as custom tags on the fly; known labels are
- * reused. Previously-attached tags not in the new set are soft-deleted.
- * Previously-removed tags that reappear are restored in place.
+ * reused. Tags removed from a place are hard-deleted from the junction table.
+ * Custom tags that become unreferenced after removal are garbage-collected
+ * from the tags vocabulary.
  *
  * @param placeId - Place UUID
  * @param userId  - Authenticated user's id (ownership check)
@@ -199,7 +158,64 @@ export async function setPlaceTags({
   userId: string;
   labels: string[];
 }): Promise<SetTagsResult> {
-  return setEntityTags({ kind: "place", entityId: placeId, userId, labels });
+  log.info(
+    { method: "setPlaceTags", userId, placeId, count: labels.length },
+    "Setting tags"
+  );
+
+  const normalised = normaliseLabels(labels);
+  if (normalised.length > config.tags.maxPerEntity) {
+    throw validationError(
+      `A maximum of ${config.tags.maxPerEntity} tags is allowed.`
+    );
+  }
+
+  const placeOwned = await tagRepository.isPlaceOwnedByUser({
+    placeId,
+    userId,
+  });
+  if (!placeOwned) throw notFoundError();
+
+  try {
+    const tagIdsBySlug = await resolveTagIds(normalised, userId);
+    const desiredIds = new Set(tagIdsBySlug.values());
+
+    const currentRows = await tagRepository.getPlaceTagIds(placeId);
+    const currentIds = new Set(currentRows.map((r) => r.tagId));
+
+    const toAdd = Array.from(desiredIds).filter((id) => !currentIds.has(id));
+    const toRemove = Array.from(currentIds).filter((id) => !desiredIds.has(id));
+
+    await tagRepository.insertPlaceTags({ placeId, tagIds: toAdd });
+    await tagRepository.deletePlaceTagsByTagIds({ placeId, tagIds: toRemove });
+
+    // Garbage-collect custom tags that are no longer used by any place
+    if (toRemove.length > 0) {
+      await tagRepository.deleteOrphanedCustomTags(toRemove);
+    }
+
+    const [result, listSlugs] = await Promise.all([
+      tagRepository.getTagsForPlace(placeId),
+      placeRepository.getPublishedListSlugsForPlace({ placeId, userId }),
+    ]);
+
+    log.info(
+      {
+        method: "setPlaceTags",
+        userId,
+        placeId,
+        added: toAdd.length,
+        removed: toRemove.length,
+      },
+      "Tags set"
+    );
+
+    return { tags: result, listSlugs };
+  } catch (err) {
+    if (err instanceof TagServiceError) throw err;
+    log.error({ method: "setPlaceTags", userId, placeId, err }, "DB error");
+    throw tagServiceError("Failed to update tags. Please try again.", err);
+  }
 }
 
 // ─── Internal ────────────────────────────────────────────────────────────────
@@ -244,123 +260,4 @@ async function resolveTagIds(
   }
 
   return bySlug;
-}
-
-/**
- * Shared implementation for setListTags / setPlaceTags.
- */
-async function setEntityTags({
-  kind,
-  entityId,
-  userId,
-  labels,
-}: {
-  kind: TaggableKind;
-  entityId: string;
-  userId: string;
-  labels: string[];
-}): Promise<SetTagsResult> {
-  log.info(
-    { method: "setEntityTags", userId, kind, entityId, count: labels.length },
-    "Setting tags"
-  );
-
-  const normalised = normaliseLabels(labels);
-  if (normalised.length > config.tags.maxPerEntity) {
-    throw validationError(
-      `A maximum of ${config.tags.maxPerEntity} tags is allowed.`
-    );
-  }
-
-  // Ownership check — for lists, also captures the slug for cache invalidation
-  let listSlug: string | undefined;
-  if (kind === "list") {
-    const listOwnership = await tagRepository.isListOwnedByUser({
-      listId: entityId,
-      userId,
-    });
-    if (!listOwnership) throw notFoundError();
-    listSlug = listOwnership.slug;
-  } else {
-    const placeOwned = await tagRepository.isPlaceOwnedByUser({
-      placeId: entityId,
-      userId,
-    });
-    if (!placeOwned) throw notFoundError();
-  }
-
-  try {
-    const tagIdsBySlug = await resolveTagIds(normalised, userId);
-    const desiredIds = new Set(tagIdsBySlug.values());
-
-    const junctions =
-      kind === "list"
-        ? await tagRepository.getListTagJunctions(entityId)
-        : await tagRepository.getPlaceTagJunctions(entityId);
-
-    const toRestore: string[] = [];
-    const toSoftDelete: string[] = [];
-    const existingTagIds = new Set<string>();
-
-    for (const j of junctions) {
-      existingTagIds.add(j.tagId);
-      const wanted = desiredIds.has(j.tagId);
-      if (wanted && j.deletedAt !== null) toRestore.push(j.id);
-      if (!wanted && j.deletedAt === null) toSoftDelete.push(j.id);
-    }
-
-    const toInsert = Array.from(desiredIds).filter(
-      (id) => !existingTagIds.has(id)
-    );
-
-    if (kind === "list") {
-      await tagRepository.restoreListTags(toRestore);
-      await tagRepository.softDeleteListTags(toSoftDelete);
-      await tagRepository.insertListTags({
-        listId: entityId,
-        tagIds: toInsert,
-      });
-    } else {
-      await tagRepository.restorePlaceTags(toRestore);
-      await tagRepository.softDeletePlaceTags(toSoftDelete);
-      await tagRepository.insertPlaceTags({
-        placeId: entityId,
-        tagIds: toInsert,
-      });
-    }
-
-    const [result, listSlugs] = await Promise.all([
-      kind === "list"
-        ? tagRepository.getTagsForList(entityId)
-        : tagRepository.getTagsForPlace(entityId),
-      kind === "place"
-        ? placeRepository.getPublishedListSlugsForPlace({
-            placeId: entityId,
-            userId,
-          })
-        : Promise.resolve(undefined),
-    ]);
-
-    log.info(
-      {
-        method: "setEntityTags",
-        userId,
-        kind,
-        entityId,
-        inserted: toInsert.length,
-        restored: toRestore.length,
-        removed: toSoftDelete.length,
-      },
-      "Tags set"
-    );
-
-    return { tags: result, listSlug, listSlugs };
-  } catch (err) {
-    if (err instanceof TagServiceError) throw err;
-    log.error(
-      { method: "setEntityTags", userId, kind, entityId, err },
-      "DB error"
-    );
-    throw tagServiceError("Failed to update tags. Please try again.", err);
-  }
 }

@@ -3,14 +3,11 @@ import { render, screen } from "@testing-library/react";
 
 // ─── Mock tag actions ─────────────────────────────────────────────────────────
 
-const { mockSetListTagsAction, mockSetPlaceTagsAction, mockSearchTagsAction } =
-  vi.hoisted(() => ({
-    mockSetListTagsAction: vi.fn(),
-    mockSetPlaceTagsAction: vi.fn(),
-    mockSearchTagsAction: vi.fn(),
-  }));
+const { mockSetPlaceTagsAction, mockSearchTagsAction } = vi.hoisted(() => ({
+  mockSetPlaceTagsAction: vi.fn(),
+  mockSearchTagsAction: vi.fn(),
+}));
 vi.mock("@/actions/tag-actions", () => ({
-  setListTagsAction: mockSetListTagsAction,
   setPlaceTagsAction: mockSetPlaceTagsAction,
   searchTagsAction: mockSearchTagsAction,
 }));
@@ -67,33 +64,22 @@ describe("EditTagsForm", () => {
 
   it("renders the entityId in a hidden field", () => {
     const { container } = render(
-      <EditTagsForm entityId="list-1" kind="list" initialTags={[]} />
+      <EditTagsForm entityId="place-1" initialTags={[]} />
     );
     const hidden = container.querySelector<HTMLInputElement>(
       'input[name="entityId"]'
     );
-    expect(hidden?.value).toBe("list-1");
+    expect(hidden?.value).toBe("place-1");
   });
 
   it("pre-populates TagInput with initialTags", () => {
-    render(
-      <EditTagsForm
-        entityId="list-1"
-        kind="list"
-        initialTags={["Cafe", "Bar"]}
-      />
-    );
+    render(<EditTagsForm entityId="place-1" initialTags={["Cafe", "Bar"]} />);
     expect(screen.getByText("Cafe")).toBeInTheDocument();
     expect(screen.getByText("Bar")).toBeInTheDocument();
   });
 
-  it("wires kind='list' to setListTagsAction", () => {
-    render(<EditTagsForm entityId="list-1" kind="list" initialTags={[]} />);
-    expect(capturedAction).toBe(mockSetListTagsAction);
-  });
-
-  it("wires kind='place' to setPlaceTagsAction", () => {
-    render(<EditTagsForm entityId="place-1" kind="place" initialTags={[]} />);
+  it("always wires to setPlaceTagsAction", () => {
+    render(<EditTagsForm entityId="place-1" initialTags={[]} />);
     expect(capturedAction).toBe(mockSetPlaceTagsAction);
   });
 
@@ -104,7 +90,7 @@ describe("EditTagsForm", () => {
       fieldErrors: {},
       isSuccess: false,
     };
-    render(<EditTagsForm entityId="list-1" kind="list" initialTags={[]} />);
+    render(<EditTagsForm entityId="place-1" initialTags={[]} />);
     expect(screen.getByRole("alert")).toHaveTextContent("Tag save failed");
   });
 
@@ -115,13 +101,13 @@ describe("EditTagsForm", () => {
       fieldErrors: { tags: ["Too many tags"] },
       isSuccess: false,
     };
-    render(<EditTagsForm entityId="list-1" kind="list" initialTags={[]} />);
+    render(<EditTagsForm entityId="place-1" initialTags={[]} />);
     expect(screen.getByText("Too many tags")).toBeInTheDocument();
   });
 
   it("disables the submit button and shows saving state while pending", () => {
     mockIsPending = true;
-    render(<EditTagsForm entityId="list-1" kind="list" initialTags={[]} />);
+    render(<EditTagsForm entityId="place-1" initialTags={[]} />);
     const btn = screen.getByRole("button", { name: /saving/i });
     expect(btn).toBeDisabled();
   });
@@ -135,12 +121,7 @@ describe("EditTagsForm", () => {
     };
     const onSuccess = vi.fn();
     render(
-      <EditTagsForm
-        entityId="list-1"
-        kind="list"
-        initialTags={[]}
-        onSuccess={onSuccess}
-      />
+      <EditTagsForm entityId="place-1" initialTags={[]} onSuccess={onSuccess} />
     );
     expect(onSuccess).toHaveBeenCalled();
   });
@@ -148,12 +129,7 @@ describe("EditTagsForm", () => {
   it("does not call onSuccess when the action has not succeeded", () => {
     const onSuccess = vi.fn();
     render(
-      <EditTagsForm
-        entityId="list-1"
-        kind="list"
-        initialTags={[]}
-        onSuccess={onSuccess}
-      />
+      <EditTagsForm entityId="place-1" initialTags={[]} onSuccess={onSuccess} />
     );
     expect(onSuccess).not.toHaveBeenCalled();
   });

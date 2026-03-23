@@ -23,25 +23,19 @@ export interface TagRecord {
   isSystem: boolean;
   userId: string | null;
   createdAt: Date;
-  deletedAt: Date | null;
 }
 
-/** Result of a setListTags / setPlaceTags operation. */
+/** Result of a setPlaceTags operation. */
 export interface SetTagsResult {
   tags: TagSummary[];
-  /** Slug of the updated list. Present only for setListTags results. */
-  listSlug?: string;
-  /** Slugs of published lists that contain the updated place. Present only for setPlaceTags results. */
+  /** Slugs of published lists that contain the updated place. */
   listSlugs?: string[];
 }
 
 /**
  * Tag summary with the entity it is attached to.
- * Returned by batch tag-fetch operations (getTagsForLists, getTagsForPlaces).
+ * Returned by batch tag-fetch operations (getTagsForPlaces, getTagsForListsViaPlaces).
  */
 export interface EntityTagSummary extends TagSummary {
   entityId: string;
 }
-
-/** Entity kinds that can be tagged. */
-export type TaggableKind = "list" | "place";

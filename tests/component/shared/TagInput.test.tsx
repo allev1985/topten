@@ -173,7 +173,6 @@ describe("TagInput", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /cafe/i })).toBeInTheDocument()
     );
-    expect(screen.getByText("Google Places")).toBeInTheDocument();
   });
 
   it("filters out already-selected suggestions", async () => {

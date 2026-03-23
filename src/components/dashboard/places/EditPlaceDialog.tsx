@@ -171,7 +171,6 @@ export function EditPlaceDialog({
           <div className="border-t pt-4">
             <EditTagsForm
               entityId={place.id}
-              kind="place"
               initialTags={place.tags}
               onSuccess={() => onOpenChange(false)}
             />

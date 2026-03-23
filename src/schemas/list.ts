@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { tagsFieldSchema } from "./tag";
 
 /**
  * Schema for creating a new list.
@@ -11,7 +10,6 @@ export const createListSchema = z.object({
     .trim()
     .min(1, "Title is required")
     .max(255, "Title must be 255 characters or fewer"),
-  tags: tagsFieldSchema.optional().default([]),
 });
 
 /**

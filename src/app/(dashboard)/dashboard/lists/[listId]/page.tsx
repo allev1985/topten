@@ -70,7 +70,7 @@ export default async function ListDetailPage({
             {list.description}
           </p>
         )}
-        <ListTagsSection listId={list.id} initialTags={list.tags ?? []} />
+        <ListTagsSection initialTags={list.tags ?? []} />
       </div>
 
       {errorMessage ? (

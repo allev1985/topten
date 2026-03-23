@@ -29,12 +29,12 @@ const {
   mockGetVanitySlugByUserId: vi.fn(),
 }));
 
-const { mockGetTagsForLists } = vi.hoisted(() => ({
-  mockGetTagsForLists: vi.fn(),
+const { mockGetTagsForListsViaPlaces } = vi.hoisted(() => ({
+  mockGetTagsForListsViaPlaces: vi.fn(),
 }));
 
 vi.mock("@/lib/tag", () => ({
-  getTagsForLists: mockGetTagsForLists,
+  getTagsForListsViaPlaces: mockGetTagsForListsViaPlaces,
 }));
 
 vi.mock("@/db/repositories/list.repository", () => ({
@@ -86,7 +86,7 @@ beforeEach(() => {
 
   // sensible defaults
   mockGetVanitySlugByUserId.mockResolvedValue(VANITY_SLUG);
-  mockGetTagsForLists.mockResolvedValue([]);
+  mockGetTagsForListsViaPlaces.mockResolvedValue([]);
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
