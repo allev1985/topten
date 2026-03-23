@@ -63,8 +63,6 @@ describe("AddPlaceDialog (list context)", () => {
     const user = userEvent.setup();
     render(<AddPlaceDialog listId="list-1" availablePlaces={[]} />);
     await user.click(screen.getByRole("button", { name: /add a place/i }));
-    expect(
-      screen.getByRole("button", { name: /create place/i })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /add place/i })).toBeDisabled();
   });
 });
