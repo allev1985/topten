@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/styling/cn";
 import { searchTagsAction } from "@/actions/tag-actions";
 import { config } from "@/lib/config/client";
-import { normaliseTagLabel } from "@/lib/tag/slug";
+import { normaliseTagLabel } from "@/lib/tag/helpers/slug";
 import type { TagSummary } from "@/lib/tag";
 
 /**

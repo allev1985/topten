@@ -29,7 +29,7 @@ import {
   validationError,
   tagServiceError,
 } from "./errors";
-import { normaliseTagSlug, normaliseTagLabel } from "./slug";
+import { normaliseTagSlug, normaliseTagLabel } from "./helpers/slug";
 import { config } from "@/lib/config";
 import type { TagSummary, EntityTagSummary, SetTagsResult } from "./types";
 

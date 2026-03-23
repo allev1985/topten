@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normaliseTagSlug, normaliseTagLabel } from "@/lib/tag/slug";
+import { normaliseTagSlug, normaliseTagLabel } from "@/lib/tag/helpers/slug";
 import { config } from "@/lib/config/client";
 
 describe("normaliseTagSlug", () => {

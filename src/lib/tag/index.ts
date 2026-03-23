@@ -13,7 +13,7 @@ export {
 
 export { TagServiceError } from "./errors";
 
-export { normaliseTagSlug, normaliseTagLabel } from "./slug";
+export { normaliseTagSlug, normaliseTagLabel } from "./helpers/slug";
 
 export { SYSTEM_TAG_TAXONOMY, findTaxonomyEntry } from "./system-tags";
 

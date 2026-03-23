@@ -21,6 +21,17 @@ describe("tagLabelSchema", () => {
     const long = "a".repeat(config.tags.maxLabelLength + 1);
     expect(tagLabelSchema.safeParse(long).success).toBe(false);
   });
+
+  it("rejects labels that normalise to an empty slug (e.g. pure punctuation)", () => {
+    expect(tagLabelSchema.safeParse("!!!").success).toBe(false);
+    expect(tagLabelSchema.safeParse("---").success).toBe(false);
+    expect(tagLabelSchema.safeParse("   ---   ").success).toBe(false);
+  });
+
+  it("accepts labels that contain punctuation alongside alphanumeric characters", () => {
+    expect(tagLabelSchema.safeParse("Vegan-Friendly!").success).toBe(true);
+    expect(tagLabelSchema.safeParse("24/7").success).toBe(true);
+  });
 });
 
 describe("tagsFieldSchema", () => {

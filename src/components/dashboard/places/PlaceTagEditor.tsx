@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/styling/cn";
 import { setPlaceTagsAction, searchTagsAction } from "@/actions/tag-actions";
-import { normaliseTagLabel } from "@/lib/tag/slug";
+import { normaliseTagLabel } from "@/lib/tag/helpers/slug";
 import { config } from "@/lib/config/client";
 import type { TagSummary } from "@/lib/tag";
 

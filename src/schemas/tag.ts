@@ -1,8 +1,13 @@
 import { z } from "zod";
 import { config } from "@/lib/config/client";
+import { normaliseTagSlug } from "@/lib/tag/helpers/slug";
 
 /**
  * Schema for a single tag label.
+ *
+ * Requires at least one alphanumeric character so labels that are entirely
+ * punctuation (e.g. "!!!") are rejected here rather than silently dropped
+ * after normalisation to an empty slug inside setPlaceTags.
  */
 export const tagLabelSchema = z
   .string()
@@ -11,6 +16,10 @@ export const tagLabelSchema = z
   .max(
     config.tags.maxLabelLength,
     `Tag must be ${config.tags.maxLabelLength} characters or fewer`
+  )
+  .refine(
+    (label) => normaliseTagSlug(label).length > 0,
+    "Tag must contain at least one letter or number"
   );
 
 /**

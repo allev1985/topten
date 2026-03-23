@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SYSTEM_TAG_TAXONOMY, findTaxonomyEntry } from "@/lib/tag/system-tags";
-import { normaliseTagSlug } from "@/lib/tag/slug";
+import { normaliseTagSlug } from "@/lib/tag/helpers/slug";
 
 describe("SYSTEM_TAG_TAXONOMY", () => {
   it("contains at least one entry", () => {

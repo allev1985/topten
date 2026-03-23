@@ -1,6 +1,6 @@
 /**
  * Tag slug normalisation helpers.
- * @module lib/tag/slug
+ * @module lib/tag/helpers/slug
  */
 
 import { config } from "@/lib/config/client";
