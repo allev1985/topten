@@ -19,14 +19,14 @@ interface PublicPlaceAccordionItemProps {
  * PublicPlaceAccordionItem — Client Component
  *
  * Renders a single place as a disclosure card within a grid.
- * The hero image is shown at the top, with the place name and address
- * displayed below it in black text. When the place has a description,
- * the card header is tappable to expand and reveal it.
+ * The hero image is shown at the top, with the place name, address, and tags
+ * always visible. When the place has a description, the card header is
+ * tappable to expand and reveal it.
  */
 export function PublicPlaceAccordionItem({
   place,
 }: PublicPlaceAccordionItemProps): JSX.Element {
-  const hasContent = Boolean(place.description) || place.tags.length > 0;
+  const hasDescription = Boolean(place.description);
 
   const heroImage = (
     <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-white">
@@ -47,7 +47,7 @@ export function PublicPlaceAccordionItem({
   );
 
   const nameAndAddress = (
-    <div className="flex items-start justify-between gap-2 px-3 py-2">
+    <div className="flex items-start justify-between gap-2 px-3 pt-2">
       <div className="min-w-0 text-left">
         <p className="text-foreground leading-snug font-semibold">
           {place.name}
@@ -56,17 +56,24 @@ export function PublicPlaceAccordionItem({
           {place.address}
         </p>
       </div>
-      {hasContent && (
+      {hasDescription && (
         <ChevronDown className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0 transition-transform duration-200 group-data-[state=open]/card:rotate-180" />
       )}
     </div>
   );
 
-  if (!hasContent) {
+  const tags = place.tags.length > 0 && (
+    <div className="px-3 pt-1 pb-2">
+      <TagBadgeList tags={place.tags} size="sm" />
+    </div>
+  );
+
+  if (!hasDescription) {
     return (
       <div className="bg-card overflow-hidden">
         {heroImage}
         {nameAndAddress}
+        {tags}
       </div>
     );
   }
@@ -76,14 +83,12 @@ export function PublicPlaceAccordionItem({
       <CollapsibleTrigger className="block w-full">
         {heroImage}
         {nameAndAddress}
+        {tags}
       </CollapsibleTrigger>
 
       <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
-        <div className="space-y-2 px-3 py-3">
-          {place.description && (
-            <p className="text-muted-foreground text-sm">{place.description}</p>
-          )}
-          <TagBadgeList tags={place.tags} size="sm" />
+        <div className="px-3 pb-3">
+          <p className="text-muted-foreground text-sm">{place.description}</p>
         </div>
       </CollapsibleContent>
     </Collapsible>
