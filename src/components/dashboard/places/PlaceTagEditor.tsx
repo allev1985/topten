@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/styling/cn";
 import { setPlaceTagsAction, searchTagsAction } from "@/actions/tag-actions";
-import { normaliseTagLabel } from "@/lib/tag/helpers/slug";
+import { normaliseTagLabel, normaliseTagSlug } from "@/lib/tag/helpers/slug";
 import { config } from "@/lib/config/client";
 import type { TagSummary } from "@/lib/tag";
 
@@ -84,7 +84,7 @@ export function PlaceTagEditor({ placeId, initialTags }: PlaceTagEditorProps) {
 
   function commit(raw: string) {
     const clean = normaliseTagLabel(raw);
-    if (!clean || atCapacity) return;
+    if (!clean || !normaliseTagSlug(raw) || atCapacity) return;
     if (tags.some((t) => t.toLowerCase() === clean.toLowerCase())) {
       setQuery("");
       setSuggestions([]);

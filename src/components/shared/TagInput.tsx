@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/styling/cn";
 import { searchTagsAction } from "@/actions/tag-actions";
 import { config } from "@/lib/config/client";
-import { normaliseTagLabel } from "@/lib/tag/helpers/slug";
+import { normaliseTagLabel, normaliseTagSlug } from "@/lib/tag/helpers/slug";
 import type { TagSummary } from "@/lib/tag";
 
 /**
@@ -89,7 +89,7 @@ export function TagInput({
 
   function commit(raw: string) {
     const clean = normaliseTagLabel(raw);
-    if (!clean || atCapacity) return;
+    if (!clean || !normaliseTagSlug(raw) || atCapacity) return;
     if (selected.some((s) => s.toLowerCase() === clean.toLowerCase())) {
       setQuery("");
       setSuggestions([]);
