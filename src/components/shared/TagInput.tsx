@@ -167,6 +167,14 @@ export function TagInput({
             ref={inputRef}
             id={`${name}-tag-input`}
             type="text"
+            role="combobox"
+            aria-expanded={suggestions.length > 0}
+            aria-haspopup="listbox"
+            aria-controls={`${name}-listbox`}
+            aria-activedescendant={
+              active >= 0 ? `${name}-option-${active}` : undefined
+            }
+            aria-describedby={error ? `${name}-error` : undefined}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
@@ -182,13 +190,22 @@ export function TagInput({
       </div>
       {suggestions.length > 0 && (
         <ul
+          role="listbox"
+          id={`${name}-listbox`}
+          aria-label="Tag suggestions"
           className="bg-popover border-input max-h-48 overflow-auto rounded-md border shadow-md"
           onMouseDown={(e) => e.preventDefault()}
         >
           {suggestions.map((s, i) => (
-            <li key={s.id}>
+            <li
+              key={s.id}
+              role="option"
+              id={`${name}-option-${i}`}
+              aria-selected={i === active}
+            >
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => commit(s.label)}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-1.5 text-left text-sm",
@@ -207,7 +224,11 @@ export function TagInput({
           ))}
         </ul>
       )}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && (
+        <p id={`${name}-error`} role="alert" className="text-destructive text-xs">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
