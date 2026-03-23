@@ -13,10 +13,7 @@ export {
 
 export { TagServiceError } from "./errors";
 
-export {
-  normaliseTagSlug,
-  normaliseTagLabel,
-} from "./slug";
+export { normaliseTagSlug, normaliseTagLabel } from "./slug";
 
 export {
   GOOGLE_PLACES_TAXONOMY,
