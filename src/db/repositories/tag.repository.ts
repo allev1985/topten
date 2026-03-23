@@ -8,7 +8,7 @@
  * @module db/repositories/tag.repository
  */
 
-import { eq, and, or, isNull, inArray, like, asc } from "drizzle-orm";
+import { eq, and, or, isNull, inArray, like, asc, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { tags, listTags, placeTags } from "@/db/schema/tag";
 import { lists } from "@/db/schema/list";
@@ -69,7 +69,7 @@ export async function searchTagsBySlugPrefix({
         or(eq(tags.isSystem, true), eq(tags.userId, userId))
       )
     )
-    .orderBy(asc(tags.isSystem), asc(tags.slug))
+    .orderBy(desc(tags.isSystem), asc(tags.slug))
     .limit(limit);
 }
 
