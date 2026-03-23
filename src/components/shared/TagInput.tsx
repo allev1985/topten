@@ -5,11 +5,8 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/styling/cn";
 import { searchTagsAction } from "@/actions/tag-actions";
-import {
-  MAX_TAGS_PER_ENTITY,
-  MAX_TAG_LENGTH,
-  normaliseTagLabel,
-} from "@/lib/tag/slug";
+import { config } from "@/lib/config/client";
+import { normaliseTagLabel } from "@/lib/tag/slug";
 import type { TagSummary } from "@/lib/tag";
 
 /**
@@ -61,7 +58,7 @@ export function TagInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const atCapacity = selected.length >= MAX_TAGS_PER_ENTITY;
+  const atCapacity = selected.length >= config.tags.maxPerEntity;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -136,7 +133,7 @@ export function TagInput({
       <label className="text-sm font-medium">
         {label}
         <span className="text-muted-foreground ml-1 text-xs font-normal">
-          ({selected.length}/{MAX_TAGS_PER_ENTITY})
+          ({selected.length}/{config.tags.maxPerEntity})
         </span>
       </label>
       <input type="hidden" name={name} value={JSON.stringify(selected)} />
@@ -173,7 +170,7 @@ export function TagInput({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder={selected.length === 0 ? placeholder : ""}
-            maxLength={MAX_TAG_LENGTH}
+            maxLength={config.tags.maxLabelLength}
             disabled={disabled}
             className="placeholder:text-muted-foreground min-w-[8rem] flex-1 bg-transparent outline-none"
           />

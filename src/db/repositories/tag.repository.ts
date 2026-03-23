@@ -110,7 +110,7 @@ export async function insertTags(
  *
  * @param listId - List UUID
  * @param userId - Requesting user's id
- * @returns true when the list is owned by the user
+ * @returns The list's slug when it is owned by the user, or null otherwise
  */
 export async function isListOwnedByUser({
   listId,
@@ -118,9 +118,9 @@ export async function isListOwnedByUser({
 }: {
   listId: string;
   userId: string;
-}): Promise<boolean> {
+}): Promise<{ slug: string } | null> {
   const rows = await db
-    .select({ id: lists.id })
+    .select({ id: lists.id, slug: lists.slug })
     .from(lists)
     .where(
       and(
@@ -130,7 +130,7 @@ export async function isListOwnedByUser({
       )
     )
     .limit(1);
-  return rows.length > 0;
+  return rows[0] ? { slug: rows[0].slug } : null;
 }
 
 /**

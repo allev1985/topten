@@ -38,6 +38,7 @@ import {
   setPlaceTagsAction,
 } from "@/actions/tag-actions";
 import { TagServiceError } from "@/lib/tag";
+import { invalidatePublicListCaches } from "@/lib/public";
 import type { ActionState } from "@/types/forms";
 
 const initial = { data: null, error: null, fieldErrors: {}, isSuccess: false };
@@ -106,7 +107,7 @@ describe("setListTagsAction", () => {
   });
 
   it("passes parsed labels to the service", async () => {
-    mockSetListTags.mockResolvedValue({ tags: [] });
+    mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
     const res = await setListTagsAction(
       initial as ActionState<never>,
       fd({ entityId: "list-1", tags: JSON.stringify(["Cafe", "Bar"]) })
@@ -117,6 +118,18 @@ describe("setListTagsAction", () => {
       userId: "user-1",
       labels: ["Cafe", "Bar"],
     });
+  });
+
+  it("invalidates both list-summaries and list-detail caches", async () => {
+    mockSetListTags.mockResolvedValue({ tags: [], listSlug: "my-list" });
+    await setListTagsAction(
+      initial as ActionState<never>,
+      fd({ entityId: "list-1", tags: "[]" })
+    );
+    expect(invalidatePublicListCaches).toHaveBeenCalledWith(
+      "user-1",
+      "my-list"
+    );
   });
 
   it("surfaces TagServiceError messages", async () => {
@@ -134,7 +147,7 @@ describe("setListTagsAction", () => {
 
 describe("setPlaceTagsAction", () => {
   it("passes parsed labels to setPlaceTags", async () => {
-    mockSetPlaceTags.mockResolvedValue({ tags: [] });
+    mockSetPlaceTags.mockResolvedValue({ tags: [], listSlugs: [] });
     const res = await setPlaceTagsAction(
       initial as ActionState<never>,
       fd({ entityId: "place-1", tags: JSON.stringify(["Bar"]) })
@@ -145,6 +158,22 @@ describe("setPlaceTagsAction", () => {
       userId: "user-1",
       labels: ["Bar"],
     });
+  });
+
+  it("invalidates list detail caches for all lists containing the place", async () => {
+    mockSetPlaceTags.mockResolvedValue({
+      tags: [],
+      listSlugs: ["list-a", "list-b"],
+    });
+    await setPlaceTagsAction(
+      initial as ActionState<never>,
+      fd({ entityId: "place-1", tags: "[]" })
+    );
+    expect(invalidatePublicListCaches).toHaveBeenCalledWith(
+      "user-1",
+      "list-a",
+      "list-b"
+    );
   });
 
   it("returns unauthenticated error when session is absent", async () => {

@@ -16,8 +16,6 @@ export { TagServiceError } from "./errors";
 export {
   normaliseTagSlug,
   normaliseTagLabel,
-  MAX_TAGS_PER_ENTITY,
-  MAX_TAG_LENGTH,
 } from "./slug";
 
 export {

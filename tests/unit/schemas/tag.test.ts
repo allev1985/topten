@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { tagLabelSchema, tagsFieldSchema, setTagsSchema } from "@/schemas/tag";
-import { MAX_TAG_LENGTH, MAX_TAGS_PER_ENTITY } from "@/lib/tag/slug";
+import { config } from "@/lib/config/client";
 
 describe("tagLabelSchema", () => {
   it("accepts a valid label", () => {
@@ -17,8 +17,8 @@ describe("tagLabelSchema", () => {
     expect(tagLabelSchema.safeParse("").success).toBe(false);
   });
 
-  it("rejects labels longer than MAX_TAG_LENGTH", () => {
-    const long = "a".repeat(MAX_TAG_LENGTH + 1);
+  it("rejects labels longer than config.tags.maxLabelLength", () => {
+    const long = "a".repeat(config.tags.maxLabelLength + 1);
     expect(tagLabelSchema.safeParse(long).success).toBe(false);
   });
 });
@@ -42,9 +42,9 @@ describe("tagsFieldSchema", () => {
     if (result.success) expect(result.data).toEqual([]);
   });
 
-  it("rejects arrays exceeding MAX_TAGS_PER_ENTITY", () => {
+  it("rejects arrays exceeding config.tags.maxPerEntity", () => {
     const tooMany = Array.from(
-      { length: MAX_TAGS_PER_ENTITY + 1 },
+      { length: config.tags.maxPerEntity + 1 },
       (_, i) => `tag${i}`
     );
     const result = tagsFieldSchema.safeParse(JSON.stringify(tooMany));

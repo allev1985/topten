@@ -2,9 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   normaliseTagSlug,
   normaliseTagLabel,
-  MAX_TAGS_PER_ENTITY,
-  MAX_TAG_LENGTH,
 } from "@/lib/tag/slug";
+import { config } from "@/lib/config/client";
 
 describe("normaliseTagSlug", () => {
   it("lower-cases and hyphenates whitespace", () => {
@@ -35,9 +34,9 @@ describe("normaliseTagSlug", () => {
     expect(normaliseTagSlug("Top 10")).toBe("top-10");
   });
 
-  it("truncates to MAX_TAG_LENGTH", () => {
-    const long = "a".repeat(MAX_TAG_LENGTH + 20);
-    expect(normaliseTagSlug(long)).toHaveLength(MAX_TAG_LENGTH);
+  it("truncates to config.tags.maxLabelLength", () => {
+    const long = "a".repeat(config.tags.maxLabelLength + 20);
+    expect(normaliseTagSlug(long)).toHaveLength(config.tags.maxLabelLength);
   });
 });
 
@@ -50,18 +49,18 @@ describe("normaliseTagLabel", () => {
     expect(normaliseTagLabel("CamelCase Tag")).toBe("CamelCase Tag");
   });
 
-  it("truncates to MAX_TAG_LENGTH", () => {
-    const long = "a".repeat(MAX_TAG_LENGTH + 10);
-    expect(normaliseTagLabel(long)).toHaveLength(MAX_TAG_LENGTH);
+  it("truncates to config.tags.maxLabelLength", () => {
+    const long = "a".repeat(config.tags.maxLabelLength + 10);
+    expect(normaliseTagLabel(long)).toHaveLength(config.tags.maxLabelLength);
   });
 });
 
 describe("constants", () => {
-  it("exports MAX_TAGS_PER_ENTITY as a positive integer", () => {
-    expect(MAX_TAGS_PER_ENTITY).toBe(10);
+  it("config.tags.maxPerEntity is a positive integer", () => {
+    expect(config.tags.maxPerEntity).toBe(10);
   });
 
-  it("exports MAX_TAG_LENGTH as a positive integer", () => {
-    expect(MAX_TAG_LENGTH).toBe(64);
+  it("config.tags.maxLabelLength is a positive integer", () => {
+    expect(config.tags.maxLabelLength).toBe(64);
   });
 });

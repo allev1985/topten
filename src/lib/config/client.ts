@@ -45,4 +45,8 @@ export const config = {
       places: "/dashboard/places",
     },
   },
+  tags: {
+    maxPerEntity: 10,
+    maxLabelLength: 64,
+  },
 } as const;
