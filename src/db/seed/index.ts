@@ -20,11 +20,9 @@ async function seedSystemTags(): Promise<void> {
         userId: null,
       }))
     )
-    .onConflictDoUpdate({
+    .onConflictDoNothing({
       target: tags.slug,
-      set: { label: sql`excluded.label`, isSystem: sql`excluded.is_system` },
     });
-
   console.log("System tags seeded.");
 }
 

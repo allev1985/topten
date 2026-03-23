@@ -76,15 +76,30 @@ export async function searchTagsBySlugPrefix({
 /**
  * Look up tag rows for a set of normalised slugs.
  *
+ * Returns system tags plus custom tags created by the requesting user.
+ *
  * @param slugs - Normalised slugs to resolve
+ * @param userId - Requesting user's id (scopes custom-tag visibility)
  * @returns Matching tag rows (may be fewer than input if some slugs are new)
  */
-export async function getTagsBySlugs(slugs: string[]): Promise<TagRow[]> {
+export async function getTagsBySlugs({
+  slugs,
+  userId,
+}: {
+  slugs: string[];
+  userId: string;
+}): Promise<TagRow[]> {
   if (slugs.length === 0) return [];
   return db
     .select()
     .from(tags)
-    .where(and(inArray(tags.slug, slugs), isNull(tags.deletedAt)));
+    .where(
+      and(
+        inArray(tags.slug, slugs),
+        isNull(tags.deletedAt),
+        or(eq(tags.isSystem, true), eq(tags.userId, userId))
+      )
+    );
 }
 
 /**
